@@ -33,8 +33,8 @@ class OfflineAssignmentPolicy
      */
     public function view(User $user, OfflineAssignment $offlineAssignment): bool
     {
-        if ($user->isTeacher()) {
-            return true;
+        if ($user->isTeacher() && $user->teacher) {
+            return $offlineAssignment->teacher_id === $user->teacher->id;
         }
 
         if ($user->isStudent() && $user->student) {
