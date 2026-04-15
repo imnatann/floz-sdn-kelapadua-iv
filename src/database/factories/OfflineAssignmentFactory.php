@@ -6,7 +6,6 @@ use App\Models\OfflineAssignment;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Teacher;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OfflineAssignmentFactory extends Factory
@@ -37,7 +36,7 @@ class OfflineAssignmentFactory extends Factory
                 $classIds = [SchoolClass::factory()->create()->id];
             }
 
-            if (!is_array($classIds)) {
+            if (! is_array($classIds)) {
                 $classIds = [$classIds];
             }
 

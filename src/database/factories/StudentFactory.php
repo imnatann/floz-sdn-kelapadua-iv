@@ -17,22 +17,22 @@ class StudentFactory extends Factory
         $user = User::factory()->student()->create();
 
         return [
-            'email'              => $user->email,
-            'nis'                => fake()->unique()->numerify('##########'),
-            'nisn'               => null,
-            'nik'                => null,
+            'email' => $user->email,
+            'nis' => fake()->unique()->numerify('##########'),
+            'nisn' => null,
+            'nik' => null,
             'family_card_number' => null,
-            'name'               => $user->name,
-            'gender'             => fake()->randomElement(['male', 'female']),
-            'birth_place'        => fake()->city(),
-            'birth_date'         => fake()->date('Y-m-d', '-10 years'),
-            'religion'           => fake()->randomElement(['Islam', 'Kristen', 'Katholik', 'Hindu', 'Buddha']),
-            'address'            => fake()->address(),
-            'parent_name'        => fake()->name(),
-            'parent_phone'       => fake()->numerify('08##########'),
-            'class_id'           => SchoolClass::factory(),
-            'status'             => 'active',
-            'photo_url'          => null,
+            'name' => $user->name,
+            'gender' => fake()->randomElement(['male', 'female']),
+            'birth_place' => fake()->city(),
+            'birth_date' => fake()->date('Y-m-d', '-10 years'),
+            'religion' => fake()->randomElement(['Islam', 'Kristen', 'Katholik', 'Hindu', 'Buddha']),
+            'address' => fake()->address(),
+            'parent_name' => fake()->name(),
+            'parent_phone' => fake()->numerify('08##########'),
+            'class_id' => SchoolClass::factory(),
+            'status' => 'active',
+            'photo_url' => null,
         ];
     }
 }

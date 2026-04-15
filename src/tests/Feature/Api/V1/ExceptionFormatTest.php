@@ -12,6 +12,7 @@ beforeEach(function () {
         Route::get('/server-error', fn () => throw new \RuntimeException('Boom'));
         Route::post('/validate', function () {
             request()->validate(['name' => 'required|string|min:3']);
+
             return ['ok' => true];
         });
     });

@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\UserRole;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\Student;
 use App\Models\Teacher;

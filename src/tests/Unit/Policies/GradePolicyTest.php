@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->policy = new GradePolicy();
+    $this->policy = new GradePolicy;
 });
 
 it('allows a student to view their own grade', function () {

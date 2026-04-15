@@ -14,7 +14,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string', 'min:6'],
         ];
     }
@@ -22,10 +22,10 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required'    => 'Email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
             'password.required' => 'Password wajib diisi.',
-            'password.min'      => 'Password minimal 6 karakter.',
+            'password.min' => 'Password minimal 6 karakter.',
         ];
     }
 }

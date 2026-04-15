@@ -14,15 +14,15 @@ class AttendanceFactory extends Factory
     public function definition(): array
     {
         return [
-            'student_id'     => Student::factory(),
-            'class_id'       => SchoolClass::factory(),
-            'subject_id'     => null,
-            'semester_id'    => null,
-            'recorded_by'    => null,
-            'date'           => now()->toDateString(),
+            'student_id' => Student::factory(),
+            'class_id' => SchoolClass::factory(),
+            'subject_id' => null,
+            'semester_id' => null,
+            'recorded_by' => null,
+            'date' => now()->toDateString(),
             'meeting_number' => 1,
-            'status'         => 'hadir',
-            'notes'          => null,
+            'status' => 'hadir',
+            'notes' => null,
         ];
     }
 }

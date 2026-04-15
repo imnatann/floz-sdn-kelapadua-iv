@@ -16,19 +16,19 @@ class TeacherFactory extends Factory
         $user = User::factory()->teacher()->create();
 
         return [
-            'user_id'     => $user->id,
-            'email'       => $user->email,
-            'name'        => $user->name,
-            'nip'         => null,
-            'nuptk'       => null,
-            'gender'      => fake()->randomElement(['male', 'female']),
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'nip' => null,
+            'nuptk' => null,
+            'gender' => fake()->randomElement(['male', 'female']),
             'birth_place' => fake()->city(),
-            'birth_date'  => fake()->date('Y-m-d', '-25 years'),
-            'phone'       => fake()->numerify('08##########'),
-            'address'     => fake()->address(),
+            'birth_date' => fake()->date('Y-m-d', '-25 years'),
+            'phone' => fake()->numerify('08##########'),
+            'address' => fake()->address(),
             'is_homeroom' => false,
-            'photo_url'   => null,
-            'status'      => 'active',
+            'photo_url' => null,
+            'status' => 'active',
         ];
     }
 }

@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
-beforeEach(fn () => $this->policy = new ReportCardPolicy());
+beforeEach(fn () => $this->policy = new ReportCardPolicy);
 
 it('allows a student to view their own report card', function () {
     $student = Student::factory()->create();

@@ -13,12 +13,12 @@ class SchoolClassFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'                => fake()->randomElement(['1A', '1B', '2A', '2B', '3A', '4A', '5A', '6A']),
-            'grade_level'         => fake()->numberBetween(1, 6),
-            'academic_year_id'    => AcademicYear::factory(),
+            'name' => fake()->randomElement(['1A', '1B', '2A', '2B', '3A', '4A', '5A', '6A']),
+            'grade_level' => fake()->numberBetween(1, 6),
+            'academic_year_id' => AcademicYear::factory(),
             'homeroom_teacher_id' => null,
-            'max_students'        => 40,
-            'status'              => 'active',
+            'max_students' => 40,
+            'status' => 'active',
         ];
     }
 }

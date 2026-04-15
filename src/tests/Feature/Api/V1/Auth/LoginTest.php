@@ -20,7 +20,7 @@ it('logs in a student successfully', function () {
     $user->update(['password' => bcrypt('rahasia123')]);
 
     $response = $this->postJson('/api/v1/auth/login', [
-        'email'    => $user->email,
+        'email' => $user->email,
         'password' => 'rahasia123',
     ]);
 
@@ -44,17 +44,17 @@ it('returns 401 on wrong password', function () {
     $user = User::factory()->student()->create(['password' => bcrypt('rahasia123')]);
 
     $this->postJson('/api/v1/auth/login', [
-        'email'    => $user->email,
+        'email' => $user->email,
         'password' => 'salah123',
     ])->assertStatus(401)
-      ->assertJsonStructure(['message', 'code']);
+        ->assertJsonStructure(['message', 'code']);
 });
 
 it('returns 403 for inactive user', function () {
     $user = User::factory()->student()->inactive()->create(['password' => bcrypt('rahasia123')]);
 
     $this->postJson('/api/v1/auth/login', [
-        'email'    => $user->email,
+        'email' => $user->email,
         'password' => 'rahasia123',
     ])->assertStatus(403);
 });
@@ -63,8 +63,8 @@ it('returns 403 for parent role with explicit message', function () {
     $user = User::factory()->parent()->create(['password' => bcrypt('rahasia123')]);
 
     $this->postJson('/api/v1/auth/login', [
-        'email'    => $user->email,
+        'email' => $user->email,
         'password' => 'rahasia123',
     ])->assertStatus(403)
-      ->assertJsonPath('message', 'Akun parent belum didukung di mobile saat ini.');
+        ->assertJsonPath('message', 'Akun parent belum didukung di mobile saat ini.');
 });

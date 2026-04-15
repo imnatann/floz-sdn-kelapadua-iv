@@ -24,6 +24,7 @@ class ReportCardPolicy
 
         if ($user->isTeacher() && $user->teacher) {
             $student = $card->student;
+
             return $student
                 && $student->class
                 && $student->class->homeroom_teacher_id === $user->teacher->id;

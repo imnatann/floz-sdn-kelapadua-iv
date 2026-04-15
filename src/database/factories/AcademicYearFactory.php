@@ -12,10 +12,10 @@ class AcademicYearFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'       => '2026/2027 - Ganjil',
+            'name' => '2026/2027 - Ganjil',
             'start_date' => '2026-07-14',
-            'end_date'   => '2026-12-19',
-            'is_active'  => true,
+            'end_date' => '2026-12-19',
+            'is_active' => true,
         ];
     }
 }

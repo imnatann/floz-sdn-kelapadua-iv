@@ -3,8 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 
 class EnsureRole
@@ -17,13 +17,13 @@ class EnsureRole
         $user = $request->user();
 
         if (! $user) {
-            throw new AuthenticationException();
+            throw new AuthenticationException;
         }
 
         $userRole = $user->role->value;
         if (! in_array($userRole, $roles, true)) {
             throw new AuthorizationException(
-                "Akses ditolak. Endpoint ini memerlukan role: " . implode(', ', $roles)
+                'Akses ditolak. Endpoint ini memerlukan role: '.implode(', ', $roles)
             );
         }
 

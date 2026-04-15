@@ -1,8 +1,8 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);

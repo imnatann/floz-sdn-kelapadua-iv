@@ -25,8 +25,7 @@ class GradePolicy
         if ($user->isTeacher() && $user->teacher) {
             return $user->teacher->teachingAssignments()
                 ->where('subject_id', $grade->subject_id)
-                ->whereHas('schoolClass.students', fn ($q) =>
-                    $q->where('students.id', $grade->student_id)
+                ->whereHas('schoolClass.students', fn ($q) => $q->where('students.id', $grade->student_id)
                 )
                 ->exists();
         }
@@ -48,8 +47,7 @@ class GradePolicy
         if ($user->isTeacher() && $user->teacher) {
             return $user->teacher->teachingAssignments()
                 ->where('subject_id', $grade->subject_id)
-                ->whereHas('schoolClass.students', fn ($q) =>
-                    $q->where('students.id', $grade->student_id)
+                ->whereHas('schoolClass.students', fn ($q) => $q->where('students.id', $grade->student_id)
                 )
                 ->exists();
         }

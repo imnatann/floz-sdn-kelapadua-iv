@@ -13,15 +13,15 @@ class AnnouncementFactory extends Factory
     public function definition(): array
     {
         return [
-            'title'           => fake()->sentence(6),
-            'content'         => fake()->paragraphs(2, true),
-            'excerpt'         => fake()->sentence(12),
+            'title' => fake()->sentence(6),
+            'content' => fake()->paragraphs(2, true),
+            'excerpt' => fake()->sentence(12),
             'cover_image_url' => null,
             'target_audience' => 'all',
-            'is_pinned'       => false,
-            'type'            => 'info',
-            'is_published'    => true,
-            'user_id'         => User::factory()->schoolAdmin(),
+            'is_pinned' => false,
+            'type' => 'info',
+            'is_published' => true,
+            'user_id' => User::factory()->schoolAdmin(),
         ];
     }
 

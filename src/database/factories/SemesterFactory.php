@@ -14,10 +14,10 @@ class SemesterFactory extends Factory
     {
         return [
             'academic_year_id' => AcademicYear::factory(),
-            'semester_number'  => fake()->randomElement([1, 2]),
-            'start_date'       => '2026-07-14',
-            'end_date'         => '2026-12-19',
-            'is_active'        => true,
+            'semester_number' => fake()->randomElement([1, 2]),
+            'start_date' => '2026-07-14',
+            'end_date' => '2026-12-19',
+            'is_active' => true,
         ];
     }
 }

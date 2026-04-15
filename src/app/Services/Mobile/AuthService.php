@@ -4,8 +4,8 @@ namespace App\Services\Mobile;
 
 use App\Enums\UserRole;
 use App\Models\User;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 
 class AuthService

@@ -1,16 +1,15 @@
 <?php
 
-use App\Enums\UserRole;
 use App\Models\User;
 use App\Services\Mobile\AuthService;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->service = new AuthService();
+    $this->service = new AuthService;
 });
 
 it('returns user + token on valid credentials', function () {

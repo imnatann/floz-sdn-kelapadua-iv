@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->policy = new AttendancePolicy();
+    $this->policy = new AttendancePolicy;
 });
 
 it('allows a teacher to record attendance for their own meeting', function () {
@@ -36,7 +36,7 @@ it('allows a student to view their own attendance record', function () {
     $user = User::where('email', $student->email)->first();
     $att = Attendance::factory()->create([
         'student_id' => $student->id,
-        'class_id'   => $student->class_id,
+        'class_id' => $student->class_id,
     ]);
 
     expect($this->policy->view($user, $att))->toBeTrue();
@@ -48,7 +48,7 @@ it('rejects a student viewing another student\'s attendance', function () {
     $userA = User::where('email', $a->email)->first();
     $attOfB = Attendance::factory()->create([
         'student_id' => $b->id,
-        'class_id'   => $b->class_id,
+        'class_id' => $b->class_id,
     ]);
 
     expect($this->policy->view($userA, $attOfB))->toBeFalse();

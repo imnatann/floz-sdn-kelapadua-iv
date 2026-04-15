@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\OfflineAssignment;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class OfflineAssignmentPolicy
 {
@@ -83,16 +82,16 @@ class OfflineAssignmentPolicy
     {
         return $user->isTeacher();
     }
-    
+
     /**
      * Determine whether the user can submit the assignment
      */
     public function submit(User $user, OfflineAssignment $offlineAssignment): bool
     {
-        if (!$user->isStudent() || !$user->student) {
+        if (! $user->isStudent() || ! $user->student) {
             return false;
         }
-        
+
         return $offlineAssignment->classes->pluck('id')->contains($user->student->class_id);
     }
 }

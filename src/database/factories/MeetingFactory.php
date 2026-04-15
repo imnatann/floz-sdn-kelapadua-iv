@@ -14,10 +14,10 @@ class MeetingFactory extends Factory
     {
         return [
             'teaching_assignment_id' => TeachingAssignment::factory(),
-            'meeting_number'         => fake()->numberBetween(1, 14),
-            'title'                  => fake()->sentence(3),
-            'description'            => null,
-            'is_locked'              => true,
+            'meeting_number' => fake()->numberBetween(1, 14),
+            'title' => fake()->sentence(3),
+            'description' => null,
+            'is_locked' => true,
         ];
     }
 }

@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->policy = new OfflineAssignmentPolicy();
+    $this->policy = new OfflineAssignmentPolicy;
 });
 
 it('allows a teacher to view their own offline assignment', function () {

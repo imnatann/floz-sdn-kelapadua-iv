@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
-beforeEach(fn () => $this->policy = new AnnouncementPolicy());
+beforeEach(fn () => $this->policy = new AnnouncementPolicy);
 
 it('allows any authenticated user to view a school-wide announcement', function () {
     $a = Announcement::factory()->create(['target_audience' => 'all']);

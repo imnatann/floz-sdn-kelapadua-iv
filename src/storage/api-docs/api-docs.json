@@ -40,13 +40,107 @@
                 }
             }
         },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login dan dapatkan Sanctum token",
+                "operationId": "729051a72c82e45c2414c9e5b3450480",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login berhasil"
+                    },
+                    "401": {
+                        "description": "Email atau password salah"
+                    },
+                    "403": {
+                        "description": "Akun tidak aktif atau parent"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout (revoke current token)",
+                "operationId": "fb4bf3a224c61f0b366538e251e934b9",
+                "responses": {
+                    "204": {
+                        "description": "Logout berhasil"
+                    },
+                    "401": {
+                        "description": "Token tidak valid"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Profil user yang sedang login",
+                "operationId": "a2bbab381ba3b6aa5b022472b3cbd925",
+                "responses": {
+                    "200": {
+                        "description": "Profile data"
+                    },
+                    "401": {
+                        "description": "Token tidak valid"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/login": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "summary": "User Login",
-                "description": "Authenticate user and return redirect or token",
+                "description": "Authenticate user and return redirect",
                 "operationId": "a0bad38435a32b5ad173da486ba8f59d",
                 "requestBody": {
                     "required": true,
@@ -61,7 +155,7 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "admin@floz.id"
+                                        "example": "admin@sekolah.id"
                                     },
                                     "password": {
                                         "type": "string",
@@ -123,7 +217,7 @@
                 ],
                 "summary": "Tenant Dashboard Stats",
                 "description": "Get statistics for the tenant dashboard",
-                "operationId": "d78b2a0b241ea04aa79ab7e1e3b5203d",
+                "operationId": "a32eae9558575e32b720bac70aad28c3",
                 "responses": {
                     "200": {
                         "description": "Dashboard stats",
@@ -136,19 +230,25 @@
                                                 "total_students": {
                                                     "type": "integer"
                                                 },
+                                                "total_teachers": {
+                                                    "type": "integer"
+                                                },
                                                 "total_classes": {
                                                     "type": "integer"
                                                 },
-                                                "total_grades": {
+                                                "total_staff": {
                                                     "type": "integer"
                                                 },
-                                                "pending_reports": {
+                                                "attendance_present": {
+                                                    "type": "integer"
+                                                },
+                                                "attendance_absent": {
                                                     "type": "integer"
                                                 }
                                             },
                                             "type": "object"
                                         },
-                                        "recentGrades": {
+                                        "recent_announcements": {
                                             "type": "array",
                                             "items": {
                                                 "type": "object"
@@ -170,7 +270,7 @@
                 ],
                 "summary": "List Grades",
                 "description": "Get list of grades with filtering",
-                "operationId": "038f0c57166ca8a5f1d689df03a31a04",
+                "operationId": "fac99c04296b004c30baad90529aac58",
                 "parameters": [
                     {
                         "name": "class_id",
@@ -214,7 +314,7 @@
                 ],
                 "summary": "Batch Input View",
                 "description": "Get view for batch grade input",
-                "operationId": "7eb2dc875cba15929eac37b954a35299",
+                "operationId": "72f2f64c7aff22482aec03961fe3825b",
                 "parameters": [
                     {
                         "name": "class_id",
@@ -253,7 +353,7 @@
                 ],
                 "summary": "Store Batch Grades",
                 "description": "Store multiple grades at once",
-                "operationId": "0443a33d2c21f496e078e2e21dead376",
+                "operationId": "1ed56bcad8dd0a8c30eb8ca00906f0e0",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -321,7 +421,7 @@
                 ],
                 "summary": "List Report Cards",
                 "description": "Get list of report cards with filtering",
-                "operationId": "ab82ad92c66b6703a3bfc53b303b3851",
+                "operationId": "cb0c8bf4bd22e7d3548b7b7ce656c1de",
                 "parameters": [
                     {
                         "name": "class_id",
@@ -369,7 +469,7 @@
                 ],
                 "summary": "Generate Report Cards",
                 "description": "Generate report cards for a class and semester",
-                "operationId": "82df7d788c7b8544ae49df7ac0b81d41",
+                "operationId": "217366120cd0d7b1378ed9449828a4bc",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -377,7 +477,8 @@
                             "schema": {
                                 "required": [
                                     "class_id",
-                                    "semester_id"
+                                    "semester_id",
+                                    "report_type"
                                 ],
                                 "properties": {
                                     "class_id": {
@@ -385,6 +486,13 @@
                                     },
                                     "semester_id": {
                                         "type": "integer"
+                                    },
+                                    "report_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "uts",
+                                            "final"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -406,7 +514,7 @@
                 ],
                 "summary": "Show Report Card",
                 "description": "Get detailed view of a report card",
-                "operationId": "acff4b70b5eaec6e8db0dfe790f102e0",
+                "operationId": "9d65f2d60ef8f851d1e908c57f2f20d8",
                 "parameters": [
                     {
                         "name": "reportCard",
@@ -431,7 +539,7 @@
                 ],
                 "summary": "Publish Report Card",
                 "description": "Mark a report card as published",
-                "operationId": "8030d9b950a6b57b5ffbcdbd5c1f5e4e",
+                "operationId": "ea0b4cfb60a8ad29bca3eff53cfaa22c",
                 "parameters": [
                     {
                         "name": "reportCard",
@@ -456,7 +564,7 @@
                 ],
                 "summary": "Download Report Card PDF",
                 "description": "Download the PDF version of the report card",
-                "operationId": "d584a7e1b1e8141824d3c7e34c06431c",
+                "operationId": "dfdc06972e7001ce156688f09ff14932",
                 "parameters": [
                     {
                         "name": "reportCard",
@@ -489,7 +597,7 @@
                 ],
                 "summary": "Import Students",
                 "description": "Import students from Excel/CSV file",
-                "operationId": "43bcdf4b95bc69ab79719e3ec771f735",
+                "operationId": "169dd6685c2de4252ea7f7a39d56c877",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -521,7 +629,7 @@
                 ],
                 "summary": "Download Import Template",
                 "description": "Download CSV template for student import",
-                "operationId": "fe71dfcf14ef029469cf6c9e722b8ff4",
+                "operationId": "13bc5c07e3010e549b65fcf7eea5c799",
                 "responses": {
                     "200": {
                         "description": "CSV Template",
@@ -544,7 +652,7 @@
                 ],
                 "summary": "List Students",
                 "description": "Get list of students with filtering",
-                "operationId": "02948ece3aa59b536707dec0ac3e463c",
+                "operationId": "40838abeace3f0f9df72fa2ea32f5700",
                 "parameters": [
                     {
                         "name": "search",
@@ -592,7 +700,7 @@
                 ],
                 "summary": "Create Student",
                 "description": "Create a new student",
-                "operationId": "b910f21102b367aee753cb57e2bfb176",
+                "operationId": "797125c7968abfde3c4a2c9dc23765d8",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -665,7 +773,7 @@
                 ],
                 "summary": "Show Student",
                 "description": "Get student details",
-                "operationId": "ef0c692e6761f8d674af87186612c048",
+                "operationId": "46b08ee4ad7650e8f8a0e48cc9941a7e",
                 "parameters": [
                     {
                         "name": "student",
@@ -688,7 +796,7 @@
                 ],
                 "summary": "Update Student",
                 "description": "Update student details",
-                "operationId": "ec38b927a080096d86e23afa563ead7c",
+                "operationId": "51d0d563f658c838e3d5041bf38110e8",
                 "parameters": [
                     {
                         "name": "student",
@@ -738,7 +846,7 @@
                 ],
                 "summary": "Delete Student",
                 "description": "Delete a student",
-                "operationId": "73788b0d07f6f81e664a0dcad4f18275",
+                "operationId": "3db00ee2d63c852c4629886bd335aeb9",
                 "parameters": [
                     {
                         "name": "student",
@@ -754,6 +862,15 @@
                         "description": "Redirect to index"
                     }
                 }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "Sanctum",
+                "scheme": "bearer"
             }
         }
     },

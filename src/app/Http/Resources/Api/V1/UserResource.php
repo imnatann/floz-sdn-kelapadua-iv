@@ -11,23 +11,23 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $data = [
-            'id'         => $this->id,
-            'name'       => $this->name,
-            'email'      => $this->email,
-            'role'       => $this->role->value,
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'role' => $this->role->value,
             'avatar_url' => $this->avatar_url ?? null,
-            'is_active'  => (bool) $this->is_active,
+            'is_active' => (bool) $this->is_active,
         ];
 
         if ($this->role === UserRole::Student && $this->student) {
             $student = $this->student;
             $data['student'] = [
-                'id'    => $student->id,
-                'nis'   => $student->nis,
-                'nisn'  => $student->nisn,
+                'id' => $student->id,
+                'nis' => $student->nis,
+                'nisn' => $student->nisn,
                 'class' => $student->class ? [
-                    'id'               => $student->class->id,
-                    'name'             => $student->class->name,
+                    'id' => $student->class->id,
+                    'name' => $student->class->name,
                     'homeroom_teacher' => optional($student->class->homeroomTeacher)->name,
                 ] : null,
             ];
@@ -35,8 +35,8 @@ class UserResource extends JsonResource
 
         if ($this->role === UserRole::Teacher && $this->teacher) {
             $data['teacher'] = [
-                'id'   => $this->teacher->id,
-                'nip'  => $this->teacher->nip ?? null,
+                'id' => $this->teacher->id,
+                'nip' => $this->teacher->nip ?? null,
                 'name' => $this->teacher->name,
             ];
         }

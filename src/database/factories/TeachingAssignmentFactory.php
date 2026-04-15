@@ -16,9 +16,9 @@ class TeachingAssignmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'teacher_id'       => Teacher::factory(),
-            'subject_id'       => Subject::factory(),
-            'class_id'         => SchoolClass::factory(),
+            'teacher_id' => Teacher::factory(),
+            'subject_id' => Subject::factory(),
+            'class_id' => SchoolClass::factory(),
             'academic_year_id' => AcademicYear::factory(),
         ];
     }
