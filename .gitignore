@@ -14,6 +14,18 @@ src/bootstrap/cache/
 # Mobile app build artifacts
 floz_mobile/.dart_tool/
 floz_mobile/build/
-
-# Exclude Mobile App Repository
-floz_mobile/
+floz_mobile/.flutter-plugins
+floz_mobile/.flutter-plugins-dependencies
+floz_mobile/.metadata
+floz_mobile/.idea/
+floz_mobile/ios/Pods/
+floz_mobile/ios/.symlinks/
+floz_mobile/ios/Flutter/Flutter.framework
+floz_mobile/ios/Flutter/Flutter.podspec
+floz_mobile/ios/Flutter/.last_build_id
+floz_mobile/android/.gradle/
+floz_mobile/android/captures/
+floz_mobile/android/local.properties
+floz_mobile/android/key.properties
+floz_mobile/android/.idea/
+floz_mobile/**/generated_plugin_registrant.dart
