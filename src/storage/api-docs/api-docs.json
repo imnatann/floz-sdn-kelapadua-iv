@@ -1,0 +1,786 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "FLOZ Platform API",
+        "description": "API documentation for FLOZ Platform and Tenant specific features",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Primary API Server"
+        }
+    ],
+    "paths": {
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Health Check",
+                "description": "Check if the API is running",
+                "operationId": "1cdb246a0cc7a61b4444b09dfd4954bb",
+                "responses": {
+                    "200": {
+                        "description": "API is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User Login",
+                "description": "Authenticate user and return redirect or token",
+                "operationId": "a0bad38435a32b5ad173da486ba8f59d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@floz.id"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret"
+                                    },
+                                    "remember": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login Successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User Logout",
+                "description": "Logout the authenticated user",
+                "operationId": "fe1c1eca634ba2811908fec5e5183950",
+                "responses": {
+                    "302": {
+                        "description": "Redirect to home"
+                    }
+                }
+            }
+        },
+        "/tenant/dashboard": {
+            "get": {
+                "tags": [
+                    "Tenant Dashboard"
+                ],
+                "summary": "Tenant Dashboard Stats",
+                "description": "Get statistics for the tenant dashboard",
+                "operationId": "d78b2a0b241ea04aa79ab7e1e3b5203d",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard stats",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "stats": {
+                                            "properties": {
+                                                "total_students": {
+                                                    "type": "integer"
+                                                },
+                                                "total_classes": {
+                                                    "type": "integer"
+                                                },
+                                                "total_grades": {
+                                                    "type": "integer"
+                                                },
+                                                "pending_reports": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "recentGrades": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tenant/grades": {
+            "get": {
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "List Grades",
+                "description": "Get list of grades with filtering",
+                "operationId": "038f0c57166ca8a5f1d689df03a31a04",
+                "parameters": [
+                    {
+                        "name": "class_id",
+                        "in": "query",
+                        "description": "Filter by class ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "semester_id",
+                        "in": "query",
+                        "description": "Filter by semester ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "subject_id",
+                        "in": "query",
+                        "description": "Filter by subject ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of grades"
+                    }
+                }
+            }
+        },
+        "/tenant/grades/batch": {
+            "get": {
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Batch Input View",
+                "description": "Get view for batch grade input",
+                "operationId": "7eb2dc875cba15929eac37b954a35299",
+                "parameters": [
+                    {
+                        "name": "class_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "semester_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "subject_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Batch input view"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Store Batch Grades",
+                "description": "Store multiple grades at once",
+                "operationId": "0443a33d2c21f496e078e2e21dead376",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "class_id",
+                                    "semester_id",
+                                    "subject_id",
+                                    "grades"
+                                ],
+                                "properties": {
+                                    "class_id": {
+                                        "type": "integer"
+                                    },
+                                    "semester_id": {
+                                        "type": "integer"
+                                    },
+                                    "subject_id": {
+                                        "type": "integer"
+                                    },
+                                    "grades": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "student_id": {
+                                                    "type": "integer"
+                                                },
+                                                "daily_test_avg": {
+                                                    "type": "number"
+                                                },
+                                                "mid_test": {
+                                                    "type": "number"
+                                                },
+                                                "final_test": {
+                                                    "type": "number"
+                                                },
+                                                "knowledge_score": {
+                                                    "type": "number"
+                                                },
+                                                "skill_score": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirect to index"
+                    }
+                }
+            }
+        },
+        "/tenant/report-cards": {
+            "get": {
+                "tags": [
+                    "Report Cards"
+                ],
+                "summary": "List Report Cards",
+                "description": "Get list of report cards with filtering",
+                "operationId": "ab82ad92c66b6703a3bfc53b303b3851",
+                "parameters": [
+                    {
+                        "name": "class_id",
+                        "in": "query",
+                        "description": "Filter by class ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "semester_id",
+                        "in": "query",
+                        "description": "Filter by semester ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of report cards"
+                    }
+                }
+            }
+        },
+        "/tenant/report-cards/generate": {
+            "post": {
+                "tags": [
+                    "Report Cards"
+                ],
+                "summary": "Generate Report Cards",
+                "description": "Generate report cards for a class and semester",
+                "operationId": "82df7d788c7b8544ae49df7ac0b81d41",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "class_id",
+                                    "semester_id"
+                                ],
+                                "properties": {
+                                    "class_id": {
+                                        "type": "integer"
+                                    },
+                                    "semester_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirect to index"
+                    }
+                }
+            }
+        },
+        "/tenant/report-cards/{reportCard}": {
+            "get": {
+                "tags": [
+                    "Report Cards"
+                ],
+                "summary": "Show Report Card",
+                "description": "Get detailed view of a report card",
+                "operationId": "acff4b70b5eaec6e8db0dfe790f102e0",
+                "parameters": [
+                    {
+                        "name": "reportCard",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report card details"
+                    }
+                }
+            }
+        },
+        "/tenant/report-cards/{reportCard}/publish": {
+            "post": {
+                "tags": [
+                    "Report Cards"
+                ],
+                "summary": "Publish Report Card",
+                "description": "Mark a report card as published",
+                "operationId": "8030d9b950a6b57b5ffbcdbd5c1f5e4e",
+                "parameters": [
+                    {
+                        "name": "reportCard",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect back"
+                    }
+                }
+            }
+        },
+        "/tenant/report-cards/{reportCard}/pdf": {
+            "get": {
+                "tags": [
+                    "Report Cards"
+                ],
+                "summary": "Download Report Card PDF",
+                "description": "Download the PDF version of the report card",
+                "operationId": "d584a7e1b1e8141824d3c7e34c06431c",
+                "parameters": [
+                    {
+                        "name": "reportCard",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PDF File",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tenant/students/import": {
+            "post": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Import Students",
+                "description": "Import students from Excel/CSV file",
+                "operationId": "43bcdf4b95bc69ab79719e3ec771f735",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "description": "Excel/CSV file",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirect back with success/error"
+                    }
+                }
+            }
+        },
+        "/tenant/students/template": {
+            "get": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Download Import Template",
+                "description": "Download CSV template for student import",
+                "operationId": "fe71dfcf14ef029469cf6c9e722b8ff4",
+                "responses": {
+                    "200": {
+                        "description": "CSV Template",
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tenant/students": {
+            "get": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "List Students",
+                "description": "Get list of students with filtering",
+                "operationId": "02948ece3aa59b536707dec0ac3e463c",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name or NIS",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "class_id",
+                        "in": "query",
+                        "description": "Filter by class ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "graduated",
+                                "transferred",
+                                "dropout"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of students"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Create Student",
+                "description": "Create a new student",
+                "operationId": "b910f21102b367aee753cb57e2bfb176",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nis",
+                                    "name"
+                                ],
+                                "properties": {
+                                    "nis": {
+                                        "type": "string"
+                                    },
+                                    "nisn": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female"
+                                        ]
+                                    },
+                                    "birth_place": {
+                                        "type": "string"
+                                    },
+                                    "birth_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "religion": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "parent_name": {
+                                        "type": "string"
+                                    },
+                                    "parent_phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "class_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirect to index"
+                    }
+                }
+            }
+        },
+        "/tenant/students/{student}": {
+            "get": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Show Student",
+                "description": "Get student details",
+                "operationId": "ef0c692e6761f8d674af87186612c048",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Student details"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Update Student",
+                "description": "Update student details",
+                "operationId": "ec38b927a080096d86e23afa563ead7c",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nis": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "graduated",
+                                            "transferred",
+                                            "dropout"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Redirect to show"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Delete Student",
+                "description": "Delete a student",
+                "operationId": "73788b0d07f6f81e664a0dcad4f18275",
+                "parameters": [
+                    {
+                        "name": "student",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to index"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "System",
+            "description": "System"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Tenant Dashboard",
+            "description": "Tenant Dashboard"
+        },
+        {
+            "name": "Grades",
+            "description": "Grades"
+        },
+        {
+            "name": "Report Cards",
+            "description": "Report Cards"
+        },
+        {
+            "name": "Students",
+            "description": "Students"
+        }
+    ]
+}

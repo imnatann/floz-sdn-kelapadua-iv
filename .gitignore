@@ -1,0 +1,19 @@
+# FLOZ LMS
+node_modules/
+vendor/
+.env
+*.log
+.DS_Store
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Laravel framework and cache
+src/storage/framework/
+src/bootstrap/cache/
+
+# Mobile app build artifacts
+floz_mobile/.dart_tool/
+floz_mobile/build/
+
+# Exclude Mobile App Repository
+floz_mobile/

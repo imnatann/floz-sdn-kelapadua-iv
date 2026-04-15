@@ -1,0 +1,66 @@
+@layer components {
+    :root {
+        --di-large: 24;
+        --gap: 24;
+        --sq-mul: 1px;
+        --ds-surface-antigrid: #09090b;
+        /* zinc-950 */
+        --ds-surface-elevation-lg: #18181b;
+        /* zinc-900 */
+        --ds-border-antigrid: #27272a;
+        /* zinc-800 */
+        --ds-border-elevation: #3f3f46;
+        /* zinc-700 */
+    }
+
+    .box {
+        @apply relative flex flex-col bg-[var(--ds-surface-antigrid)] border-2 border-[var(--ds-border-antigrid)] overflow-hidden;
+    }
+
+    .box--content {
+        @apply flex-1 w-full h-full relative z-10;
+    }
+
+    .anti-grid-curve {
+        @apply absolute w-[calc(var(--di-large)*var(--sq-mul)+2px)] h-[calc(var(--di-large)*var(--sq-mul)+2px)] z-20;
+    }
+
+    .anti-grid-curve-top-left {
+        @apply -top-[2px] -left-[2px];
+        clip-path: polygon(0 100%, 100% 0, 0 0);
+    }
+
+    .anti-grid-curve-top-right {
+        @apply -top-[2px] -right-[2px];
+        clip-path: polygon(0 0, 100% 100%, 100% 0);
+    }
+
+    .anti-grid-curve-bottom-left {
+        @apply -bottom-[2px] -left-[2px];
+        clip-path: polygon(0 100%, 100% 100%, 0 0);
+    }
+
+    .anti-grid-curve-bottom-right {
+        @apply -bottom-[2px] -right-[2px];
+        clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    }
+
+    /* The square fills the corner gap */
+    .anti-grid-square {
+        @apply relative z-0 bg-[var(--ds-surface-antigrid)] w-full h-full;
+    }
+
+    /* The circle cuts out the border radius */
+    .anti-grid-circle {
+        --diameter: calc(sqrt(pow(var(--di-large), 2) + pow(var(--di-large), 2)) * 1px + 2px);
+        --radius: calc(var(--diameter) / 2);
+        @apply absolute inset-0 z-10 rounded-full bg-slate-900 border-2 border-[var(--ds-border-antigrid)];
+        width: calc(var(--radius) * 3);
+        height: calc(var(--radius) * 3);
+    }
+
+    /* Connector Lines */
+    .connector-v-top {
+        @apply absolute left-[-2px] -top-[calc(var(--gap)*1px+4px)] w-[calc(100%+4px)] h-[calc(var(--gap)*1px+6px)] bg-[var(--ds-surface-antigrid)] border-[var(--ds-border-antigrid)];
+    }
+}

@@ -1,0 +1,161 @@
+<mxfile host="app.diagrams.net" modified="2026-03-27T00:00:00.000Z" agent="OpenAI" version="24.7.17" type="device">
+  <diagram id="floz-class-diagram" name="FLOZ Class Diagram">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;hr/&gt;Edge label format: &lt;b&gt;relation [source : target]&lt;/b&gt;&lt;br/&gt;Example: semesters [1 : 0..*] means one AcademicYear has many Semester.&lt;br/&gt;Diagram source: Laravel models in src/app/Models." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="360" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="academic_year" value="&lt;b&gt;AcademicYear&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ name&lt;br/&gt;+ start_date&lt;br/&gt;+ end_date&lt;br/&gt;+ is_active" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="420" y="20" width="190" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="semester" value="&lt;b&gt;Semester&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ academic_year_id&lt;br/&gt;+ semester_number&lt;br/&gt;+ start_date&lt;br/&gt;+ end_date&lt;br/&gt;+ is_active" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="650" y="20" width="210" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="school_class" value="&lt;b&gt;SchoolClass&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ name&lt;br/&gt;+ grade_level&lt;br/&gt;+ academic_year_id&lt;br/&gt;+ homeroom_teacher_id&lt;br/&gt;+ max_students&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="900" y="20" width="220" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="user" value="&lt;b&gt;User&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ name&lt;br/&gt;+ email&lt;br/&gt;+ password&lt;br/&gt;+ role&lt;br/&gt;+ avatar_url&lt;br/&gt;+ is_active" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="210" width="200" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="teacher" value="&lt;b&gt;Teacher&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ nip&lt;br/&gt;+ nuptk&lt;br/&gt;+ name&lt;br/&gt;+ email&lt;br/&gt;+ phone&lt;br/&gt;+ is_homeroom&lt;br/&gt;+ user_id&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="260" y="210" width="210" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="student" value="&lt;b&gt;Student&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ nis&lt;br/&gt;+ nisn&lt;br/&gt;+ nik&lt;br/&gt;+ family_card_number&lt;br/&gt;+ name&lt;br/&gt;+ email&lt;br/&gt;+ class_id&lt;br/&gt;+ parent_name&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="510" y="210" width="230" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="subject" value="&lt;b&gt;Subject&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ code&lt;br/&gt;+ name&lt;br/&gt;+ education_level&lt;br/&gt;+ grade_level&lt;br/&gt;+ kkm&lt;br/&gt;+ category&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="780" y="220" width="210" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="announcement" value="&lt;b&gt;Announcement&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ title&lt;br/&gt;+ content&lt;br/&gt;+ excerpt&lt;br/&gt;+ target_audience&lt;br/&gt;+ is_pinned&lt;br/&gt;+ is_published&lt;br/&gt;+ user_id" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="430" width="220" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="student_mutation" value="&lt;b&gt;StudentMutation&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ student_id&lt;br/&gt;+ type&lt;br/&gt;+ from_class_id&lt;br/&gt;+ to_class_id&lt;br/&gt;+ date&lt;br/&gt;+ reason&lt;br/&gt;+ reference_number" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="770" y="430" width="230" height="180" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="teaching_assignment" value="&lt;b&gt;TeachingAssignment&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ teacher_id&lt;br/&gt;+ subject_id&lt;br/&gt;+ class_id&lt;br/&gt;+ academic_year_id" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="230" width="220" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="schedule" value="&lt;b&gt;Schedule&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ teaching_assignment_id&lt;br/&gt;+ day_of_week&lt;br/&gt;+ start_time&lt;br/&gt;+ end_time" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="230" width="210" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="meeting" value="&lt;b&gt;Meeting&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ teaching_assignment_id&lt;br/&gt;+ meeting_number&lt;br/&gt;+ title&lt;br/&gt;+ description&lt;br/&gt;+ is_locked" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1550" y="210" width="210" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="meeting_material" value="&lt;b&gt;MeetingMaterial&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ meeting_id&lt;br/&gt;+ title&lt;br/&gt;+ type&lt;br/&gt;+ content&lt;br/&gt;+ file_path&lt;br/&gt;+ url&lt;br/&gt;+ sort_order" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1800" y="190" width="220" height="180" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="offline_assignment" value="&lt;b&gt;OfflineAssignment&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ teacher_id&lt;br/&gt;+ subject_id&lt;br/&gt;+ meeting_id&lt;br/&gt;+ title&lt;br/&gt;+ due_date&lt;br/&gt;+ status&lt;br/&gt;+ type&lt;br/&gt;+ created_by" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1540" y="430" width="230" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="offline_assignment_file" value="&lt;b&gt;OfflineAssignmentFile&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ offline_assignment_id&lt;br/&gt;+ file_path&lt;br/&gt;+ file_name&lt;br/&gt;+ file_type&lt;br/&gt;+ file_size" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1810" y="430" width="230" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="offline_assignment_question" value="&lt;b&gt;OfflineAssignmentQuestion&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ offline_assignment_id&lt;br/&gt;+ question_text&lt;br/&gt;+ question_type&lt;br/&gt;+ options&lt;br/&gt;+ correct_answer&lt;br/&gt;+ points&lt;br/&gt;+ sort_order" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1810" y="610" width="250" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="offline_assignment_submission" value="&lt;b&gt;OfflineAssignmentSubmission&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ offline_assignment_id&lt;br/&gt;+ student_id&lt;br/&gt;+ submitted_at&lt;br/&gt;+ grade&lt;br/&gt;+ correction_note&lt;br/&gt;+ correction_file&lt;br/&gt;+ answer_text&lt;br/&gt;+ answer_link" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1540" y="680" width="250" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="offline_submission_file" value="&lt;b&gt;OfflineSubmissionFile&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ submission_id&lt;br/&gt;+ file_path&lt;br/&gt;+ file_name&lt;br/&gt;+ file_type&lt;br/&gt;+ file_size" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1820" y="820" width="230" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="offline_assignment_answer" value="&lt;b&gt;OfflineAssignmentAnswer&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ submission_id&lt;br/&gt;+ question_id&lt;br/&gt;+ answer&lt;br/&gt;+ is_correct&lt;br/&gt;+ points_earned" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="2110" y="700" width="230" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="grade" value="&lt;b&gt;Grade&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ student_id&lt;br/&gt;+ subject_id&lt;br/&gt;+ class_id&lt;br/&gt;+ semester_id&lt;br/&gt;+ teacher_id&lt;br/&gt;+ final_score&lt;br/&gt;+ predicate" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="260" y="690" width="210" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="attendance" value="&lt;b&gt;Attendance&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ student_id&lt;br/&gt;+ class_id&lt;br/&gt;+ subject_id&lt;br/&gt;+ semester_id&lt;br/&gt;+ recorded_by&lt;br/&gt;+ date&lt;br/&gt;+ meeting_number&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="510" y="680" width="220" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="report_card" value="&lt;b&gt;ReportCard&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ student_id&lt;br/&gt;+ class_id&lt;br/&gt;+ semester_id&lt;br/&gt;+ rank&lt;br/&gt;+ report_type&lt;br/&gt;+ total_score&lt;br/&gt;+ average_score&lt;br/&gt;+ status&lt;br/&gt;+ published_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="770" y="680" width="230" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="task" value="&lt;b&gt;Task&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ class_id&lt;br/&gt;+ subject_id&lt;br/&gt;+ semester_id&lt;br/&gt;+ teacher_id&lt;br/&gt;+ title&lt;br/&gt;+ task_date&lt;br/&gt;+ due_date&lt;br/&gt;+ max_score&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="690" width="220" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="task_score" value="&lt;b&gt;TaskScore&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ task_id&lt;br/&gt;+ student_id&lt;br/&gt;+ score&lt;br/&gt;+ notes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="730" width="190" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="exam" value="&lt;b&gt;Exam&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ class_id&lt;br/&gt;+ subject_id&lt;br/&gt;+ semester_id&lt;br/&gt;+ teacher_id&lt;br/&gt;+ title&lt;br/&gt;+ exam_type&lt;br/&gt;+ exam_date&lt;br/&gt;+ max_score&lt;br/&gt;+ status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="930" width="220" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="exam_score" value="&lt;b&gt;ExamScore&lt;/b&gt;&lt;hr/&gt;+ id&lt;br/&gt;+ exam_id&lt;br/&gt;+ student_id&lt;br/&gt;+ score&lt;br/&gt;+ notes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="970" width="190" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" value="semesters [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;strokeColor=#6c8ebf;" edge="1" parent="1" source="academic_year" target="semester"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="classes [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#6c8ebf;" edge="1" parent="1" source="academic_year" target="school_class"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e3" value="teacherProfile [1 : 0..1]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#82b366;" edge="1" parent="1" source="user" target="teacher"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="studentProfile [1 : 0..1]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#82b366;" edge="1" parent="1" source="user" target="student"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="announcements [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#82b366;" edge="1" parent="1" source="user" target="announcement"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e6" value="homeroomClasses [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#82b366;" edge="1" parent="1" source="teacher" target="school_class"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" value="students [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#82b366;" edge="1" parent="1" source="school_class" target="student"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e8" value="teacherAssignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="teacher" target="teaching_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" value="subjectAssignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="subject" target="teaching_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" value="classAssignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="school_class" target="teaching_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e11" value="yearAssignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="academic_year" target="teaching_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e12" value="schedules [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="teaching_assignment" target="schedule"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e13" value="meetings [1 : 16]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="teaching_assignment" target="meeting"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e14" value="materials [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;" edge="1" parent="1" source="meeting" target="meeting_material"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e15" value="assignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="meeting" target="offline_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e16" value="authoredAssignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="teacher" target="offline_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e17" value="subjectAssignments [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="subject" target="offline_assignment"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e18" value="targetClasses [0..* : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment" target="school_class"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e19" value="files [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment" target="offline_assignment_file"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e20" value="questions [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment" target="offline_assignment_question"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e21" value="submissions [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment" target="offline_assignment_submission"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e22" value="studentSubmissions [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="student" target="offline_assignment_submission"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e23" value="submissionFiles [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment_submission" target="offline_submission_file"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e24" value="answers [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment_submission" target="offline_assignment_answer"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e25" value="questionAnswers [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#666666;" edge="1" parent="1" source="offline_assignment_question" target="offline_assignment_answer"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e26" value="grades [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="student" target="grade"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e27" value="grades [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="subject" target="grade"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e28" value="grades [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="school_class" target="grade"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e29" value="grades [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="semester" target="grade"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e30" value="gradedBy [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="teacher" target="grade"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e31" value="attendanceRecords [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="student" target="attendance"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e32" value="attendanceRecords [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="school_class" target="attendance"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e33" value="attendanceRecords [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="subject" target="attendance"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e34" value="attendanceRecords [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="semester" target="attendance"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e35" value="recordedBy [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="teacher" target="attendance"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e36" value="reportCards [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="student" target="report_card"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e37" value="reportCards [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="school_class" target="report_card"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e38" value="reportCards [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="semester" target="report_card"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e39" value="tasks [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="school_class" target="task"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e40" value="tasks [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="subject" target="task"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e41" value="tasks [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="semester" target="task"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e42" value="tasks [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="teacher" target="task"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e43" value="scores [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="task" target="task_score"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e44" value="taskScores [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="student" target="task_score"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e45" value="exams [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="school_class" target="exam"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e46" value="exams [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="subject" target="exam"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e47" value="exams [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="semester" target="exam"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e48" value="exams [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="teacher" target="exam"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e49" value="scores [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="exam" target="exam_score"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e50" value="examScores [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#d6b656;" edge="1" parent="1" source="student" target="exam_score"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e51" value="mutations [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#b85450;" edge="1" parent="1" source="student" target="student_mutation"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e52" value="fromClass [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;strokeColor=#b85450;" edge="1" parent="1" source="school_class" target="student_mutation"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e53" value="toClass [1 : 0..*]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=none;startArrow=none;strokeColor=#b85450;" edge="1" parent="1" source="school_class" target="student_mutation"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="520"/><mxPoint x="1120" y="520"/></Array></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,166 @@
+@import "tailwindcss";
+@import "./mastra.css";
+/* ===== Google Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@plugin "daisyui" {
+    themes: light --default;
+}
+
+/* ===== DaisyUI Theme Override ===== */
+:root {
+    /* Orange-based FLOZ palette */
+    --color-primary: oklch(63.7% 0.237 25.33);
+    /* #EA580C  */
+    --color-primary-content: oklch(98% 0 0);
+    --color-secondary: oklch(55% 0.15 250);
+    /* Deep blue */
+    --color-secondary-content: oklch(98% 0 0);
+    --color-accent: oklch(75% 0.18 60);
+    /* Warm amber */
+    --color-accent-content: oklch(20% 0 0);
+    --color-neutral: oklch(27% 0.02 260);
+    --color-neutral-content: oklch(98% 0 0);
+    --color-base-100: oklch(100% 0 0);
+    /* White */
+    --color-base-200: oklch(97.5% 0.005 250);
+    /* #F8FAFC */
+    --color-base-300: oklch(92% 0.01 250);
+    /* #E2E8F0 */
+    --color-base-content: oklch(20% 0.02 260);
+    --color-info: oklch(62% 0.17 250);
+    --color-success: oklch(62% 0.19 155);
+    --color-warning: oklch(75% 0.18 80);
+    --color-error: oklch(58% 0.22 27);
+
+    /* FLOZ custom tokens */
+    --floz-orange: #EA580C;
+    --floz-orange-light: #FFF7ED;
+    --floz-orange-50: #FFF7ED;
+    --floz-orange-100: #FFEDD5;
+    --floz-orange-200: #FED7AA;
+    --floz-orange-500: #F97316;
+    --floz-orange-600: #EA580C;
+    --floz-orange-700: #C2410C;
+    --floz-slate-50: #F8FAFC;
+    --floz-slate-100: #F1F5F9;
+    --floz-slate-200: #E2E8F0;
+    --floz-slate-300: #CBD5E1;
+    --floz-slate-400: #94A3B8;
+    --floz-slate-500: #64748B;
+    --floz-slate-600: #475569;
+    --floz-slate-700: #334155;
+    --floz-slate-800: #1E293B;
+    --floz-slate-900: #0F172A;
+
+    /* Radius */
+    --radius-card: 12px;
+    --radius-btn: 8px;
+    --radius-input: 8px;
+    --radius-badge: 6px;
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --shadow-card-hover: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.04);
+    --shadow-dropdown: 0 10px 30px -5px rgb(0 0 0 / 0.1), 0 4px 10px -4px rgb(0 0 0 / 0.05);
+
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* ===== Base Styles ===== */
+body {
+    font-family: var(--font-sans);
+    background-color: var(--floz-slate-50);
+    color: var(--floz-slate-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--floz-slate-300);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--floz-slate-400);
+}
+
+/* ===== Vue Transitions ===== */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 200ms ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+    transition: transform 250ms ease, opacity 250ms ease;
+}
+
+.slide-up-enter-from {
+    transform: translateY(8px);
+    opacity: 0;
+}
+
+.slide-up-leave-to {
+    transform: translateY(-8px);
+    opacity: 0;
+}
+
+/* ===== Custom Utilities ===== */
+.floz-card {
+    background: white;
+    border: 1px solid var(--floz-slate-200);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.floz-card:hover {
+    box-shadow: var(--shadow-card-hover);
+}
+
+.floz-card-body {
+    padding: 1.25rem;
+}
+
+.floz-gradient-text {
+    background: linear-gradient(135deg, var(--floz-orange-600), var(--floz-orange-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Sidebar active indicator */
+.sidebar-item-active {
+    background: var(--floz-orange-50);
+    color: var(--floz-orange-600);
+    font-weight: 600;
+    position: relative;
+}
+
+.sidebar-item-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--floz-orange-600);
+}
