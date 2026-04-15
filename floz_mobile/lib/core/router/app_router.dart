@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/auth/providers/auth_provider.dart';
-import '../../features/auth/presentation/splash_screen.dart';
-import '../../features/auth/presentation/tenant_search_screen.dart';
+import '../../core/auth/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/student/dashboard/presentation/student_dashboard_screen.dart';
 import '../../features/student/dashboard/presentation/teacher_dashboard_screen.dart';
@@ -21,58 +19,33 @@ import '../../features/student/announcements/presentation/announcement_detail_sc
 import '../../shared/widgets/floz_bottom_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // Watch user ID. When it changes, this creates a BRAND NEW GoRouter instance,
-  // completely wiping any StatefulShellRoute navigation history.
-  // ignore: unused_local_variable
-  final userId = ref.watch(authProvider.select((s) => s.user?.id));
-
   final listenable = ValueNotifier<bool>(false);
 
-  ref.listen<AuthState>(authProvider, (previous, next) {
-    if (previous?.isAuthenticated != next.isAuthenticated ||
-        previous?.tenant != next.tenant ||
-        previous?.isLoading != next.isLoading) {
+  ref.listen<AuthSession>(authSessionProvider, (previous, next) {
+    if (previous?.isAuthenticated != next.isAuthenticated) {
       listenable.value = !listenable.value;
     }
   });
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     refreshListenable: listenable,
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      final authState = ref.read(authProvider);
-
+      final session = ref.read(authSessionProvider);
       final isLoggingIn = state.uri.toString() == '/login';
-      final isSearchingTenant = state.uri.toString() == '/tenant-search';
-      final isSplash = state.uri.toString() == '/';
 
-      // If loading, show splash
-      if (authState.isLoading && isSplash) return null;
-
-      // If no tenant selected, go to tenant search
-      if (authState.tenant == null) {
-        return isSearchingTenant ? null : '/tenant-search';
-      }
-
-      // If tenant selected but not authenticated
-      if (!authState.isAuthenticated) {
+      if (!session.isAuthenticated) {
         return isLoggingIn ? null : '/login';
       }
 
-      // If authenticated, go to dashboard (if currently on login/search/splash)
-      if (isLoggingIn || isSearchingTenant || isSplash) {
+      if (isLoggingIn) {
         return '/dashboard';
       }
 
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(
-        path: '/tenant-search',
-        builder: (context, state) => const TenantSearchScreen(),
-      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -85,14 +58,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/dashboard',
                 builder: (context, state) {
-                  final user = ref.read(authProvider).user;
+                  final session = ref.read(authSessionProvider);
+                  final user = session.user;
                   if (user?.isStudent ?? false) {
                     return const StudentDashboardScreen();
                   }
                   if (user?.isTeacher ?? false) {
                     return const TeacherDashboardScreen();
                   }
-                  if (user?.isParent ?? false) {
+                  if (user?.isSchoolAdmin ?? false) {
                     return const ParentDashboardScreen();
                   }
                   return const Scaffold(
