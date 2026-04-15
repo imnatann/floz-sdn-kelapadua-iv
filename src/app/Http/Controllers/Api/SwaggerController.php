@@ -15,6 +15,12 @@ use Illuminate\Http\Request;
     url: "http://localhost:8000/api",
     description: "Primary API Server"
 )]
+#[OA\SecurityScheme(
+    securityScheme: "bearerAuth",
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "Sanctum"
+)]
 class SwaggerController extends Controller
 {
     #[OA\Get(
