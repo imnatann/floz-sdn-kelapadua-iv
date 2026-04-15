@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\MobileAuthController;
-use App\Http\Controllers\Api\MobileDashboardController;
+use App\Http\Controllers\Api\V1\MobileDashboardController;
 use App\Http\Controllers\Api\MobileScheduleController;
 use App\Http\Controllers\Api\MobileGradeController;
 use App\Http\Controllers\Api\MobileAnnouncementController;
@@ -35,7 +35,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/auth/me', [MobileAuthController::class, 'me']);
 
         // Dashboard
-        Route::get('/dashboard', [MobileDashboardController::class, 'index']);
+        Route::middleware('role:student')->group(function () {
+            Route::get('/student/dashboard', [MobileDashboardController::class, 'index']);
+        });
 
         // Schedules
         Route::get('/schedules', [MobileScheduleController::class, 'index']);
