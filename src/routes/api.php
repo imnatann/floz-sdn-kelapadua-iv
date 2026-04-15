@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\V1\MobileAuthController;
 use App\Http\Controllers\Api\MobileDashboardController;
 use App\Http\Controllers\Api\MobileScheduleController;
 use App\Http\Controllers\Api\MobileGradeController;
