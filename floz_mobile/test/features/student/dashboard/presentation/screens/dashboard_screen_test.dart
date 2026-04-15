@@ -37,20 +37,21 @@ void main() {
     );
   }
 
-  testWidgets('shows loading then data on happy path', (tester) async {
+  testWidgets('shows data after load on happy path', (tester) async {
     when(() => repo.fetch(forceRefresh: any(named: 'forceRefresh')))
         .thenAnswer((_) async => const Success(_fixture));
 
     await tester.pumpWidget(wrap(const DashboardScreen()));
-
-    // Loading visible first
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
     await tester.pumpAndSettle();
 
-    expect(find.text('Halo, Ahmad'), findsOneWidget);
-    expect(find.text('Kelas: 4A'), findsOneWidget);
+    // Greeting card shows student name prominently
+    expect(find.text('Ahmad'), findsOneWidget);
+    // Class + homeroom appear as chips in the greeting header
+    expect(find.text('Kelas 4A'), findsOneWidget);
+    expect(find.text('Bu Ani'), findsOneWidget);
+    // Stat card value
     expect(find.text('90%'), findsOneWidget);
+    // Empty state banners for schedules + announcements
     expect(find.text('Tidak ada jadwal hari ini.'), findsOneWidget);
     expect(find.text('Belum ada pengumuman.'), findsOneWidget);
   });

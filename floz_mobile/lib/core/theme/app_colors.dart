@@ -72,7 +72,7 @@ class AppColors {
   static final LinearGradient pageGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [slate50, Colors.white, primary50.withOpacity(0.3)],
+    colors: [slate50, Colors.white, primary50.withValues(alpha: 0.3)],
   );
 
   static final LinearGradient heroGradient = LinearGradient(
