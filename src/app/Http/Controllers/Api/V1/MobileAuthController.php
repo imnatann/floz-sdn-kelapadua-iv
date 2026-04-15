@@ -3,113 +3,50 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Auth\LoginRequest;
+use App\Http\Resources\Api\V1\UserResource;
+use App\Services\Mobile\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class MobileAuthController extends Controller
 {
+    public function __construct(private readonly AuthService $service) {}
+
     /**
      * POST /api/v1/auth/login
-     * Login and issue a Sanctum token.
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Email atau password salah.',
-            ], 401);
-        }
-
-        if (!$user->is_active) {
-            return response()->json([
-                'message' => 'Akun Anda tidak aktif. Hubungi administrator.',
-            ], 403);
-        }
-
-        // Revoke old tokens (single-device policy for mobile)
-        $user->tokens()->where('name', 'mobile')->delete();
-
-        $token = $user->createToken('mobile')->plainTextToken;
+        $result = $this->service->login(
+            $request->validated('email'),
+            $request->validated('password'),
+        );
 
         return response()->json([
-            'token' => $token,
-            'user'  => $this->formatUser($user),
+            'data' => [
+                'token' => $result['token'],
+                'user'  => (new UserResource($result['user']))->resolve(),
+            ],
         ]);
     }
 
     /**
      * POST /api/v1/auth/logout
-     * Revoke the current token.
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->service->logout($request->user());
 
-        return response()->json([
-            'message' => 'Berhasil logout.',
-        ]);
+        return response()->noContent();
     }
 
     /**
      * GET /api/v1/auth/me
-     * Return the authenticated user's profile.
      */
     public function me(Request $request)
     {
-        $user = $request->user();
-
         return response()->json([
-            'user' => $this->formatUser($user),
+            'data' => (new UserResource($request->user()))->resolve(),
         ]);
-    }
-
-    /**
-     * Format user data for API response.
-     */
-    private function formatUser(User $user): array
-    {
-        $data = [
-            'id'         => $user->id,
-            'name'       => $user->name,
-            'email'      => $user->email,
-            'role'       => $user->role->value,
-            'avatar_url' => $user->avatar_url,
-            'is_active'  => $user->is_active,
-        ];
-
-        // Attach role-specific data
-        if ($user->isStudent()) {
-            $student = $user->student()->with(['class.homeroomTeacher'])->first();
-            $data['student'] = $student ? [
-                'id'       => $student->id,
-                'nis'      => $student->nis,
-                'nisn'     => $student->nisn,
-                'class'    => $student->class ? [
-                    'id'   => $student->class->id,
-                    'name' => $student->class->name,
-                    'homeroom_teacher' => $student->class->homeroomTeacher?->name,
-                ] : null,
-            ] : null;
-        }
-
-        if ($user->isTeacher()) {
-            $teacher = $user->teacher;
-            $data['teacher'] = $teacher ? [
-                'id'   => $teacher->id,
-                'nip'  => $teacher->nip ?? null,
-                'name' => $teacher->name,
-            ] : null;
-        }
-
-        return $data;
     }
 }
