@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/student/shared/widgets/student_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final session = ref.watch(authSessionProvider);
@@ -27,7 +28,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/student',
-        builder: (context, _) => const _StudentPlaceholderScreen(),
+        builder: (context, _) => const StudentShell(),
       ),
       GoRoute(
         path: '/teacher',
@@ -43,16 +44,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 class _AuthSessionChangeNotifier extends ChangeNotifier {
   _AuthSessionChangeNotifier(Ref ref) {
     ref.listen(authSessionProvider, (prev, next) => notifyListeners());
-  }
-}
-
-class _StudentPlaceholderScreen extends StatelessWidget {
-  const _StudentPlaceholderScreen();
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Student shell — P2 implements features')),
-    );
   }
 }
 
