@@ -8,13 +8,12 @@ class FlozApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-
+    final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'FLOZ LMS',
-      theme: AppTheme.lightTheme,
-      routerConfig: router,
+      title: 'FLOZ Mobile',
       debugShowCheckedModeBanner: false,
+      routerConfig: router,
+      theme: AppTheme.lightTheme,
     );
   }
 }
