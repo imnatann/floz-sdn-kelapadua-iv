@@ -1,7 +1,6 @@
 import 'auth_session.dart';
 
 class RoleGuard {
-  /// Returns the redirect path if access is denied, else null.
   static String? guard({
     required AuthSession session,
     required String currentPath,
@@ -10,7 +9,7 @@ class RoleGuard {
     if (!session.isAuthenticated) {
       return '/login';
     }
-    final role = (session.user as dynamic)?.role as String?;
+    final role = session.user?.role;
     if (role == null || !allowedRoles.contains(role)) {
       return '/login';
     }

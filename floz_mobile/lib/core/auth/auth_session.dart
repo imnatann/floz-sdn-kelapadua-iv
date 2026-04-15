@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/auth/domain/entities/user.dart';
 
 class AuthSession {
-  final dynamic user; // tightened to User? in Task 32 after entity exists
+  final User? user;
   final String? token;
   const AuthSession({this.user, this.token});
 
   bool get isAuthenticated => token != null && user != null;
+  String? get role => user?.role;
 
-  AuthSession copyWith({dynamic user, String? token}) =>
+  AuthSession copyWith({User? user, String? token}) =>
       AuthSession(user: user ?? this.user, token: token ?? this.token);
 
   static const empty = AuthSession();
@@ -17,7 +19,7 @@ class AuthSessionNotifier extends Notifier<AuthSession> {
   @override
   AuthSession build() => AuthSession.empty;
 
-  void setSession(dynamic user, String token) {
+  void setSession(User user, String token) {
     state = AuthSession(user: user, token: token);
   }
 
