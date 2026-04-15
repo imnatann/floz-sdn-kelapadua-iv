@@ -23,10 +23,12 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // ─── Auth (no token yet) ───────────────────────────────────────
-    Route::post('/auth/login', [MobileAuthController::class, 'login']);
+    Route::middleware('throttle:login')->group(function () {
+        Route::post('/auth/login', [MobileAuthController::class, 'login']);
+    });
 
     // ─── Protected (auth required) ─────────────────────────────────
-    Route::middleware(['auth:sanctum'])->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:mobile-api'])->group(function () {
 
         // Auth
         Route::post('/auth/logout', [MobileAuthController::class, 'logout']);
