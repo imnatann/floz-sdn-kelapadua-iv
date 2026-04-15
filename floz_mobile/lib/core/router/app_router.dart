@@ -1,170 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/auth/auth_session.dart';
+import 'package:go_router/go_router.dart';
+import '../auth/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
-import '../../features/student/dashboard/presentation/student_dashboard_screen.dart';
-import '../../features/student/dashboard/presentation/teacher_dashboard_screen.dart';
-import '../../features/student/dashboard/presentation/parent_dashboard_screen.dart';
-import '../../features/student/schedule/presentation/schedule_screen.dart';
-import '../../features/student/assignments/presentation/assignments_screen.dart';
-import '../../features/student/assignments/presentation/assignment_detail_screen.dart';
-import '../../features/student/grades/presentation/grades_list_screen.dart';
-import '../../features/student/grades/presentation/grade_detail_screen.dart';
-import '../../features/profile/presentation/profile_screen.dart';
-import '../../features/student/report_cards/presentation/report_cards_list_screen.dart';
-import '../../features/student/report_cards/presentation/report_card_detail_screen.dart';
-import '../../features/student/announcements/presentation/announcements_list_screen.dart';
-import '../../features/student/announcements/presentation/announcement_detail_screen.dart';
-import '../../shared/widgets/floz_bottom_nav.dart';
 
-final routerProvider = Provider<GoRouter>((ref) {
-  final listenable = ValueNotifier<bool>(false);
-
-  ref.listen<AuthSession>(authSessionProvider, (previous, next) {
-    if (previous?.isAuthenticated != next.isAuthenticated) {
-      listenable.value = !listenable.value;
-    }
-  });
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final session = ref.watch(authSessionProvider);
 
   return GoRouter(
     initialLocation: '/login',
-    refreshListenable: listenable,
-    debugLogDiagnostics: true,
+    refreshListenable: _AuthSessionChangeNotifier(ref),
     redirect: (context, state) {
-      final session = ref.read(authSessionProvider);
-      final isLoggingIn = state.uri.toString() == '/login';
+      final loggedIn = session.isAuthenticated;
+      final goingToLogin = state.matchedLocation == '/login';
 
-      if (!session.isAuthenticated) {
-        return isLoggingIn ? null : '/login';
+      if (!loggedIn && !goingToLogin) return '/login';
+      if (loggedIn && goingToLogin) {
+        return session.role == 'teacher' ? '/teacher' : '/student';
       }
-
-      if (isLoggingIn) {
-        return '/dashboard';
-      }
-
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) {
-          return FlozBottomNav(navigationShell: navigationShell);
-        },
-        branches: [
-          // Branch 1: Home (Dashboard)
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/dashboard',
-                builder: (context, state) {
-                  final session = ref.read(authSessionProvider);
-                  final user = session.user;
-                  if (user?.isStudent ?? false) {
-                    return const StudentDashboardScreen();
-                  }
-                  if (user?.isTeacher ?? false) {
-                    return const TeacherDashboardScreen();
-                  }
-                  if (user?.isSchoolAdmin ?? false) {
-                    return const ParentDashboardScreen();
-                  }
-                  return const Scaffold(
-                    body: Center(child: Text('Unknown Role')),
-                  );
-                },
-                routes: [
-                  GoRoute(
-                    path: 'announcements',
-                    builder: (context, state) =>
-                        const AnnouncementsListScreen(),
-                    routes: [
-                      GoRoute(
-                        path: ':id',
-                        builder: (context, state) {
-                          final id = int.parse(state.pathParameters['id']!);
-                          return AnnouncementDetailScreen(id: id);
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Branch 2: Schedule
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/schedule',
-                builder: (context, state) => const ScheduleScreen(),
-              ),
-            ],
-          ),
-          // Branch 3: Assignments
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/assignments',
-                builder: (context, state) => const AssignmentsScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    builder: (context, state) {
-                      final id = int.parse(state.pathParameters['id']!);
-                      return AssignmentDetailScreen(id: id);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Branch 4: Grades
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/grades',
-                builder: (context, state) => const GradesListScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':subjectId',
-                    builder: (context, state) {
-                      final subjectId = int.parse(
-                        state.pathParameters['subjectId']!,
-                      );
-                      return GradeDetailScreen(subjectId: subjectId);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Branch 5: Profile
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/profile',
-                builder: (context, state) => const ProfileScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'report-cards',
-                    builder: (context, state) => const ReportCardsListScreen(),
-                    routes: [
-                      GoRoute(
-                        path: ':id',
-                        builder: (context, state) {
-                          final id = int.parse(state.pathParameters['id']!);
-                          return ReportCardDetailScreen(id: id);
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+      GoRoute(
+        path: '/login',
+        builder: (context, _) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/student',
+        builder: (context, _) => const _StudentPlaceholderScreen(),
+      ),
+      GoRoute(
+        path: '/teacher',
+        builder: (context, _) => const _TeacherPlaceholderScreen(),
       ),
     ],
+    errorBuilder: (_, state) => Scaffold(
+      body: Center(child: Text('Route not found: ${state.uri.path}')),
+    ),
   );
 });
+
+class _AuthSessionChangeNotifier extends ChangeNotifier {
+  _AuthSessionChangeNotifier(Ref ref) {
+    ref.listen(authSessionProvider, (prev, next) => notifyListeners());
+  }
+}
+
+class _StudentPlaceholderScreen extends StatelessWidget {
+  const _StudentPlaceholderScreen();
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text('Student shell — P2 implements features')),
+    );
+  }
+}
+
+class _TeacherPlaceholderScreen extends StatelessWidget {
+  const _TeacherPlaceholderScreen();
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text('Teacher shell — P3+ implements features')),
+    );
+  }
+}
