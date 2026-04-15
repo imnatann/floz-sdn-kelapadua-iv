@@ -29,6 +29,10 @@ class AuthService
             throw new AuthorizationException('Akun parent belum didukung di mobile saat ini.');
         }
 
+        if ($user->role === UserRole::SchoolAdmin || $user->role === UserRole::SuperAdmin) {
+            throw new AuthorizationException('Admin gunakan web app, mobile hanya untuk guru dan siswa.');
+        }
+
         // Single-device policy: revoke prior mobile tokens
         $user->tokens()->where('name', 'mobile')->delete();
 

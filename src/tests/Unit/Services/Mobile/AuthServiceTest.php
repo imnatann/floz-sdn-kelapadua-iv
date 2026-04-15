@@ -61,6 +61,20 @@ it('throws AuthorizationException for parent role with specific message', functi
     }
 });
 
+it('throws AuthorizationException for school admin with specific message', function () {
+    User::factory()->schoolAdmin()->create([
+        'email' => 'admin@example.com',
+        'password' => bcrypt('rahasia123'),
+    ]);
+
+    try {
+        $this->service->login('admin@example.com', 'rahasia123');
+        expect(false)->toBeTrue('Should have thrown');
+    } catch (AuthorizationException $e) {
+        expect($e->getMessage())->toBe('Admin gunakan web app, mobile hanya untuk guru dan siswa.');
+    }
+});
+
 it('revokes existing mobile tokens on new login (single device)', function () {
     $user = User::factory()->student()->create([
         'email' => 'siswa@example.com',

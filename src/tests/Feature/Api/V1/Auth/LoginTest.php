@@ -68,3 +68,13 @@ it('returns 403 for parent role with explicit message', function () {
     ])->assertStatus(403)
         ->assertJsonPath('message', 'Akun parent belum didukung di mobile saat ini.');
 });
+
+it('returns 403 for school admin role with explicit message', function () {
+    $user = User::factory()->schoolAdmin()->create(['password' => bcrypt('rahasia123')]);
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => $user->email,
+        'password' => 'rahasia123',
+    ])->assertStatus(403)
+        ->assertJsonPath('message', 'Admin gunakan web app, mobile hanya untuk guru dan siswa.');
+});
