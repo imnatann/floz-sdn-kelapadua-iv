@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\MobileAssignmentController;
 use App\Http\Controllers\Api\V1\MobileReportCardController;
 use App\Http\Controllers\Api\V1\MobileTeacherClassController;
 use App\Http\Controllers\Api\V1\MobileTeacherAttendanceController;
+use App\Http\Controllers\Api\V1\MobileTeacherGradeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,6 +43,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/teacher/teaching-assignments/{id}/meetings', [MobileTeacherClassController::class, 'meetings']);
             Route::get('/teacher/meetings/{meeting}/attendance', [MobileTeacherAttendanceController::class, 'show']);
             Route::post('/teacher/meetings/{meeting}/attendance', [MobileTeacherAttendanceController::class, 'store']);
+            Route::get('/teacher/teaching-assignments/{ta}/grade-roster', [MobileTeacherGradeController::class, 'roster']);
+            Route::post('/teacher/teaching-assignments/{ta}/grades', [MobileTeacherGradeController::class, 'store']);
         });
 
         // Dashboard + Student routes
