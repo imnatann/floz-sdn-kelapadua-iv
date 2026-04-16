@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../grades/presentation/screens/grades_list_screen.dart';
+import '../../report_cards/presentation/screens/report_cards_list_screen.dart';
 import '../../schedule/presentation/screens/schedule_screen.dart';
 import 'tab_placeholder.dart';
 
@@ -33,7 +34,7 @@ class _StudentShellState extends ConsumerState<StudentShell> {
           DashboardScreen(),
           ScheduleScreen(),
           GradesListScreen(),
-          TabPlaceholder(title: 'Rapor'),
+          ReportCardsListScreen(),
           TabPlaceholder(title: 'Pengumuman'),
           TabPlaceholder(title: 'Tugas'),
         ],
