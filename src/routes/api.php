@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\V1\MobileAuthController;
 use App\Http\Controllers\Api\V1\MobileDashboardController;
-use App\Http\Controllers\Api\MobileScheduleController;
+use App\Http\Controllers\Api\V1\MobileScheduleController;
 use App\Http\Controllers\Api\MobileGradeController;
 use App\Http\Controllers\Api\MobileAnnouncementController;
 use App\Http\Controllers\Api\MobileReportCardController;
@@ -34,14 +34,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/logout', [MobileAuthController::class, 'logout']);
         Route::get('/auth/me', [MobileAuthController::class, 'me']);
 
-        // Dashboard
+        // Dashboard + Student routes
         Route::middleware('role:student')->group(function () {
             Route::get('/student/dashboard', [MobileDashboardController::class, 'index']);
+            Route::get('/student/schedules', [MobileScheduleController::class, 'index']);
         });
-
-        // Schedules
-        Route::get('/schedules', [MobileScheduleController::class, 'index']);
-        Route::get('/schedules/today', [MobileScheduleController::class, 'today']);
 
         // Grades
         Route::get('/grades', [MobileGradeController::class, 'index']);
