@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\V1\MobileAuthController;
 use App\Http\Controllers\Api\V1\MobileDashboardController;
 use App\Http\Controllers\Api\V1\MobileScheduleController;
-use App\Http\Controllers\Api\MobileGradeController;
+use App\Http\Controllers\Api\V1\MobileGradeController;
 use App\Http\Controllers\Api\MobileAnnouncementController;
 use App\Http\Controllers\Api\MobileReportCardController;
 use App\Http\Controllers\Api\MobileAssignmentController;
@@ -38,11 +38,9 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:student')->group(function () {
             Route::get('/student/dashboard', [MobileDashboardController::class, 'index']);
             Route::get('/student/schedules', [MobileScheduleController::class, 'index']);
+            Route::get('/student/grades', [MobileGradeController::class, 'index']);
+            Route::get('/student/grades/{subjectId}', [MobileGradeController::class, 'show']);
         });
-
-        // Grades
-        Route::get('/grades', [MobileGradeController::class, 'index']);
-        Route::get('/grades/{subjectId}', [MobileGradeController::class, 'show']);
 
         // Report Cards
         Route::get('/report-cards', [MobileReportCardController::class, 'index']);
