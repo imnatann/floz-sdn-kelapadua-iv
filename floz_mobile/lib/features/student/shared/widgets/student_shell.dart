@@ -22,7 +22,7 @@ class _StudentShellState extends ConsumerState<StudentShell> {
     _StudentTab(label: 'Jadwal', icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today),
     _StudentTab(label: 'Nilai', icon: Icons.grade_outlined, activeIcon: Icons.grade),
     _StudentTab(label: 'Rapor', icon: Icons.description_outlined, activeIcon: Icons.description),
-    _StudentTab(label: 'Pengumuman', icon: Icons.campaign_outlined, activeIcon: Icons.campaign),
+    _StudentTab(label: 'Info', icon: Icons.campaign_outlined, activeIcon: Icons.campaign),
     _StudentTab(label: 'Tugas', icon: Icons.assignment_outlined, activeIcon: Icons.assignment),
   ];
 
