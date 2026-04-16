@@ -5,7 +5,7 @@ import '../../grades/presentation/screens/grades_list_screen.dart';
 import '../../report_cards/presentation/screens/report_cards_list_screen.dart';
 import '../../announcements/presentation/screens/announcements_list_screen.dart';
 import '../../schedule/presentation/screens/schedule_screen.dart';
-import 'tab_placeholder.dart';
+import '../../assignments/presentation/screens/assignments_list_screen.dart';
 
 class StudentShell extends ConsumerStatefulWidget {
   const StudentShell({super.key});
@@ -37,7 +37,7 @@ class _StudentShellState extends ConsumerState<StudentShell> {
           GradesListScreen(),
           ReportCardsListScreen(),
           AnnouncementsListScreen(),
-          TabPlaceholder(title: 'Tugas'),
+          AssignmentsListScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
