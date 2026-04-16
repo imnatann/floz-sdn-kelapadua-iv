@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../auth/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/student/shared/widgets/student_shell.dart';
-import '../../features/teacher/classes/presentation/screens/classes_list_screen.dart';
+import '../../features/teacher/shared/widgets/teacher_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final session = ref.watch(authSessionProvider);
@@ -33,7 +33,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/teacher',
-        builder: (context, _) => const ClassesListScreen(),
+        builder: (context, _) => const TeacherShell(),
       ),
     ],
     errorBuilder: (_, state) => Scaffold(
