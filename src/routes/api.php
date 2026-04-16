@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\V1\MobileDashboardController;
 use App\Http\Controllers\Api\V1\MobileScheduleController;
 use App\Http\Controllers\Api\V1\MobileGradeController;
 use App\Http\Controllers\Api\MobileAnnouncementController;
-use App\Http\Controllers\Api\MobileReportCardController;
+use App\Http\Controllers\Api\V1\MobileReportCardController;
 use App\Http\Controllers\Api\MobileAssignmentController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,12 +40,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/student/schedules', [MobileScheduleController::class, 'index']);
             Route::get('/student/grades', [MobileGradeController::class, 'index']);
             Route::get('/student/grades/{subjectId}', [MobileGradeController::class, 'show']);
+            Route::get('/student/report-cards', [MobileReportCardController::class, 'index']);
+            Route::get('/student/report-cards/{id}', [MobileReportCardController::class, 'show']);
+            Route::get('/student/report-cards/{id}/pdf', [MobileReportCardController::class, 'pdf']);
         });
-
-        // Report Cards
-        Route::get('/report-cards', [MobileReportCardController::class, 'index']);
-        Route::get('/report-cards/{id}', [MobileReportCardController::class, 'show']);
-        Route::get('/report-cards/{id}/pdf', [MobileReportCardController::class, 'pdf']);
 
         // Announcements
         Route::get('/announcements', [MobileAnnouncementController::class, 'index']);
