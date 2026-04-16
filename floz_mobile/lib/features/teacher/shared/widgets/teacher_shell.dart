@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../student/shared/widgets/tab_placeholder.dart';
 import '../../classes/presentation/screens/classes_list_screen.dart';
+import '../../grades_input/presentation/screens/grade_input_screen.dart';
 
 class TeacherShell extends ConsumerStatefulWidget {
   const TeacherShell({super.key});
@@ -22,7 +23,17 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
   Widget _buildTab(int index) {
     return switch (index) {
       0 => const ClassesListScreen(),
-      1 => const TabPlaceholder(title: 'Nilai', subtitle: 'Input nilai batch akan hadir di pembaruan selanjutnya.', icon: Icons.edit_note_outlined),
+      1 => ClassesListScreen(
+          onClassTap: (ta) => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => GradeInputScreen(
+                taId: ta.id,
+                subjectName: ta.subjectName,
+                className: ta.className,
+              ),
+            ),
+          ),
+        ),
       2 => const TabPlaceholder(title: 'Rekap', subtitle: 'Rekap absensi & nilai akan hadir di pembaruan selanjutnya.', icon: Icons.bar_chart_outlined),
       _ => const SizedBox.shrink(),
     };

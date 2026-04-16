@@ -12,7 +12,8 @@ import '../../providers/teacher_class_providers.dart';
 import 'class_detail_screen.dart';
 
 class ClassesListScreen extends ConsumerWidget {
-  const ClassesListScreen({super.key});
+  const ClassesListScreen({super.key, this.onClassTap});
+  final void Function(TeachingAssignmentSummary ta)? onClassTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,6 +34,7 @@ class ClassesListScreen extends ConsumerWidget {
             data: (list) => _TeacherHome(
               classes: list,
               teacherName: session.user?.name ?? 'Guru',
+              onClassTap: onClassTap,
             ),
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.primary600),
@@ -59,9 +61,14 @@ class ClassesListScreen extends ConsumerWidget {
 // ── Content ─────────────────────────────────────────────────────────────
 
 class _TeacherHome extends StatelessWidget {
-  const _TeacherHome({required this.classes, required this.teacherName});
+  const _TeacherHome({
+    required this.classes,
+    required this.teacherName,
+    this.onClassTap,
+  });
   final List<TeachingAssignmentSummary> classes;
   final String teacherName;
+  final void Function(TeachingAssignmentSummary ta)? onClassTap;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +136,7 @@ class _TeacherHome extends StatelessWidget {
       ...List.generate(classes.length, (i) {
         return StaggeredEntry(
           index: i + 2,
-          child: _ClassTile(ta: classes[i]),
+          child: _ClassTile(ta: classes[i], onTap: onClassTap),
         );
       }),
     ];
@@ -297,8 +304,9 @@ class _HeaderStat extends StatelessWidget {
 // ── Class tile ──────────────────────────────────────────────────────────
 
 class _ClassTile extends StatelessWidget {
-  const _ClassTile({required this.ta});
+  const _ClassTile({required this.ta, this.onTap});
   final TeachingAssignmentSummary ta;
+  final void Function(TeachingAssignmentSummary ta)? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -306,15 +314,19 @@ class _ClassTile extends StatelessWidget {
 
     return FlozCard(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ClassDetailScreen(
-              taId: ta.id,
-              subjectName: ta.subjectName,
-              className: ta.className,
+        if (onTap != null) {
+          onTap!(ta);
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ClassDetailScreen(
+                taId: ta.id,
+                subjectName: ta.subjectName,
+                className: ta.className,
+              ),
             ),
-          ),
-        );
+          );
+        }
       },
       padding: const EdgeInsets.all(16),
       child: Row(
