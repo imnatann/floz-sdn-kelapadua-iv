@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\MobileAnnouncementController;
 use App\Http\Controllers\Api\V1\MobileAssignmentController;
 use App\Http\Controllers\Api\V1\MobileReportCardController;
 use App\Http\Controllers\Api\V1\MobileTeacherClassController;
+use App\Http\Controllers\Api\V1\MobileTeacherAttendanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,6 +40,8 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:teacher')->group(function () {
             Route::get('/teacher/teaching-assignments', [MobileTeacherClassController::class, 'index']);
             Route::get('/teacher/teaching-assignments/{id}/meetings', [MobileTeacherClassController::class, 'meetings']);
+            Route::get('/teacher/meetings/{meeting}/attendance', [MobileTeacherAttendanceController::class, 'show']);
+            Route::post('/teacher/meetings/{meeting}/attendance', [MobileTeacherAttendanceController::class, 'store']);
         });
 
         // Dashboard + Student routes
