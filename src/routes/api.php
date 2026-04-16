@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\V1\MobileAuthController;
 use App\Http\Controllers\Api\V1\MobileDashboardController;
 use App\Http\Controllers\Api\V1\MobileScheduleController;
 use App\Http\Controllers\Api\V1\MobileGradeController;
-use App\Http\Controllers\Api\MobileAnnouncementController;
+use App\Http\Controllers\Api\V1\MobileAnnouncementController;
 use App\Http\Controllers\Api\V1\MobileReportCardController;
 use App\Http\Controllers\Api\MobileAssignmentController;
 use Illuminate\Support\Facades\Route;
@@ -43,11 +43,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/student/report-cards', [MobileReportCardController::class, 'index']);
             Route::get('/student/report-cards/{id}', [MobileReportCardController::class, 'show']);
             Route::get('/student/report-cards/{id}/pdf', [MobileReportCardController::class, 'pdf']);
+            Route::get('/student/announcements', [MobileAnnouncementController::class, 'index']);
+            Route::get('/student/announcements/{id}', [MobileAnnouncementController::class, 'show']);
         });
-
-        // Announcements
-        Route::get('/announcements', [MobileAnnouncementController::class, 'index']);
-        Route::get('/announcements/{id}', [MobileAnnouncementController::class, 'show']);
 
         // Assignments (Tugas)
         Route::get('/assignments', [MobileAssignmentController::class, 'index']);
