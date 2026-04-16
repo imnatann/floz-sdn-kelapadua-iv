@@ -13,4 +13,5 @@ class ApiEndpoints {
   static const String studentAssignments = '/student/assignments';
 
   static const String teacherTeachingAssignments = '/teacher/teaching-assignments';
+  static const String teacherMeetings = '/teacher/meetings';
 }
