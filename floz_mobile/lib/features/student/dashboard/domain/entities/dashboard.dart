@@ -33,7 +33,7 @@ class DashboardStats {
 }
 
 class ScheduleItem {
-  final int id;
+  final String id;
   final String startTime;
   final String endTime;
   final String subject;

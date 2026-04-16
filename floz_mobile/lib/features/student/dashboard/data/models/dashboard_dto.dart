@@ -34,7 +34,7 @@ class DashboardDto {
 
   static ScheduleItem _scheduleFromJson(Map<String, dynamic> json) {
     return ScheduleItem(
-      id: json['id'] as int,
+      id: json['id']?.toString() ?? '',
       startTime: json['start_time']?.toString() ?? '',
       endTime: json['end_time']?.toString() ?? '',
       subject: json['subject']?.toString() ?? '-',
