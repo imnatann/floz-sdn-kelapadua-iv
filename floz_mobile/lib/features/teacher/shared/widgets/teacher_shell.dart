@@ -23,7 +23,7 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
   Widget _buildTab(int index) {
     return switch (index) {
       0 => const ClassesListScreen(),
-      1 => const TabPlaceholder(title: 'Absensi', subtitle: 'Input absensi harian akan hadir di pembaruan selanjutnya.', icon: Icons.fact_check_outlined),
+      1 => const ClassesListScreen(), // Same class list — teacher picks class → meeting → input absen
       2 => const TabPlaceholder(title: 'Nilai', subtitle: 'Input nilai batch akan hadir di pembaruan selanjutnya.', icon: Icons.edit_note_outlined),
       3 => const TabPlaceholder(title: 'Rekap', subtitle: 'Rekap absensi & nilai akan hadir di pembaruan selanjutnya.', icon: Icons.bar_chart_outlined),
       _ => const SizedBox.shrink(),
