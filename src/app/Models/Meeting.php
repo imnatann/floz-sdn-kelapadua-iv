@@ -75,7 +75,7 @@ class Meeting extends Model
                 'teaching_assignment_id' => $teachingAssignmentId,
                 'meeting_number' => $i,
                 'title' => "Pertemuan {$i}",
-                'is_locked' => true,
+                'is_locked' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
