@@ -6,4 +6,5 @@ class ApiEndpoints {
   static const String authMe     = '/auth/me';
 
   static const String studentDashboard = '/student/dashboard';
+  static const String studentSchedules  = '/student/schedules';
 }
