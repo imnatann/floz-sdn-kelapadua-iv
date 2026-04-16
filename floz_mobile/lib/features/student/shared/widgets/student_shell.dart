@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../dashboard/presentation/screens/dashboard_screen.dart';
+import '../../schedule/presentation/screens/schedule_screen.dart';
 import 'tab_placeholder.dart';
 
 class StudentShell extends ConsumerStatefulWidget {
@@ -29,7 +30,7 @@ class _StudentShellState extends ConsumerState<StudentShell> {
         index: _index,
         children: const [
           DashboardScreen(),
-          TabPlaceholder(title: 'Jadwal'),
+          ScheduleScreen(),
           TabPlaceholder(title: 'Nilai'),
           TabPlaceholder(title: 'Rapor'),
           TabPlaceholder(title: 'Pengumuman'),
