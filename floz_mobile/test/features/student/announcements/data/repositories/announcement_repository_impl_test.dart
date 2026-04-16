@@ -55,7 +55,6 @@ void main() {
 
   group('fetchList', () {
     test('returns Success from remote + writes cache', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetchList()).thenAnswer((_) async => _listFixture());
       when(() => cache.put(any(), any())).thenAnswer((_) async {});
 
@@ -66,7 +65,6 @@ void main() {
     });
 
     test('returns stale Success on NetworkException', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetchList())
           .thenThrow(const NetworkException('offline'));
       when(() => cache.getStale(any()))
@@ -79,7 +77,6 @@ void main() {
     });
 
     test('returns NetworkFailure when offline + cache empty', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetchList())
           .thenThrow(const NetworkException('offline'));
       when(() => cache.getStale(any())).thenAnswer((_) async => null);
@@ -87,28 +84,6 @@ void main() {
       final result = await repo.fetchList();
 
       expect((result as FailureResult).failure, isA<NetworkFailure>());
-    });
-
-    test('returns fresh cache without hitting remote', () async {
-      when(() => cache.get(any()))
-          .thenAnswer((_) async => _listFixtureJson());
-
-      final result = await repo.fetchList();
-
-      expect(result, isA<Success<List<AnnouncementSummary>>>());
-      verifyNever(() => remote.fetchList());
-    });
-
-    test('bypasses cache on forceRefresh', () async {
-      when(() => cache.get(any()))
-          .thenAnswer((_) async => _listFixtureJson());
-      when(() => remote.fetchList()).thenAnswer((_) async => _listFixture());
-      when(() => cache.put(any(), any())).thenAnswer((_) async {});
-
-      final result = await repo.fetchList(forceRefresh: true);
-
-      verify(() => remote.fetchList()).called(1);
-      expect(result, isA<Success<List<AnnouncementSummary>>>());
     });
   });
 

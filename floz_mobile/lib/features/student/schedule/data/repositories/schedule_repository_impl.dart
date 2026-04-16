@@ -21,13 +21,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
 
   @override
   Future<Result<WeeklySchedule>> fetch({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      final cached = await _cache.get(_cacheKey);
-      if (cached is List) {
-        return Success(ScheduleDto.fromJson(cached));
-      }
-    }
-
+    // Always fetch from network first; cache is offline fallback only
     try {
       final data = await _remote.fetch();
       await _cache.put(_cacheKey, _toJson(data));

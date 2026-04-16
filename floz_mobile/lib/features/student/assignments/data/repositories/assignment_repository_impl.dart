@@ -26,13 +26,7 @@ class AssignmentRepositoryImpl implements AssignmentRepository {
   }) async {
     final cacheKey = _listCacheKey(status);
 
-    if (!forceRefresh) {
-      final cached = await _cache.get(cacheKey);
-      if (cached is List) {
-        return Success(AssignmentDto.listFromJson(cached));
-      }
-    }
-
+    // Always fetch from network first; cache is offline fallback only
     try {
       final data = await _remote.fetchList(status: status);
       await _cache.put(cacheKey, _listToJson(data));

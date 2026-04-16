@@ -21,21 +21,13 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
   @override
   Future<Result<StudentDashboard>> fetch({bool forceRefresh = false}) async {
-    // 1. Try fresh cache (unless forcing refresh)
-    if (!forceRefresh) {
-      final cached = await _cache.get(_cacheKey);
-      if (cached is Map) {
-        return Success(DashboardDto.fromJson(Map<String, dynamic>.from(cached)));
-      }
-    }
-
-    // 2. Fetch from network
+    // Always fetch from network first; cache is offline fallback only
     try {
       final data = await _remote.fetch();
       await _cache.put(_cacheKey, _toJson(data));
       return Success(data);
     } on NetworkException catch (e) {
-      // 3. Network failed — try stale cache as fallback
+      // Network failed — try stale cache as fallback
       final stale = await _cache.getStale(_cacheKey);
       if (stale is Map) {
         return Success(

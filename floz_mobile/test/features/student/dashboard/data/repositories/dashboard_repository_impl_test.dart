@@ -45,7 +45,6 @@ void main() {
     test('returns Success from remote and writes cache on happy path', () async {
       when(() => remote.fetch()).thenAnswer((_) async => _fixture());
       when(() => cache.put(any(), any())).thenAnswer((_) async {});
-      when(() => cache.get(any())).thenAnswer((_) async => null);
 
       final result = await repo.fetch();
 
@@ -54,7 +53,6 @@ void main() {
     });
 
     test('returns stale Success from cache when remote throws NetworkException', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetch()).thenThrow(const NetworkException('offline'));
       when(() => cache.getStale(any())).thenAnswer((_) async => _fixtureJson());
 
@@ -65,7 +63,6 @@ void main() {
     });
 
     test('returns NetworkFailure when remote throws and cache is empty', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetch()).thenThrow(const NetworkException('offline'));
       when(() => cache.getStale(any())).thenAnswer((_) async => null);
 
@@ -76,7 +73,6 @@ void main() {
     });
 
     test('returns AuthFailure on 401', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetch()).thenThrow(const UnauthorizedException('expired'));
 
       final result = await repo.fetch();
@@ -85,33 +81,11 @@ void main() {
     });
 
     test('returns ServerFailure on 500', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => null);
       when(() => remote.fetch()).thenThrow(const ServerException('boom'));
 
       final result = await repo.fetch();
 
       expect((result as FailureResult).failure, isA<ServerFailure>());
-    });
-
-    test('returns cached Success directly when cache is fresh', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => _fixtureJson());
-
-      final result = await repo.fetch();
-
-      expect(result, isA<Success<StudentDashboard>>());
-      expect((result as Success<StudentDashboard>).stale, isFalse);
-      verifyNever(() => remote.fetch());
-    });
-
-    test('bypasses cache when forceRefresh=true', () async {
-      when(() => cache.get(any())).thenAnswer((_) async => _fixtureJson());
-      when(() => remote.fetch()).thenAnswer((_) async => _fixture());
-      when(() => cache.put(any(), any())).thenAnswer((_) async {});
-
-      final result = await repo.fetch(forceRefresh: true);
-
-      expect(result, isA<Success<StudentDashboard>>());
-      verify(() => remote.fetch()).called(1);
     });
   });
 }

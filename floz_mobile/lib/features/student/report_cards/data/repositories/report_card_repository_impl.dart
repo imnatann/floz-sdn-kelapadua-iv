@@ -21,13 +21,7 @@ class ReportCardRepositoryImpl implements ReportCardRepository {
 
   @override
   Future<Result<List<ReportCardSummary>>> fetchList({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      final cached = await _cache.get(_listCacheKey);
-      if (cached is List) {
-        return Success(ReportCardDto.listFromJson(cached));
-      }
-    }
-
+    // Always fetch from network first; cache is offline fallback only
     try {
       final data = await _remote.fetchList();
       await _cache.put(_listCacheKey, _listToJson(data));

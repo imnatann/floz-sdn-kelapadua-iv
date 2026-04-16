@@ -21,13 +21,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
 
   @override
   Future<Result<List<AnnouncementSummary>>> fetchList({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      final cached = await _cache.get(_listCacheKey);
-      if (cached is List) {
-        return Success(AnnouncementDto.listFromJson(cached));
-      }
-    }
-
+    // Always fetch from network first; cache is offline fallback only
     try {
       final data = await _remote.fetchList();
       await _cache.put(_listCacheKey, _listToJson(data));
