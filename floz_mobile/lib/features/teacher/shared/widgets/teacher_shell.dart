@@ -15,7 +15,6 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
 
   static const _tabs = <_TeacherTab>[
     _TeacherTab(label: 'Kelas', icon: Icons.menu_book_outlined, activeIcon: Icons.menu_book_rounded),
-    _TeacherTab(label: 'Absensi', icon: Icons.fact_check_outlined, activeIcon: Icons.fact_check_rounded),
     _TeacherTab(label: 'Nilai', icon: Icons.edit_note_outlined, activeIcon: Icons.edit_note),
     _TeacherTab(label: 'Rekap', icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart_rounded),
   ];
@@ -23,9 +22,8 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
   Widget _buildTab(int index) {
     return switch (index) {
       0 => const ClassesListScreen(),
-      1 => const ClassesListScreen(), // Same class list — teacher picks class → meeting → input absen
-      2 => const TabPlaceholder(title: 'Nilai', subtitle: 'Input nilai batch akan hadir di pembaruan selanjutnya.', icon: Icons.edit_note_outlined),
-      3 => const TabPlaceholder(title: 'Rekap', subtitle: 'Rekap absensi & nilai akan hadir di pembaruan selanjutnya.', icon: Icons.bar_chart_outlined),
+      1 => const TabPlaceholder(title: 'Nilai', subtitle: 'Input nilai batch akan hadir di pembaruan selanjutnya.', icon: Icons.edit_note_outlined),
+      2 => const TabPlaceholder(title: 'Rekap', subtitle: 'Rekap absensi & nilai akan hadir di pembaruan selanjutnya.', icon: Icons.bar_chart_outlined),
       _ => const SizedBox.shrink(),
     };
   }
