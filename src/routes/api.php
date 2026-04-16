@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\MobileGradeController;
 use App\Http\Controllers\Api\V1\MobileAnnouncementController;
 use App\Http\Controllers\Api\V1\MobileAssignmentController;
 use App\Http\Controllers\Api\V1\MobileReportCardController;
+use App\Http\Controllers\Api\V1\MobileTeacherClassController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,6 +34,12 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::post('/auth/logout', [MobileAuthController::class, 'logout']);
         Route::get('/auth/me', [MobileAuthController::class, 'me']);
+
+        // Teacher routes
+        Route::middleware('role:teacher')->group(function () {
+            Route::get('/teacher/teaching-assignments', [MobileTeacherClassController::class, 'index']);
+            Route::get('/teacher/teaching-assignments/{id}/meetings', [MobileTeacherClassController::class, 'meetings']);
+        });
 
         // Dashboard + Student routes
         Route::middleware('role:student')->group(function () {
