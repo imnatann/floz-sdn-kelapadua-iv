@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../auth/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/student/shared/widgets/student_shell.dart';
+import '../../features/teacher/classes/presentation/screens/classes_list_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final session = ref.watch(authSessionProvider);
@@ -32,7 +33,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/teacher',
-        builder: (context, _) => const _TeacherPlaceholderScreen(),
+        builder: (context, _) => const ClassesListScreen(),
       ),
     ],
     errorBuilder: (_, state) => Scaffold(
@@ -44,15 +45,5 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 class _AuthSessionChangeNotifier extends ChangeNotifier {
   _AuthSessionChangeNotifier(Ref ref) {
     ref.listen(authSessionProvider, (prev, next) => notifyListeners());
-  }
-}
-
-class _TeacherPlaceholderScreen extends StatelessWidget {
-  const _TeacherPlaceholderScreen();
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Teacher shell — P3+ implements features')),
-    );
   }
 }
