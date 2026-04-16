@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/floz_card.dart';
 import '../../../../../shared/widgets/staggered_entry.dart';
 import '../../domain/entities/class_meetings.dart';
 import '../../providers/teacher_class_providers.dart';
+import '../../../attendance/presentation/screens/attendance_input_screen.dart';
 
 class ClassDetailScreen extends ConsumerWidget {
   const ClassDetailScreen({
@@ -165,7 +166,15 @@ class _MeetingsBody extends StatelessWidget {
                 final m = cm.meetings[i];
                 return StaggeredEntry(
                   index: i,
-                  child: _MeetingTile(meeting: m),
+                  child: _MeetingTile(
+                    meeting: m,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            AttendanceInputScreen(meetingId: m.id),
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
@@ -176,8 +185,9 @@ class _MeetingsBody extends StatelessWidget {
 }
 
 class _MeetingTile extends StatelessWidget {
-  const _MeetingTile({required this.meeting});
+  const _MeetingTile({required this.meeting, this.onTap});
   final MeetingSummary meeting;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -188,6 +198,7 @@ class _MeetingTile extends StatelessWidget {
     return FlozCard(
       padding: const EdgeInsets.all(14),
       borderColor: locked ? AppColors.slate200 : null,
+      onTap: locked ? null : onTap,
       child: Opacity(
         opacity: locked ? 0.65 : 1.0,
         child: Row(
