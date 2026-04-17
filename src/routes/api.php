@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\MobileAuthController;
 use App\Http\Controllers\Api\V1\MobileDashboardController;
 use App\Http\Controllers\Api\V1\MobileScheduleController;
 use App\Http\Controllers\Api\V1\MobileGradeController;
+use App\Http\Controllers\Api\V1\MobileNotificationsController;
 use App\Http\Controllers\Api\V1\MobileAnnouncementController;
 use App\Http\Controllers\Api\V1\MobileAssignmentController;
 use App\Http\Controllers\Api\V1\MobileReportCardController;
@@ -67,6 +68,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/student/courses', [MobileStudentCoursesController::class, 'index']);
             Route::get('/student/courses/{ta}/meetings', [MobileStudentCoursesController::class, 'meetings']);
             Route::get('/student/meetings/{meeting}', [MobileStudentCoursesController::class, 'meeting']);
+        });
+
+        // Notifications (shared by student + teacher)
+        Route::middleware('role:student,teacher')->group(function () {
+            Route::get('/notifications', [MobileNotificationsController::class, 'index']);
+            Route::post('/notifications/{id}/read', [MobileNotificationsController::class, 'read']);
+            Route::post('/notifications/read-all', [MobileNotificationsController::class, 'readAll']);
         });
     });
 });
