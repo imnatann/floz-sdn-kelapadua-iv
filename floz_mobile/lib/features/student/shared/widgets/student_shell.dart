@@ -6,16 +6,10 @@ import '../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../grades/presentation/screens/grades_list_screen.dart';
 import '../../report_cards/presentation/screens/report_cards_list_screen.dart';
 import '../../schedule/presentation/screens/schedule_screen.dart';
+import '../providers/student_tab_providers.dart';
 
-class StudentShell extends ConsumerStatefulWidget {
+class StudentShell extends ConsumerWidget {
   const StudentShell({super.key});
-
-  @override
-  ConsumerState<StudentShell> createState() => _StudentShellState();
-}
-
-class _StudentShellState extends ConsumerState<StudentShell> {
-  int _index = 0;
 
   static const _tabs = <_StudentTab>[
     _StudentTab(label: 'Beranda', icon: Icons.home_outlined, activeIcon: Icons.home),
@@ -26,9 +20,6 @@ class _StudentShellState extends ConsumerState<StudentShell> {
     _StudentTab(label: 'Tugas', icon: Icons.assignment_outlined, activeIcon: Icons.assignment),
   ];
 
-  /// Build only the active tab. Riverpod providers are NOT auto-dispose,
-  /// so switching back to a previously-visited tab shows cached data
-  /// instantly without re-fetching.
   Widget _buildTab(int index) {
     return switch (index) {
       0 => const DashboardScreen(),
@@ -42,12 +33,14 @@ class _StudentShellState extends ConsumerState<StudentShell> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final index = ref.watch(studentSelectedTabProvider);
     return Scaffold(
-      body: _buildTab(_index),
+      body: _buildTab(index),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        selectedIndex: index,
+        onDestinationSelected: (i) =>
+            ref.read(studentSelectedTabProvider.notifier).state = i,
         destinations: _tabs
             .map((t) => NavigationDestination(
                   icon: Icon(t.icon),

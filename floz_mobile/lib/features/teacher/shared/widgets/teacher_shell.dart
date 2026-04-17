@@ -3,16 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../classes/presentation/screens/classes_list_screen.dart';
 import '../../grades_input/presentation/screens/grade_input_screen.dart';
 import '../../recaps/presentation/screens/recap_screen.dart';
+import '../providers/teacher_tab_providers.dart';
 
-class TeacherShell extends ConsumerStatefulWidget {
+class TeacherShell extends ConsumerWidget {
   const TeacherShell({super.key});
-
-  @override
-  ConsumerState<TeacherShell> createState() => _TeacherShellState();
-}
-
-class _TeacherShellState extends ConsumerState<TeacherShell> {
-  int _index = 0;
 
   static const _tabs = <_TeacherTab>[
     _TeacherTab(label: 'Kelas', icon: Icons.menu_book_outlined, activeIcon: Icons.menu_book_rounded),
@@ -20,7 +14,7 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
     _TeacherTab(label: 'Rekap', icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart_rounded),
   ];
 
-  Widget _buildTab(int index) {
+  Widget _buildTab(BuildContext context, int index) {
     return switch (index) {
       0 => const ClassesListScreen(purpose: ClassListPurpose.kelas),
       1 => ClassesListScreen(
@@ -52,12 +46,14 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final index = ref.watch(teacherSelectedTabProvider);
     return Scaffold(
-      body: _buildTab(_index),
+      body: _buildTab(context, index),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        selectedIndex: index,
+        onDestinationSelected: (i) =>
+            ref.read(teacherSelectedTabProvider.notifier).state = i,
         destinations: _tabs
             .map((t) => NavigationDestination(
                   icon: Icon(t.icon),
