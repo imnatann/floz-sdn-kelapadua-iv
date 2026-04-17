@@ -19,4 +19,10 @@ class ApiEndpoints {
       '/teacher/teaching-assignments/$taId/attendance-recap';
   static String teacherGradeRecap(int taId) =>
       '/teacher/teaching-assignments/$taId/grade-recap';
+
+  static const String studentCourses = '/student/courses';
+  static String studentCourseMeetings(int taId) =>
+      '/student/courses/$taId/meetings';
+  static String studentMeeting(int meetingId) =>
+      '/student/meetings/$meetingId';
 }
