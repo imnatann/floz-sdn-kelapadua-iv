@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/auth_session.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/student/shared/widgets/student_shell.dart';
 import '../../features/teacher/shared/widgets/teacher_shell.dart';
 
@@ -34,6 +35,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/teacher',
         builder: (context, _) => const TeacherShell(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, _) => const ProfileScreen(),
       ),
     ],
     errorBuilder: (_, state) => Scaffold(

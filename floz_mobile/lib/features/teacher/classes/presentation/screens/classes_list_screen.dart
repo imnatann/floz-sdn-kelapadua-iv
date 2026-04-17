@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../core/auth/auth_session.dart';
 import '../../../../../core/error/failure.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -244,6 +245,11 @@ class _GreetingHeader extends StatelessWidget {
               ),
             ),
           ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: _ProfileButton(initials: _initialsOf(teacherName)),
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -296,6 +302,49 @@ class _GreetingHeader extends StatelessWidget {
     if (hour < 15) return 'SELAMAT SIANG';
     if (hour < 18) return 'SELAMAT SORE';
     return 'SELAMAT MALAM';
+  }
+
+  String _initialsOf(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    return (parts.first.characters.first + parts.last.characters.first).toUpperCase();
+  }
+}
+
+class _ProfileButton extends StatelessWidget {
+  const _ProfileButton({required this.initials});
+  final String initials;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => context.push('/profile'),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.32), width: 1.2),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            initials,
+            style: const TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
