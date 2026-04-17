@@ -172,19 +172,28 @@ class ExamController extends Controller
             'scores.*.student_id' => 'required|exists:students,id',
             'scores.*.score' => 'nullable|numeric|min:0|max:100',
             'scores.*.notes' => 'nullable|string|max:255',
+            'scores.*.submission_status' => 'required|in:'.implode(',', ExamScore::STATUSES),
         ]);
 
         DB::transaction(function () use ($validated, $exam) {
             foreach ($validated['scores'] as $data) {
-                if ($data['score'] !== null || $data['notes'] !== null) {
+                $status = $data['submission_status'];
+                $score = $status === ExamScore::STATUS_TIDAK_KUMPUL ? null : $data['score'];
+
+                $hasData = $score !== null
+                    || !empty($data['notes'])
+                    || $status !== ExamScore::STATUS_KUMPUL;
+
+                if ($hasData) {
                     ExamScore::updateOrCreate(
                         [
                             'exam_id' => $exam->id,
                             'student_id' => $data['student_id'],
                         ],
                         [
-                            'score' => $data['score'],
+                            'score' => $score,
                             'notes' => $data['notes'],
+                            'submission_status' => $status,
                         ]
                     );
                 } else {
@@ -193,7 +202,7 @@ class ExamController extends Controller
                              ->delete();
                 }
             }
-            
+
             // Mark exam as graded
             $exam->update(['status' => 'graded']);
         });
