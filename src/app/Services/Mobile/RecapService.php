@@ -6,11 +6,10 @@ use App\Models\Attendance;
 use App\Models\Grade;
 use App\Models\Semester;
 use App\Models\TeachingAssignment;
-use App\Models\User;
 
 class RecapService
 {
-    public function attendanceRecap(TeachingAssignment $ta, User $user): array
+    public function attendanceRecap(TeachingAssignment $ta): array
     {
         $semester = $this->getActiveSemester();
 
@@ -59,7 +58,7 @@ class RecapService
         ];
     }
 
-    public function gradeRecap(TeachingAssignment $ta, User $user): array
+    public function gradeRecap(TeachingAssignment $ta): array
     {
         $semester = $this->getActiveSemester();
 

@@ -18,7 +18,6 @@ beforeEach(function () {
 
 it('attendanceRecap returns mixed statuses with percentage calculation', function () {
     $teacher = Teacher::factory()->create();
-    $user = $teacher->user;
     $ta = TeachingAssignment::factory()->create(['teacher_id' => $teacher->id]);
 
     $s1 = Student::factory()->create(['class_id' => $ta->class_id]);
@@ -55,7 +54,7 @@ it('attendanceRecap returns mixed statuses with percentage calculation', functio
     ]);
     // S2: 0 records => all zero, percentage = 0.0
 
-    $result = $this->service->attendanceRecap($ta, $user);
+    $result = $this->service->attendanceRecap($ta);
 
     expect($result)->toHaveKeys(['teaching_assignment', 'students']);
     expect($result['teaching_assignment'])->toMatchArray([
@@ -86,11 +85,10 @@ it('attendanceRecap returns mixed statuses with percentage calculation', functio
 
 it('attendanceRecap returns empty students array when class has no students', function () {
     $teacher = Teacher::factory()->create();
-    $user = $teacher->user;
     $ta = TeachingAssignment::factory()->create(['teacher_id' => $teacher->id]);
     // No students in class
 
-    $result = $this->service->attendanceRecap($ta, $user);
+    $result = $this->service->attendanceRecap($ta);
 
     expect($result)->toHaveKeys(['teaching_assignment', 'students']);
     expect($result['students'])->toBe([]);
@@ -98,7 +96,6 @@ it('attendanceRecap returns empty students array when class has no students', fu
 
 it('gradeRecap returns scores per student', function () {
     $teacher = Teacher::factory()->create();
-    $user = $teacher->user;
     $ta = TeachingAssignment::factory()->create(['teacher_id' => $teacher->id]);
 
     $s1 = Student::factory()->create(['class_id' => $ta->class_id]);
@@ -119,7 +116,7 @@ it('gradeRecap returns scores per student', function () {
     ]);
     // s2 has no grade
 
-    $result = $this->service->gradeRecap($ta, $user);
+    $result = $this->service->gradeRecap($ta);
 
     expect($result)->toHaveKeys(['teaching_assignment', 'students']);
     expect($result['teaching_assignment'])->toMatchArray([
@@ -148,11 +145,10 @@ it('gradeRecap returns scores per student', function () {
 
 it('gradeRecap returns empty students array when class has no students', function () {
     $teacher = Teacher::factory()->create();
-    $user = $teacher->user;
     $ta = TeachingAssignment::factory()->create(['teacher_id' => $teacher->id]);
     // No students in class
 
-    $result = $this->service->gradeRecap($ta, $user);
+    $result = $this->service->gradeRecap($ta);
 
     expect($result)->toHaveKeys(['teaching_assignment', 'students']);
     expect($result['students'])->toBe([]);
