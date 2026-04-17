@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\MobileGradeController;
 use App\Http\Controllers\Api\V1\MobileAnnouncementController;
 use App\Http\Controllers\Api\V1\MobileAssignmentController;
 use App\Http\Controllers\Api\V1\MobileReportCardController;
+use App\Http\Controllers\Api\V1\MobileStudentCoursesController;
 use App\Http\Controllers\Api\V1\MobileTeacherClassController;
 use App\Http\Controllers\Api\V1\MobileTeacherAttendanceController;
 use App\Http\Controllers\Api\V1\MobileTeacherGradeController;
@@ -63,6 +64,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/student/announcements/{id}', [MobileAnnouncementController::class, 'show']);
             Route::get('/student/assignments', [MobileAssignmentController::class, 'index']);
             Route::get('/student/assignments/{id}', [MobileAssignmentController::class, 'show']);
+            Route::get('/student/courses', [MobileStudentCoursesController::class, 'index']);
+            Route::get('/student/courses/{ta}/meetings', [MobileStudentCoursesController::class, 'meetings']);
+            Route::get('/student/meetings/{meeting}', [MobileStudentCoursesController::class, 'meeting']);
         });
     });
 });
