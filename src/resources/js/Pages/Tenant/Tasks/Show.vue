@@ -12,16 +12,30 @@ const props = defineProps({
   scores: Object,
 });
 
+const STATUS_OPTIONS = [
+  { value: 'kumpul',       label: 'Kumpul',       activeClass: 'bg-emerald-500 text-white shadow-sm' },
+  { value: 'terlambat',    label: 'Telat',        activeClass: 'bg-amber-500 text-white shadow-sm' },
+  { value: 'tidak_kumpul', label: 'Tidak Kumpul', activeClass: 'bg-rose-500 text-white shadow-sm' },
+];
+
 const form = useForm({
   scores: props.students.map(s => {
       const existing = props.scores[s.id];
       return {
           student_id: s.id,
           score: existing ? existing.score : null,
-          notes: existing ? existing.notes : ''
+          notes: existing ? existing.notes : '',
+          submission_status: existing?.submission_status || 'kumpul',
       };
   }),
 });
+
+const setStatus = (idx, value) => {
+    form.scores[idx].submission_status = value;
+    if (value === 'tidak_kumpul') {
+        form.scores[idx].score = null;
+    }
+};
 
 const submit = () => {
   form.post(route('tasks.scores.store', props.task.id), {
@@ -84,7 +98,8 @@ const destroy = () => {
                     <tr>
                         <th class="px-5 py-3 w-12 text-center">No</th>
                         <th class="px-5 py-3">Nama Siswa</th>
-                        <th class="px-5 py-3 text-right" style="width: 150px">Nilai (Maks: {{ task.max_score }})</th>
+                        <th class="px-5 py-3" style="width: 280px">Status Pengumpulan</th>
+                        <th class="px-5 py-3 text-right" style="width: 130px">Nilai (Maks: {{ task.max_score }})</th>
                         <th class="px-5 py-3">Catatan Opsional</th>
                     </tr>
                 </thead>
@@ -93,15 +108,35 @@ const destroy = () => {
                         <td class="px-5 py-4 font-mono text-slate-500 text-center">{{ index + 1 }}</td>
                         <td class="px-5 py-4 font-medium text-slate-900">{{ student.name }}</td>
                         <td class="px-5 py-4">
-                            <input 
-                                type="number" 
-                                v-model="form.scores[index].score" 
+                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium" role="group">
+                                <button
+                                    v-for="opt in STATUS_OPTIONS"
+                                    :key="opt.value"
+                                    type="button"
+                                    @click="setStatus(index, opt.value)"
+                                    class="px-3 py-1.5 rounded-md transition-all"
+                                    :class="form.scores[index].submission_status === opt.value
+                                        ? opt.activeClass
+                                        : 'text-slate-600 hover:text-slate-900'"
+                                >
+                                    {{ opt.label }}
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4">
+                            <input
+                                type="number"
+                                v-model="form.scores[index].score"
+                                :disabled="form.scores[index].submission_status === 'tidak_kumpul'"
                                 class="block w-full text-right rounded-md py-1.5 text-slate-900 shadow-sm ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 sm:text-sm sm:leading-6"
-                                :class="form.scores[index].score > task.max_score ? 'ring-red-300 border-red-300 focus:ring-red-500 text-red-600 bg-red-50' : 'ring-slate-300 border-0'"
+                                :class="[
+                                    form.scores[index].score > task.max_score ? 'ring-red-300 border-red-300 focus:ring-red-500 text-red-600 bg-red-50' : 'ring-slate-300 border-0',
+                                    form.scores[index].submission_status === 'tidak_kumpul' ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : '',
+                                ]"
                                 :max="task.max_score"
                                 min="0"
                                 step="0.01"
-                                placeholder="0"
+                                :placeholder="form.scores[index].submission_status === 'tidak_kumpul' ? '—' : '0'"
                             >
                         </td>
                         <td class="px-5 py-4">

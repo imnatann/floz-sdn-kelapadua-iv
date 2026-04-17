@@ -174,29 +174,37 @@ class TaskController extends Controller
             'scores.*.student_id' => 'required|exists:students,id',
             'scores.*.score' => 'nullable|numeric|min:0|max:1000',
             'scores.*.notes' => 'nullable|string|max:255',
+            'scores.*.submission_status' => 'required|in:'.implode(',', TaskScore::STATUSES),
         ]);
 
         DB::transaction(function () use ($validated, $task) {
             foreach ($validated['scores'] as $data) {
-                if ($data['score'] !== null || $data['notes'] !== null) {
+                $status = $data['submission_status'];
+                $score = $status === TaskScore::STATUS_TIDAK_KUMPUL ? null : $data['score'];
+
+                $hasData = $score !== null
+                    || !empty($data['notes'])
+                    || $status !== TaskScore::STATUS_KUMPUL;
+
+                if ($hasData) {
                     TaskScore::updateOrCreate(
                         [
                             'task_id' => $task->id,
                             'student_id' => $data['student_id'],
                         ],
                         [
-                            'score' => $data['score'],
+                            'score' => $score,
                             'notes' => $data['notes'],
+                            'submission_status' => $status,
                         ]
                     );
                 } else {
-                    // Optional: remove score if both are null, or just ignore
                     TaskScore::where('task_id', $task->id)
                              ->where('student_id', $data['student_id'])
                              ->delete();
                 }
             }
-            
+
             // Mark task as graded
             $task->update(['status' => 'graded']);
         });

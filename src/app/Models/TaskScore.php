@@ -12,7 +12,17 @@ class TaskScore extends Model
     use HasFactory, UsesTenantConnection;
 
     protected $fillable = [
-        'task_id', 'student_id', 'score', 'notes'
+        'task_id', 'student_id', 'score', 'notes', 'submission_status'
+    ];
+
+    public const STATUS_KUMPUL = 'kumpul';
+    public const STATUS_TERLAMBAT = 'terlambat';
+    public const STATUS_TIDAK_KUMPUL = 'tidak_kumpul';
+
+    public const STATUSES = [
+        self::STATUS_KUMPUL,
+        self::STATUS_TERLAMBAT,
+        self::STATUS_TIDAK_KUMPUL,
     ];
 
     protected $casts = [
