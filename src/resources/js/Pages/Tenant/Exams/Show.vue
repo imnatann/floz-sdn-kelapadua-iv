@@ -12,6 +12,14 @@ const props = defineProps({
   scores: Object,
 });
 
+const formatDate = (raw) => {
+    if (!raw) return '-';
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime())
+        ? raw
+        : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const STATUS_OPTIONS = [
   { value: 'kumpul',       label: 'Hadir',       activeClass: 'bg-emerald-500 text-white shadow-sm' },
   { value: 'terlambat',    label: 'Telat',       activeClass: 'bg-amber-500 text-white shadow-sm' },
@@ -104,7 +112,7 @@ const examTypeLabel = (type) => {
                 <p class="text-sm font-medium text-slate-600 mt-1">{{ exam.subject?.name }}</p>
                 
                 <div class="mt-4 text-sm text-slate-700">
-                    <p class="mb-1"><span class="font-medium text-slate-500 inline-block w-36">Tanggal Pelaksanaan:</span> <span class="font-bold">{{ exam.exam_date }}</span></p>
+                    <p class="mb-1"><span class="font-medium text-slate-500 inline-block w-36">Tanggal Pelaksanaan:</span> <span class="font-bold">{{ formatDate(exam.exam_date) }}</span></p>
                     <p><span class="font-medium text-slate-500 inline-block w-36">Nilai Maksimal:</span> {{ exam.max_score }}</p>
                 </div>
             </div>

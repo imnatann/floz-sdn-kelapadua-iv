@@ -12,6 +12,14 @@ defineProps({
     studentsCount: Number,
 });
 
+const formatDate = (raw) => {
+    if (!raw) return '-';
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime())
+        ? raw
+        : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 </script>
 
 <template>
@@ -51,7 +59,7 @@ defineProps({
                     <tr v-for="task in tasks" :key="task.id" class="bg-white border-b border-slate-50 hover:bg-slate-50/50">
                         <td class="px-5 py-4 font-bold text-slate-900">{{ task.title }}</td>
                         <td class="px-5 py-4 font-medium text-slate-600">{{ task.subject.name }}</td>
-                        <td class="px-5 py-4 font-medium text-slate-600">{{ task.task_date }}</td>
+                        <td class="px-5 py-4 font-medium text-slate-600">{{ formatDate(task.task_date) }}</td>
                         <td class="px-5 py-4">
                             <div v-if="task.scores_count > 0" class="flex flex-wrap gap-1.5 items-center">
                                 <span v-if="task.kumpul_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 ring-1 ring-inset ring-emerald-600/15">

@@ -27,6 +27,14 @@ const filteredExams = computed(() => {
     return props.exams.filter(exam => exam.exam_type === currentTab.value);
 });
 
+const formatDate = (raw) => {
+    if (!raw) return '-';
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime())
+        ? raw
+        : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const examTypeBadge = (type) => {
     switch(type) {
         case 'ulangan_harian': return 'bg-emerald-100 text-emerald-800';
@@ -111,7 +119,7 @@ const examTypeLabel = (type) => {
                             </span>
                         </td>
                         <td class="px-5 py-4 font-medium text-slate-600">{{ exam.subject.name }}</td>
-                        <td class="px-5 py-4 font-medium text-slate-600">{{ exam.exam_date }}</td>
+                        <td class="px-5 py-4 font-medium text-slate-600">{{ formatDate(exam.exam_date) }}</td>
                         <td class="px-5 py-4">
                             <div v-if="exam.scores_count > 0" class="flex flex-wrap gap-1.5 items-center">
                                 <span v-if="exam.kumpul_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 ring-1 ring-inset ring-emerald-600/15">

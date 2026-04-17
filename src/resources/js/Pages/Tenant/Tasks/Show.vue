@@ -12,6 +12,14 @@ const props = defineProps({
   scores: Object,
 });
 
+const formatDate = (raw) => {
+    if (!raw) return '-';
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime())
+        ? raw
+        : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const STATUS_OPTIONS = [
   { value: 'kumpul',       label: 'Kumpul',       activeClass: 'bg-emerald-500 text-white shadow-sm' },
   { value: 'terlambat',    label: 'Telat',        activeClass: 'bg-amber-500 text-white shadow-sm' },
@@ -79,8 +87,8 @@ const destroy = () => {
                 <h3 class="text-lg font-bold text-slate-900">{{ task.title }}</h3>
                 <p class="text-sm font-medium text-slate-600 mt-1">{{ task.subject?.name }}</p>
                 <div class="mt-4 text-sm text-slate-700">
-                    <p class="mb-1"><span class="font-medium text-slate-500 inline-block w-32">Diberikan pada:</span> {{ task.task_date }}</p>
-                    <p class="mb-1"><span class="font-medium text-slate-500 inline-block w-32">Batas waktu:</span> {{ task.due_date || '-' }}</p>
+                    <p class="mb-1"><span class="font-medium text-slate-500 inline-block w-32">Diberikan pada:</span> {{ formatDate(task.task_date) }}</p>
+                    <p class="mb-1"><span class="font-medium text-slate-500 inline-block w-32">Batas waktu:</span> {{ formatDate(task.due_date) }}</p>
                     <p><span class="font-medium text-slate-500 inline-block w-32">Nilai Maksimal:</span> {{ task.max_score }}</p>
                 </div>
             </div>
