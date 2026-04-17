@@ -10,6 +10,9 @@ import '../../../../../shared/widgets/error_state.dart';
 import '../../../../../shared/widgets/floz_card.dart';
 import '../../../../../shared/widgets/floz_stat_card.dart';
 import '../../../../../shared/widgets/staggered_entry.dart';
+import '../../../courses/domain/entities/course.dart';
+import '../../../courses/presentation/screens/course_detail_screen.dart';
+import '../../../courses/providers/courses_providers.dart';
 import '../../domain/entities/dashboard.dart';
 import '../../providers/dashboard_providers.dart';
 
@@ -83,6 +86,10 @@ class _DashboardContent extends StatelessWidget {
           value: '${dashboard.stats.attendancePercentage}%',
           accent: _attendanceColor(dashboard.stats.attendancePercentage),
         ),
+      ),
+      _DashboardItem(
+        const _CoursesSection(),
+        spacingBefore: true,
       ),
       _DashboardItem(
         Padding(
@@ -659,6 +666,130 @@ class _ShimmerBlockState extends State<_ShimmerBlock>
           ),
         );
       },
+    );
+  }
+}
+
+// ── Courses section ─────────────────────────────────────────────────────
+
+class _CoursesSection extends ConsumerWidget {
+  const _CoursesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncCourses = ref.watch(coursesProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          title: 'Mata Pelajaran Saya',
+          count: asyncCourses.value?.length ?? 0,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 130,
+          child: asyncCourses.when(
+            data: (list) {
+              if (list.isEmpty) {
+                return const _EmptyBanner(
+                  icon: Icons.menu_book_outlined,
+                  message: 'Belum ada mata pelajaran terdaftar.',
+                );
+              }
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: list.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (_, i) => _CourseCard(course: list[i]),
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: AppColors.primary600),
+            ),
+            error: (_, _) => const _EmptyBanner(
+              icon: Icons.error_outline,
+              message: 'Gagal memuat mata pelajaran.',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CourseCard extends StatelessWidget {
+  const _CourseCard({required this.course});
+  final Course course;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      child: FlozCard(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => CourseDetailScreen(
+                taId: course.id,
+                subjectName: course.subjectName,
+                className: '',
+              ),
+            ),
+          );
+        },
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primary50,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSM),
+              ),
+              child: const Icon(
+                Icons.menu_book_rounded,
+                color: AppColors.primary600,
+                size: 18,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              course.subjectName,
+              style: const TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.slate900,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Text(
+              course.teacherName,
+              style: const TextStyle(fontSize: 11, color: AppColors.slate500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.event_note_rounded, size: 12, color: AppColors.slate400),
+                const SizedBox(width: 4),
+                Text('${course.meetingCount}',
+                    style: const TextStyle(fontSize: 11, color: AppColors.slate500)),
+                const SizedBox(width: 8),
+                Icon(Icons.attach_file_rounded, size: 12, color: AppColors.slate400),
+                const SizedBox(width: 4),
+                Text('${course.materialCount}',
+                    style: const TextStyle(fontSize: 11, color: AppColors.slate500)),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
