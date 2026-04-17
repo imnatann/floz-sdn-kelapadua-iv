@@ -21,6 +21,12 @@ class ClassListPurpose {
     required this.icon,
   });
 
+  static const kelas = ClassListPurpose(
+    title: 'Kelas Saya',
+    subtitle: 'Ketuk kelas untuk melihat materi, pertemuan, & siswa.',
+    icon: Icons.menu_book_rounded,
+  );
+
   static const nilai = ClassListPurpose(
     title: 'Input Nilai',
     subtitle: 'Pilih kelas untuk mulai mengisi nilai siswa.',

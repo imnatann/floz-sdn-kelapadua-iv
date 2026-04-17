@@ -22,7 +22,7 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
 
   Widget _buildTab(int index) {
     return switch (index) {
-      0 => const ClassesListScreen(),
+      0 => const ClassesListScreen(purpose: ClassListPurpose.kelas),
       1 => ClassesListScreen(
           purpose: ClassListPurpose.nilai,
           onClassTap: (ta) => Navigator.of(context).push(
