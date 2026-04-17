@@ -24,6 +24,7 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
     return switch (index) {
       0 => const ClassesListScreen(),
       1 => ClassesListScreen(
+          purpose: ClassListPurpose.nilai,
           onClassTap: (ta) => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => GradeInputScreen(
@@ -35,6 +36,7 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
           ),
         ),
       2 => ClassesListScreen(
+          purpose: ClassListPurpose.rekap,
           onClassTap: (ta) => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => RecapScreen(

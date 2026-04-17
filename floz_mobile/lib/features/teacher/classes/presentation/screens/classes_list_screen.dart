@@ -11,9 +11,33 @@ import '../../domain/entities/teaching_assignment_summary.dart';
 import '../../providers/teacher_class_providers.dart';
 import 'class_detail_screen.dart';
 
+class ClassListPurpose {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  const ClassListPurpose({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  static const nilai = ClassListPurpose(
+    title: 'Input Nilai',
+    subtitle: 'Pilih kelas untuk mulai mengisi nilai siswa.',
+    icon: Icons.edit_note_rounded,
+  );
+
+  static const rekap = ClassListPurpose(
+    title: 'Rekap Absensi & Nilai',
+    subtitle: 'Pilih kelas untuk melihat ringkasan kehadiran & nilai.',
+    icon: Icons.bar_chart_rounded,
+  );
+}
+
 class ClassesListScreen extends ConsumerWidget {
-  const ClassesListScreen({super.key, this.onClassTap});
+  const ClassesListScreen({super.key, this.onClassTap, this.purpose});
   final void Function(TeachingAssignmentSummary ta)? onClassTap;
+  final ClassListPurpose? purpose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,6 +59,7 @@ class ClassesListScreen extends ConsumerWidget {
               classes: list,
               teacherName: session.user?.name ?? 'Guru',
               onClassTap: onClassTap,
+              purpose: purpose,
             ),
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.primary600),
@@ -65,10 +90,12 @@ class _TeacherHome extends StatelessWidget {
     required this.classes,
     required this.teacherName,
     this.onClassTap,
+    this.purpose,
   });
   final List<TeachingAssignmentSummary> classes;
   final String teacherName;
   final void Function(TeachingAssignmentSummary ta)? onClassTap;
+  final ClassListPurpose? purpose;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +105,10 @@ class _TeacherHome extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           _GreetingHeader(teacherName: teacherName, classCount: 0, studentCount: 0),
+          if (purpose != null) ...[
+            const SizedBox(height: 12),
+            _PurposeBanner(purpose: purpose!),
+          ],
           const SizedBox(height: 60),
           Column(
             children: [
@@ -119,8 +150,13 @@ class _TeacherHome extends StatelessWidget {
           studentCount: totalStudents,
         ),
       ),
+      if (purpose != null)
+        StaggeredEntry(
+          index: 1,
+          child: _PurposeBanner(purpose: purpose!),
+        ),
       StaggeredEntry(
-        index: 1,
+        index: purpose != null ? 2 : 1,
         child: Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 4, left: 4),
           child: Text(
@@ -135,7 +171,7 @@ class _TeacherHome extends StatelessWidget {
       ),
       ...List.generate(classes.length, (i) {
         return StaggeredEntry(
-          index: i + 2,
+          index: i + (purpose != null ? 3 : 2),
           child: _ClassTile(ta: classes[i], onTap: onClassTap),
         );
       }),
@@ -293,6 +329,65 @@ class _HeaderStat extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Purpose banner ──────────────────────────────────────────────────────
+
+class _PurposeBanner extends StatelessWidget {
+  const _PurposeBanner({required this.purpose});
+  final ClassListPurpose purpose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: AppColors.primary50,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMD),
+        border: Border.all(color: AppColors.primary600.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSM),
+            ),
+            child: Icon(purpose.icon, color: AppColors.primary600, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  purpose.title,
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.slate900,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  purpose.subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.slate600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
