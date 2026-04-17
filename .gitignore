@@ -2,10 +2,28 @@
 node_modules/
 vendor/
 .env
+.env.testing
+.env.production
 *.log
 .DS_Store
 storage/logs/*
 !storage/logs/.gitkeep
+
+# Playwright MCP artifacts (browser cache, screenshots, console logs)
+.playwright-mcp/
+*.png
+*.jpg
+*.jpeg
+!docs/**/*.png
+!docs/**/*.jpg
+!floz_mobile/assets/**/*.png
+!floz_mobile/assets/**/*.jpg
+!floz_mobile/ios/Runner/Assets.xcassets/**
+!floz_mobile/android/app/src/main/res/**/*.png
+!src/public/**/*.png
+!src/public/**/*.jpg
+!src/resources/**/*.png
+!src/resources/**/*.jpg
 
 # Laravel framework and cache
 src/storage/framework/
