@@ -263,16 +263,6 @@ class _TopBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
       child: Row(
         children: [
-          const Text(
-            'FLOZ',
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary600,
-              letterSpacing: 1.2,
-            ),
-          ),
           const Spacer(),
           _ProfileButton(initials: _initialsOf(name)),
         ],
