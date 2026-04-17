@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:floz_mobile/core/error/failure.dart';
 import 'package:floz_mobile/core/error/result.dart';
+import 'package:floz_mobile/features/shared/notifications/domain/entities/notifications_page.dart';
+import 'package:floz_mobile/features/shared/notifications/domain/repositories/notifications_repository.dart';
+import 'package:floz_mobile/features/shared/notifications/providers/notifications_providers.dart';
 import 'package:floz_mobile/features/student/courses/domain/entities/course.dart';
 import 'package:floz_mobile/features/student/courses/domain/repositories/courses_repository.dart';
 import 'package:floz_mobile/features/student/courses/providers/courses_providers.dart';
@@ -15,6 +18,8 @@ import 'package:floz_mobile/features/student/dashboard/providers/dashboard_provi
 class _MockRepo extends Mock implements DashboardRepository {}
 
 class _MockCoursesRepo extends Mock implements CoursesRepository {}
+
+class _MockNotifRepo extends Mock implements NotificationsRepository {}
 
 const _fixture = StudentDashboard(
   student: StudentDashboardProfile(
@@ -31,12 +36,23 @@ const _fixture = StudentDashboard(
 void main() {
   late _MockRepo repo;
   late _MockCoursesRepo coursesRepo;
+  late _MockNotifRepo notifRepo;
 
   setUp(() {
     repo = _MockRepo();
     coursesRepo = _MockCoursesRepo();
+    notifRepo = _MockNotifRepo();
     when(() => coursesRepo.fetchCourses())
         .thenAnswer((_) async => const Success<List<Course>>(<Course>[]));
+    when(() => notifRepo.fetch()).thenAnswer(
+      (_) async => const Success(NotificationsPage(
+        items: [],
+        currentPage: 1,
+        lastPage: 1,
+        total: 0,
+        unreadCount: 0,
+      )),
+    );
   });
 
   Widget wrap(Widget child) {
@@ -44,6 +60,7 @@ void main() {
       overrides: [
         dashboardRepositoryProvider.overrideWithValue(repo),
         coursesRepositoryProvider.overrideWithValue(coursesRepo),
+        notificationsRepositoryProvider.overrideWithValue(notifRepo),
       ],
       child: MaterialApp(home: child),
     );

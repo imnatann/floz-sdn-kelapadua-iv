@@ -8,6 +8,7 @@ import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../shared/widgets/error_state.dart';
 import '../../../../../shared/widgets/floz_card.dart';
 import '../../../../../shared/widgets/staggered_entry.dart';
+import '../../../../shared/notifications/presentation/widgets/notification_bell.dart';
 import '../../domain/entities/teaching_assignment_summary.dart';
 import '../../providers/teacher_class_providers.dart';
 import 'class_detail_screen.dart';
@@ -322,6 +323,8 @@ class _TopBar extends StatelessWidget {
       child: Row(
         children: [
           const Spacer(),
+          const NotificationBell(),
+          const SizedBox(width: 10),
           _ProfileButton(initials: _initialsOf(name)),
         ],
       ),

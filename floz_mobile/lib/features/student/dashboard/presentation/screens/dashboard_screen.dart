@@ -10,6 +10,7 @@ import '../../../../../shared/widgets/error_state.dart';
 import '../../../../../shared/widgets/floz_card.dart';
 import '../../../../../shared/widgets/floz_stat_card.dart';
 import '../../../../../shared/widgets/staggered_entry.dart';
+import '../../../../shared/notifications/presentation/widgets/notification_bell.dart';
 import '../../../courses/domain/entities/course.dart';
 import '../../../courses/presentation/screens/course_detail_screen.dart';
 import '../../../courses/providers/courses_providers.dart';
@@ -271,6 +272,8 @@ class _TopBar extends StatelessWidget {
       child: Row(
         children: [
           const Spacer(),
+          const NotificationBell(),
+          const SizedBox(width: 10),
           _ProfileButton(initials: _initialsOf(name)),
         ],
       ),

@@ -4,12 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:floz_mobile/core/error/failure.dart';
 import 'package:floz_mobile/core/error/result.dart';
+import 'package:floz_mobile/features/shared/notifications/domain/entities/notifications_page.dart';
+import 'package:floz_mobile/features/shared/notifications/domain/repositories/notifications_repository.dart';
+import 'package:floz_mobile/features/shared/notifications/providers/notifications_providers.dart';
 import 'package:floz_mobile/features/teacher/classes/domain/entities/teaching_assignment_summary.dart';
 import 'package:floz_mobile/features/teacher/classes/domain/repositories/teacher_class_repository.dart';
 import 'package:floz_mobile/features/teacher/classes/presentation/screens/classes_list_screen.dart';
 import 'package:floz_mobile/features/teacher/classes/providers/teacher_class_providers.dart';
 
 class _MockRepo extends Mock implements TeacherClassRepository {}
+
+class _MockNotifRepo extends Mock implements NotificationsRepository {}
 
 const _fixture = [
   TeachingAssignmentSummary(
@@ -32,12 +37,26 @@ const _fixture = [
 
 void main() {
   late _MockRepo repo;
-  setUp(() => repo = _MockRepo());
+  late _MockNotifRepo notifRepo;
+  setUp(() {
+    repo = _MockRepo();
+    notifRepo = _MockNotifRepo();
+    when(() => notifRepo.fetch()).thenAnswer(
+      (_) async => const Success(NotificationsPage(
+        items: [],
+        currentPage: 1,
+        lastPage: 1,
+        total: 0,
+        unreadCount: 0,
+      )),
+    );
+  });
 
   Widget wrap(Widget child) {
     return ProviderScope(
       overrides: [
         teacherClassRepositoryProvider.overrideWithValue(repo),
+        notificationsRepositoryProvider.overrideWithValue(notifRepo),
       ],
       child: MaterialApp(home: child),
     );
