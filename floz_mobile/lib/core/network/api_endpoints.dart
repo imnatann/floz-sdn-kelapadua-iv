@@ -25,4 +25,8 @@ class ApiEndpoints {
       '/student/courses/$taId/meetings';
   static String studentMeeting(int meetingId) =>
       '/student/meetings/$meetingId';
+
+  static const String notifications = '/notifications';
+  static String notificationRead(String id) => '/notifications/$id/read';
+  static const String notificationsReadAll = '/notifications/read-all';
 }
