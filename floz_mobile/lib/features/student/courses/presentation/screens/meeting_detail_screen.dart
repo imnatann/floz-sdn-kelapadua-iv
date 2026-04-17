@@ -310,34 +310,11 @@ class _LinkMaterial extends StatelessWidget {
 
   final mat.MaterialItem material;
 
-  Future<void> _openLink(BuildContext context) async {
-    final raw = material.url;
-    if (raw == null || raw.isEmpty) {
-      _showError(context, 'Tidak dapat membuka tautan.');
-      return;
-    }
-    final uri = Uri.tryParse(raw);
-    if (uri == null) {
-      _showError(context, 'Tidak dapat membuka tautan.');
-      return;
-    }
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      _showError(context, 'Tidak dapat membuka tautan.');
-    }
-  }
-
-  void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final url = material.url ?? '';
     return FlozCard(
-      onTap: () => _openLink(context),
+      onTap: () => _launchExternal(context, material.url),
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
@@ -399,29 +376,6 @@ class _FileMaterial extends StatelessWidget {
 
   final mat.MaterialItem material;
 
-  Future<void> _openFile(BuildContext context) async {
-    final raw = material.fileUrl;
-    if (raw == null || raw.isEmpty) {
-      _showError(context, 'Tidak dapat membuka tautan.');
-      return;
-    }
-    final uri = Uri.tryParse(raw);
-    if (uri == null) {
-      _showError(context, 'Tidak dapat membuka tautan.');
-      return;
-    }
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      _showError(context, 'Tidak dapat membuka tautan.');
-    }
-  }
-
-  void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final fileName = material.fileName ?? '—';
@@ -430,7 +384,7 @@ class _FileMaterial extends StatelessWidget {
         : _formatBytes(material.fileSize!);
 
     return FlozCard(
-      onTap: () => _openFile(context),
+      onTap: () => _launchExternal(context, material.fileUrl),
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
@@ -588,6 +542,36 @@ class _EmptyMaterials extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+Future<void> _launchExternal(BuildContext context, String? raw) async {
+  if (raw == null || raw.isEmpty) {
+    _showError(context, 'Tidak dapat membuka tautan.');
+    return;
+  }
+  final uri = Uri.tryParse(raw);
+  if (uri == null) {
+    _showError(context, 'Tidak dapat membuka tautan.');
+    return;
+  }
+  try {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      _showError(context, 'Tidak dapat membuka tautan.');
+    }
+  } catch (_) {
+    if (context.mounted) {
+      _showError(context, 'Tidak dapat membuka tautan.');
+    }
+  }
+}
+
+void _showError(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

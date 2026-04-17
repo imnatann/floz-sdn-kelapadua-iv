@@ -7,6 +7,7 @@ import 'package:floz_mobile/features/student/courses/domain/entities/meeting_sum
 import 'package:floz_mobile/features/student/courses/domain/repositories/courses_repository.dart';
 import 'package:floz_mobile/features/student/courses/presentation/screens/course_detail_screen.dart';
 import 'package:floz_mobile/features/student/courses/providers/courses_providers.dart';
+import 'package:floz_mobile/shared/widgets/floz_card.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _FakeRepo extends Mock implements CoursesRepository {}
@@ -96,6 +97,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Belum dibuka'), findsOneWidget);
+  });
+
+  testWidgets('locked meeting tap does not navigate', (tester) async {
+    when(() => repo.fetchMeetings(1)).thenAnswer(
+      (_) async => Success(
+        const CourseMeetings(
+          course: CourseInfo(
+            id: 1,
+            subjectName: 'Matematika',
+            teacherName: 'Bu Siti',
+            className: 'Kelas 4A',
+          ),
+          meetings: [
+            MeetingSummary(
+              id: 11,
+              meetingNumber: 15,
+              title: 'UTS',
+              isLocked: true,
+              materialCount: 0,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    // Tap the card itself (single FlozCard — sole meeting). The text "UTS"
+    // appears twice (number badge + title) so we can't tap by text alone.
+    await tester.tap(find.byType(FlozCard));
+    await tester.pumpAndSettle();
+
+    // Should still be on CourseDetailScreen — no navigation occurred
+    expect(find.byType(CourseDetailScreen), findsOneWidget);
+    // MeetingDetailScreen should NOT be present
+    expect(find.text('Detail Pertemuan'), findsNothing);
   });
 
   testWidgets('shows error state with retry on failure', (tester) async {
