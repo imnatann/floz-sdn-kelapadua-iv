@@ -475,6 +475,11 @@ class _ScheduleTile extends StatelessWidget {
   }
 
   String _formatTime(String raw) {
+    final dt = DateTime.tryParse(raw);
+    if (dt != null) {
+      final local = dt.toLocal();
+      return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    }
     if (raw.length >= 5) return raw.substring(0, 5);
     return raw;
   }

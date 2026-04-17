@@ -48,8 +48,8 @@ class DashboardService
                     ->get()
                     ->map(fn ($s) => [
                         'id' => $s->id,
-                        'start_time' => $s->start_time,
-                        'end_time' => $s->end_time,
+                        'start_time' => $this->formatTime($s->start_time),
+                        'end_time' => $this->formatTime($s->end_time),
                         'subject' => $s->teachingAssignment->subject->name ?? '-',
                         'teacher' => $s->teachingAssignment->teacher->name ?? '-',
                     ])
@@ -81,5 +81,18 @@ class DashboardService
             'todays_schedules' => $todaysSchedules,
             'recent_announcements' => $recentAnnouncements,
         ];
+    }
+
+    /**
+     * Normalize time values from Eloquent to a 5-char 'HH:mm' string.
+     * Handles Carbon instances (from datetime:H:i cast) AND raw strings.
+     */
+    private function formatTime(mixed $value): string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('H:i');
+        }
+        $str = (string) $value;
+        return strlen($str) >= 5 ? substr($str, 0, 5) : $str;
     }
 }
