@@ -27,11 +27,6 @@ const filteredExams = computed(() => {
     return props.exams.filter(exam => exam.exam_type === currentTab.value);
 });
 
-const progressColor = (count) => {
-    if (count === 0) return 'text-slate-400 bg-slate-100';
-    return 'text-emerald-700 bg-emerald-100'; 
-};
-
 const examTypeBadge = (type) => {
     switch(type) {
         case 'ulangan_harian': return 'bg-emerald-100 text-emerald-800';
@@ -99,7 +94,7 @@ const examTypeLabel = (type) => {
                         <th class="px-5 py-3">Tipe</th>
                         <th class="px-5 py-3">Mata Pelajaran</th>
                         <th class="px-5 py-3">Tanggal</th>
-                        <th class="px-5 py-3 text-center">Progress Penilaian</th>
+                        <th class="px-5 py-3">Kehadiran</th>
                         <th class="px-5 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -117,9 +112,24 @@ const examTypeLabel = (type) => {
                         </td>
                         <td class="px-5 py-4 font-medium text-slate-600">{{ exam.subject.name }}</td>
                         <td class="px-5 py-4 font-medium text-slate-600">{{ exam.exam_date }}</td>
-                        <td class="px-5 py-4 text-center">
-                            <span :class="['px-2.5 py-1 rounded-full text-xs font-bold', progressColor(exam.scores_count)]">
-                                {{ exam.scores_count }} / {{ studentsCount }}
+                        <td class="px-5 py-4">
+                            <div v-if="exam.scores_count > 0" class="flex flex-wrap gap-1.5 items-center">
+                                <span v-if="exam.kumpul_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 ring-1 ring-inset ring-emerald-600/15">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    {{ exam.kumpul_count }} Hadir
+                                </span>
+                                <span v-if="exam.terlambat_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-amber-700 bg-amber-50 ring-1 ring-inset ring-amber-600/15">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    {{ exam.terlambat_count }} Telat
+                                </span>
+                                <span v-if="exam.tidak_kumpul_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-rose-700 bg-rose-50 ring-1 ring-inset ring-rose-600/15">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                    {{ exam.tidak_kumpul_count }} Tidak
+                                </span>
+                                <span class="text-xs text-slate-400 font-medium">dari {{ studentsCount }}</span>
+                            </div>
+                            <span v-else class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium text-slate-500 bg-slate-100">
+                                Belum diisi
                             </span>
                         </td>
                         <td class="px-5 py-4 text-right">

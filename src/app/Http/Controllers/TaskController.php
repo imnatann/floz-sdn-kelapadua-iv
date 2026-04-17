@@ -59,7 +59,12 @@ class TaskController extends Controller
         $tasks = Task::where('class_id', $class->id)
             ->where('semester_id', $activeSemester->id)
             ->with(['subject', 'teacher'])
-            ->withCount('scores')
+            ->withCount([
+                'scores',
+                'scores as kumpul_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_KUMPUL),
+                'scores as terlambat_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_TERLAMBAT),
+                'scores as tidak_kumpul_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_TIDAK_KUMPUL),
+            ])
             ->orderByDesc('task_date')
             ->get();
             

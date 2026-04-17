@@ -12,12 +12,6 @@ defineProps({
     studentsCount: Number,
 });
 
-const progressColor = (count) => {
-    if (count === 0) return 'text-slate-400 bg-slate-100';
-    // Accessing reactive prop studentsCount directly in the template avoids passing 'this'
-    return 'text-emerald-700 bg-emerald-100'; 
-};
-
 </script>
 
 <template>
@@ -48,7 +42,7 @@ const progressColor = (count) => {
                         <th class="px-5 py-3">Judul Tugas</th>
                         <th class="px-5 py-3">Mata Pelajaran</th>
                         <th class="px-5 py-3">Tanggal Diberikan</th>
-                        <th class="px-5 py-3 text-center">Progress Penilaian</th>
+                        <th class="px-5 py-3">Pengumpulan</th>
                         <th class="px-5 py-3">Status</th>
                         <th class="px-5 py-3 text-right">Aksi</th>
                     </tr>
@@ -58,9 +52,24 @@ const progressColor = (count) => {
                         <td class="px-5 py-4 font-bold text-slate-900">{{ task.title }}</td>
                         <td class="px-5 py-4 font-medium text-slate-600">{{ task.subject.name }}</td>
                         <td class="px-5 py-4 font-medium text-slate-600">{{ task.task_date }}</td>
-                        <td class="px-5 py-4 text-center">
-                            <span :class="['px-2.5 py-1 rounded-full text-xs font-bold', progressColor(task.scores_count)]">
-                                {{ task.scores_count }} / {{ studentsCount }}
+                        <td class="px-5 py-4">
+                            <div v-if="task.scores_count > 0" class="flex flex-wrap gap-1.5 items-center">
+                                <span v-if="task.kumpul_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-50 ring-1 ring-inset ring-emerald-600/15">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    {{ task.kumpul_count }} Kumpul
+                                </span>
+                                <span v-if="task.terlambat_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-amber-700 bg-amber-50 ring-1 ring-inset ring-amber-600/15">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    {{ task.terlambat_count }} Telat
+                                </span>
+                                <span v-if="task.tidak_kumpul_count > 0" class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-rose-700 bg-rose-50 ring-1 ring-inset ring-rose-600/15">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                    {{ task.tidak_kumpul_count }} Tidak
+                                </span>
+                                <span class="text-xs text-slate-400 font-medium">dari {{ studentsCount }}</span>
+                            </div>
+                            <span v-else class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium text-slate-500 bg-slate-100">
+                                Belum diisi
                             </span>
                         </td>
                         <td class="px-5 py-4">

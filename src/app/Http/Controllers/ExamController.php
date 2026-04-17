@@ -59,7 +59,12 @@ class ExamController extends Controller
         $exams = Exam::where('class_id', $class->id)
             ->where('semester_id', $activeSemester->id)
             ->with(['subject', 'teacher'])
-            ->withCount('scores')
+            ->withCount([
+                'scores',
+                'scores as kumpul_count' => fn ($q) => $q->where('submission_status', ExamScore::STATUS_KUMPUL),
+                'scores as terlambat_count' => fn ($q) => $q->where('submission_status', ExamScore::STATUS_TERLAMBAT),
+                'scores as tidak_kumpul_count' => fn ($q) => $q->where('submission_status', ExamScore::STATUS_TIDAK_KUMPUL),
+            ])
             ->orderByDesc('exam_date')
             ->get();
             
