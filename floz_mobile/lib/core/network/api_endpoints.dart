@@ -14,4 +14,9 @@ class ApiEndpoints {
 
   static const String teacherTeachingAssignments = '/teacher/teaching-assignments';
   static const String teacherMeetings = '/teacher/meetings';
+
+  static String teacherAttendanceRecap(int taId) =>
+      '/teacher/teaching-assignments/$taId/attendance-recap';
+  static String teacherGradeRecap(int taId) =>
+      '/teacher/teaching-assignments/$taId/grade-recap';
 }
