@@ -50,40 +50,48 @@ class ClassesListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(teacherClassListNotifierProvider);
     final session = ref.watch(authSessionProvider);
+    final teacherName = session.user?.name ?? 'Guru';
 
     return Scaffold(
       backgroundColor: AppColors.slate50,
       body: SafeArea(
         bottom: false,
-        child: RefreshIndicator(
-          color: AppColors.primary600,
-          backgroundColor: Colors.white,
-          strokeWidth: 2.5,
-          onRefresh: () =>
-              ref.read(teacherClassListNotifierProvider.notifier).refresh(),
-          child: state.when(
-            data: (list) => _TeacherHome(
-              classes: list,
-              teacherName: session.user?.name ?? 'Guru',
-              onClassTap: onClassTap,
-              purpose: purpose,
-            ),
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.primary600),
-            ),
-            error: (err, _) => ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                ErrorState(
-                  message: err is Failure ? err.message : 'Gagal memuat kelas',
-                  onRetry: () => ref
-                      .read(teacherClassListNotifierProvider.notifier)
-                      .refresh(),
+        child: Column(
+          children: [
+            _TopBar(name: teacherName),
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primary600,
+                backgroundColor: Colors.white,
+                strokeWidth: 2.5,
+                onRefresh: () =>
+                    ref.read(teacherClassListNotifierProvider.notifier).refresh(),
+                child: state.when(
+                  data: (list) => _TeacherHome(
+                    classes: list,
+                    teacherName: teacherName,
+                    onClassTap: onClassTap,
+                    purpose: purpose,
+                  ),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary600),
+                  ),
+                  error: (err, _) => ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                      ErrorState(
+                        message: err is Failure ? err.message : 'Gagal memuat kelas',
+                        onRetry: () => ref
+                            .read(teacherClassListNotifierProvider.notifier)
+                            .refresh(),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -245,11 +253,6 @@ class _GreetingHeader extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: _ProfileButton(initials: _initialsOf(teacherName)),
-          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -304,8 +307,39 @@ class _GreetingHeader extends StatelessWidget {
     return 'SELAMAT MALAM';
   }
 
-  String _initialsOf(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
+}
+
+// ── Top bar ─────────────────────────────────────────────────────────────
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.name});
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
+      child: Row(
+        children: [
+          const Text(
+            'FLOZ',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary600,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const Spacer(),
+          _ProfileButton(initials: _initialsOf(name)),
+        ],
+      ),
+    );
+  }
+
+  String _initialsOf(String value) {
+    final parts = value.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return '?';
     if (parts.length == 1) return parts.first.characters.first.toUpperCase();
     return (parts.first.characters.first + parts.last.characters.first).toUpperCase();
@@ -328,8 +362,15 @@ class _ProfileButton extends StatelessWidget {
           height: 42,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.32), width: 1.2),
+            color: Colors.white,
+            border: Border.all(color: AppColors.slate200, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.slate900.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           alignment: Alignment.center,
           child: Text(
@@ -338,7 +379,7 @@ class _ProfileButton extends StatelessWidget {
               fontFamily: 'SpaceGrotesk',
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: AppColors.primary600,
               height: 1,
             ),
           ),
