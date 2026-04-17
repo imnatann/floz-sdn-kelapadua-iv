@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../student/shared/widgets/tab_placeholder.dart';
 import '../../classes/presentation/screens/classes_list_screen.dart';
 import '../../grades_input/presentation/screens/grade_input_screen.dart';
+import '../../recaps/presentation/screens/recap_screen.dart';
 
 class TeacherShell extends ConsumerStatefulWidget {
   const TeacherShell({super.key});
@@ -34,7 +34,17 @@ class _TeacherShellState extends ConsumerState<TeacherShell> {
             ),
           ),
         ),
-      2 => const TabPlaceholder(title: 'Rekap', subtitle: 'Rekap absensi & nilai akan hadir di pembaruan selanjutnya.', icon: Icons.bar_chart_outlined),
+      2 => ClassesListScreen(
+          onClassTap: (ta) => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RecapScreen(
+                taId: ta.id,
+                subjectName: ta.subjectName,
+                className: ta.className,
+              ),
+            ),
+          ),
+        ),
       _ => const SizedBox.shrink(),
     };
   }
