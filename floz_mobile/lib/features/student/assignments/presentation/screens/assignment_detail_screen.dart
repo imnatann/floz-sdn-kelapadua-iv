@@ -439,7 +439,7 @@ class _NoSubmissionBanner extends StatelessWidget {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Kumpulkan tugas melalui web app',
+              'Kumpulkan tugas secara langsung kepada guru di kelas.',
               style: TextStyle(
                 fontSize: 13,
                 color: AppColors.slate600,
