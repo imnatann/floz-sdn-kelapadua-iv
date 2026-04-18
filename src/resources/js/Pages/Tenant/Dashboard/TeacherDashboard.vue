@@ -2,6 +2,7 @@
 import TenantLayout from '@/Layouts/TenantLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
+import Badge from '@/Components/UI/Badge.vue';
 import DashboardAnnouncementWidget from '@/Components/UI/DashboardAnnouncementWidget.vue';
 import { Link } from '@inertiajs/vue3';
 

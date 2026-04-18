@@ -110,4 +110,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Audit Logs
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+
+    // Announcements (Pengumuman)
+    Route::resource('announcements', AnnouncementController::class);
 });
