@@ -53,13 +53,13 @@ class AnnouncementPosted implements ShouldBroadcastNow
             'type' => 'App\\Notifications\\Tenant\\NewAnnouncementNotification', // Match DB type
             'title' => 'Pengumuman Baru',
             'message' => $this->announcement->title,
-            'link' => route('tenant.announcements.show', $this->announcement->id),
+            'link' => route('announcements.show', $this->announcement->id),
             'created_at' => now()->toIso8601String(),
             'read_at' => null,
             'data' => [ // Redundant but helpful if frontend expects 'data' wrapper
                 'title' => 'Pengumuman Baru',
                 'message' => $this->announcement->title,
-                'link' => route('tenant.announcements.show', $this->announcement->id),
+                'link' => route('announcements.show', $this->announcement->id),
                 'type' => 'announcement',
             ]
         ];

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Notifications\NewAnnouncementNotification;
 

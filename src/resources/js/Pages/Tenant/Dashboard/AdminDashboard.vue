@@ -27,6 +27,9 @@ const formatDate = (dateString) => {
     year: 'numeric',
   });
 };
+
+const stripHtml = (html) => (html ?? '').replace(/<[^>]*>/g, '').trim();
+const announcementPreview = (a) => a.excerpt?.trim() || stripHtml(a.content);
 </script>
 
 <template>
@@ -114,7 +117,7 @@ const formatDate = (dateString) => {
             >
               <div class="text-xs text-slate-400">{{ formatDate(announcement.created_at) }}</div>
               <h4 class="text-sm font-semibold text-slate-800 group-hover:text-blue-600">{{ announcement.title }}</h4>
-              <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ announcement.content }}</p>
+              <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ announcementPreview(announcement) }}</p>
             </Link>
             <div v-if="!recentAnnouncements?.length" class="py-8 text-center">
               <p class="text-sm text-slate-400">Belum ada pengumuman.</p>

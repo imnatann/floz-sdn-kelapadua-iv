@@ -12,7 +12,7 @@ const props = defineProps({
 
 const deleteAnnouncement = () => {
     if (confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')) {
-        router.delete(`/tenant/announcements/${props.announcement.id}`);
+        router.delete(`/announcements/${props.announcement.id}`);
     }
 };
 

@@ -20,7 +20,7 @@ const form = useForm({
   update_account: false,
 });
 
-const submit = () => form.put(`/tenant/students/${props.student.id}`);
+const submit = () => form.put(`/students/${props.student.id}`);
 
 import { router, usePage } from '@inertiajs/vue3';
 const permissions = usePage().props.auth.permissions;

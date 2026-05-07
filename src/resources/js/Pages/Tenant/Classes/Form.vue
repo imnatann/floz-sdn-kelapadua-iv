@@ -23,7 +23,7 @@ const form = useForm({
 
 const submit = () => {
   if (isEdit) {
-    form.put(`/tenant/classes/${props.classData.id}`, { preserveScroll: true });
+    form.put(`/classes/${props.classData.id}`, { preserveScroll: true });
   } else {
     form.post('/classes', { preserveScroll: true });
   }

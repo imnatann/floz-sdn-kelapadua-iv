@@ -23,7 +23,7 @@ const form = useForm({});
 
 const deleteSchedule = () => {
     if (confirm('Hapus jadwal ini?')) {
-        form.delete(route('tenant.schedules.destroy', props.schedule.id), {
+        form.delete(route('schedules.destroy', props.schedule.id), {
             preserveScroll: true,
             onSuccess: () => emit('delete'),
         });
