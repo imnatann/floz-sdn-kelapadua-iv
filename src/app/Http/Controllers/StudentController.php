@@ -124,7 +124,7 @@ class StudentController extends Controller
             return SchoolClass::where('status', 'active')->get(['id', 'name']);
         });
 
-        return Inertia::render('Tenant/Students/Index', [
+        return Inertia::render('Students/Index', [
             'students' => $students,
             'classes'  => $classes,
             'filters'  => $request->only(['search', 'class_id', 'status']),
@@ -137,7 +137,7 @@ class StudentController extends Controller
 
         $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
 
-        return Inertia::render('Tenant/Students/Create', [
+        return Inertia::render('Students/Create', [
             'classes' => $classes,
         ]);
     }
@@ -254,7 +254,7 @@ class StudentController extends Controller
                 ];
             })->values();
 
-        return Inertia::render('Tenant/Students/Show', [
+        return Inertia::render('Students/Show', [
             'student' => $student,
             'academicHistory' => $academicHistory
         ]);
@@ -277,7 +277,7 @@ class StudentController extends Controller
 
         $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
 
-        return Inertia::render('Tenant/Students/Edit', [
+        return Inertia::render('Students/Edit', [
             'student' => $student,
             'classes' => $classes,
         ]);

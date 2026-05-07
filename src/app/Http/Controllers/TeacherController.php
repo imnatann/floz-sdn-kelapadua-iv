@@ -24,7 +24,7 @@ class TeacherController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return Inertia::render('Tenant/Staff/Index', [
+        return Inertia::render('Staff/Index', [
             'teachers' => $teachers,
             'filters'  => $request->only(['search', 'status']),
         ]);
@@ -34,7 +34,7 @@ class TeacherController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('create', Teacher::class);
 
-        return Inertia::render('Tenant/Staff/Create');
+        return Inertia::render('Staff/Create');
     }
 
     public function store(Request $request)
@@ -64,7 +64,7 @@ class TeacherController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('update', $staff);
 
-        return Inertia::render('Tenant/Staff/Edit', [
+        return Inertia::render('Staff/Edit', [
             'teacher' => $staff,
         ]);
     }

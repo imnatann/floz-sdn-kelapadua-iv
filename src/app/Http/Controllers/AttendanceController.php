@@ -40,7 +40,7 @@ class AttendanceController extends Controller
                          ->orderBy('name')
                          ->get();
 
-        return Inertia::render('Tenant/Attendance/Index', [
+        return Inertia::render('Attendance/Index', [
             'classes' => $classes,
         ]);
     }
@@ -68,7 +68,7 @@ class AttendanceController extends Controller
             ->get()
             ->groupBy('student_id');
 
-        return Inertia::render('Tenant/Attendance/Show', [
+        return Inertia::render('Attendance/Show', [
             'schoolClass' => $class,
             'students' => $class->students()->orderBy('name')->get(),
             'meetings' => $meetings,
@@ -96,7 +96,7 @@ class AttendanceController extends Controller
             
         $nextMeetingNumber = $latestMeeting + 1;
 
-        return Inertia::render('Tenant/Attendance/Create', [
+        return Inertia::render('Attendance/Create', [
             'schoolClass' => $class,
             'students' => $class->students()->orderBy('name')->get(),
             'nextMeetingNumber' => $nextMeetingNumber,
@@ -172,7 +172,7 @@ class AttendanceController extends Controller
 
         $meetingDate = $attendances->first()->date->format('Y-m-d');
 
-        return Inertia::render('Tenant/Attendance/Edit', [
+        return Inertia::render('Attendance/Edit', [
             'schoolClass' => $class,
             'students' => $class->students()->orderBy('name')->get(),
             'meetingNumber' => $meeting,

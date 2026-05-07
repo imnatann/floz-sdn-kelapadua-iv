@@ -38,7 +38,7 @@ class AnnouncementController extends Controller
             ->paginate(12) // Grid layout usually takes more space
             ->withQueryString();
 
-        return inertia('Tenant/Announcements/Index', [
+        return inertia('Announcements/Index', [
             'announcements' => $announcements,
             'filters' => $request->only(['search']),
         ]);
@@ -48,19 +48,19 @@ class AnnouncementController extends Controller
     {
         // Add authorization check if needed (e.g. student shouldn't see teacher announcements)
         
-        return inertia('Tenant/Announcements/Show', [
+        return inertia('Announcements/Show', [
             'announcement' => $announcement->load('author'),
         ]);
     }
 
     public function create()
     {
-        return inertia('Tenant/Announcements/Form');
+        return inertia('Announcements/Form');
     }
 
     public function edit(Announcement $announcement)
     {
-        return inertia('Tenant/Announcements/Form', [
+        return inertia('Announcements/Form', [
             'announcement' => $announcement,
         ]);
     }

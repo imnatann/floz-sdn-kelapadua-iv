@@ -53,7 +53,7 @@ class GradeController extends Controller
             });
         }
 
-        return Inertia::render('Tenant/Grades/Index', [
+        return Inertia::render('Grades/Index', [
             'classes'    => $classes,
             'semesters'  => $semesters,
             'subjects'   => $subjects,
@@ -89,7 +89,7 @@ class GradeController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        return Inertia::render('Tenant/Grades/BatchInput', [
+        return Inertia::render('Grades/BatchInput', [
             'class'          => $class,
             'semester'       => $semester,
             'subject'        => $subject,

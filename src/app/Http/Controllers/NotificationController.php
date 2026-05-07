@@ -10,7 +10,7 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        return Inertia::render('Tenant/Notifications/Index');
+        return Inertia::render('Notifications/Index');
     }
 
     public function data(Request $request)

@@ -40,7 +40,7 @@ class TaskController extends Controller
         
         $classes = $query->withCount('students')->orderBy('name')->get();
 
-        return Inertia::render('Tenant/Tasks/Index', [
+        return Inertia::render('Tasks/Index', [
             'classes' => $classes,
         ]);
     }
@@ -68,7 +68,7 @@ class TaskController extends Controller
             ->orderByDesc('task_date')
             ->get();
             
-        return Inertia::render('Tenant/Tasks/ClassIndex', [
+        return Inertia::render('Tasks/ClassIndex', [
             'schoolClass' => $class,
             'tasks' => $tasks,
             'studentsCount' => $class->students()->count()
@@ -100,7 +100,7 @@ class TaskController extends Controller
         
         $subjects = $subjectsQuery->orderBy('name')->get();
 
-        return Inertia::render('Tenant/Tasks/Create', [
+        return Inertia::render('Tasks/Create', [
             'schoolClass' => $class,
             'subjects' => $subjects,
             'todayDate' => Carbon::today()->format('Y-m-d')
@@ -162,7 +162,7 @@ class TaskController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        return Inertia::render('Tenant/Tasks/Show', [
+        return Inertia::render('Tasks/Show', [
             'task' => $task,
             'students' => $students,
             'scores' => $scores,

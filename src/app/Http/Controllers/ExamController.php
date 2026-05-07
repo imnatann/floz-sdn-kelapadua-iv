@@ -40,7 +40,7 @@ class ExamController extends Controller
         
         $classes = $query->withCount('students')->orderBy('name')->get();
 
-        return Inertia::render('Tenant/Exams/Index', [
+        return Inertia::render('Exams/Index', [
             'classes' => $classes,
         ]);
     }
@@ -68,7 +68,7 @@ class ExamController extends Controller
             ->orderByDesc('exam_date')
             ->get();
             
-        return Inertia::render('Tenant/Exams/ClassIndex', [
+        return Inertia::render('Exams/ClassIndex', [
             'schoolClass' => $class,
             'exams' => $exams,
             'studentsCount' => $class->students()->count()
@@ -100,7 +100,7 @@ class ExamController extends Controller
         
         $subjects = $subjectsQuery->orderBy('name')->get();
 
-        return Inertia::render('Tenant/Exams/Create', [
+        return Inertia::render('Exams/Create', [
             'schoolClass' => $class,
             'subjects' => $subjects,
             'todayDate' => Carbon::today()->format('Y-m-d')
@@ -160,7 +160,7 @@ class ExamController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        return Inertia::render('Tenant/Exams/Show', [
+        return Inertia::render('Exams/Show', [
             'exam' => $exam,
             'students' => $students,
             'scores' => $scores,

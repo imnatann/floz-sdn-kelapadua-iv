@@ -36,7 +36,7 @@ class AuditLogController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return Inertia::render('Tenant/AuditLogs/Index', [
+        return Inertia::render('AuditLogs/Index', [
             'logs' => $logs,
             'filters' => $filters,
         ]);

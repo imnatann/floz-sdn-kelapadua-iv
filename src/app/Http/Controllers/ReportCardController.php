@@ -62,7 +62,7 @@ class ReportCardController extends Controller
                     ->first();
             }
 
-            return Inertia::render('Tenant/ReportCards/StudentIndex', [
+            return Inertia::render('ReportCards/StudentIndex', [
                 'semesters'   => $semesters,
                 'grades'      => $grades,
                 'reportCard'  => $reportCard,
@@ -83,7 +83,7 @@ class ReportCardController extends Controller
         $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
         $semesters = Semester::with('academicYear')->get();
 
-        return Inertia::render('Tenant/ReportCards/Index', [
+        return Inertia::render('ReportCards/Index', [
             'reportCards' => $reportCards,
             'classes'     => $classes,
             'semesters'   => $semesters,
@@ -163,7 +163,7 @@ class ReportCardController extends Controller
             ->orderBy('subject_id')
             ->get();
 
-        return Inertia::render('Tenant/ReportCards/Show', [
+        return Inertia::render('ReportCards/Show', [
             'reportCard' => $reportCard,
             'grades'     => $grades,
         ]);

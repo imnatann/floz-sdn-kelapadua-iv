@@ -43,7 +43,7 @@ class ScheduleController extends Controller
                 ->get()
             : [];
 
-        return Inertia::render('Tenant/Schedules/Index', [
+        return Inertia::render('Schedules/Index', [
             'classes' => $classes,
             'schedules' => $schedules,
             'teachingAssignments' => $teachingAssignments,

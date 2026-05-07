@@ -31,7 +31,7 @@ class TeachingAssignmentController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return Inertia::render('Tenant/TeachingAssignments/Index', [
+        return Inertia::render('TeachingAssignments/Index', [
             'assignments'   => $assignments,
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
             'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
@@ -43,7 +43,7 @@ class TeachingAssignmentController extends Controller
 
     public function create()
     {
-        return Inertia::render('Tenant/TeachingAssignments/Create', [
+        return Inertia::render('TeachingAssignments/Create', [
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
             'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
             'classes'       => SchoolClass::where('status', 'active')->orderBy('name')->get(['id', 'name']),
@@ -53,7 +53,7 @@ class TeachingAssignmentController extends Controller
 
     public function edit(TeachingAssignment $teachingAssignment)
     {
-        return Inertia::render('Tenant/TeachingAssignments/Edit', [
+        return Inertia::render('TeachingAssignments/Edit', [
             'assignment'    => $teachingAssignment->load(['teacher', 'subject', 'schoolClass', 'academicYear']),
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
             'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),

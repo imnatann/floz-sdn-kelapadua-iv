@@ -41,7 +41,7 @@ class MeetingController extends Controller
             }
         }
 
-        return Inertia::render('Tenant/Courses/Index', [
+        return Inertia::render('Courses/Index', [
             'courses' => $courses,
             'is_teacher' => $user->isTeacher(),
         ]);
@@ -85,7 +85,7 @@ class MeetingController extends Controller
             });
         }
 
-        return Inertia::render('Tenant/Courses/Show', [
+        return Inertia::render('Courses/Show', [
             'course' => $teachingAssignment,
             'meetings' => $meetings,
             'is_teacher' => $user->isTeacher(),
@@ -123,7 +123,7 @@ class MeetingController extends Controller
             }
         ]);
 
-        return Inertia::render('Tenant/Meetings/Show', [
+        return Inertia::render('Meetings/Show', [
             'course' => $teachingAssignment,
             'meeting' => $meeting,
             'is_teacher' => $user->isTeacher(),
@@ -224,7 +224,7 @@ class MeetingController extends Controller
             'assignments' => function($q) { $q->orderBy('id'); }
         ]);
 
-        return Inertia::render('Tenant/Materials/Show', [
+        return Inertia::render('Materials/Show', [
             'course' => $course,
             'meeting' => $meeting,
             'material' => $meetingMaterial,
