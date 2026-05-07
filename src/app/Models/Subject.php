@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\UsesTenantConnection;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Subject extends Model
 {
-    use HasFactory, UsesTenantConnection, Auditable;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'code', 'name', 'education_level', 'grade_level', 'kkm',

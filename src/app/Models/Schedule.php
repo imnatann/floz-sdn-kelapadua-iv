@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\UsesTenantConnection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use App\Traits\Auditable;
 
 class Schedule extends Model
 {
-    use HasFactory, HasUuids, UsesTenantConnection, Auditable;
+    use HasFactory, HasUuids, Auditable;
 
     protected $fillable = [
         'teaching_assignment_id',
