@@ -1,10 +1,10 @@
 <script setup>
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   announcement: Object,

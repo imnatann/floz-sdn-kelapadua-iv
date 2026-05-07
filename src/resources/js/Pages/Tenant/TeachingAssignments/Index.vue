@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   assignments: Object,

@@ -1,12 +1,12 @@
 <script setup>
 import { Link, Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   semesters: Array,

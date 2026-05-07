@@ -1,10 +1,10 @@
 <script setup>
 import { useForm, Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   classRoom: Object,

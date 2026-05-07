@@ -1,10 +1,10 @@
 <script setup>
 import { useForm, Head, Link } from '@inertiajs/vue3';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   assignment: Object,

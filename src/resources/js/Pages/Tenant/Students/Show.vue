@@ -1,7 +1,7 @@
 <script setup>
 import { Head, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import StudentProfileTab from './Tabs/StudentProfileTab.vue';
@@ -9,7 +9,7 @@ import StudentAcademicTab from './Tabs/StudentAcademicTab.vue';
 import StudentMutationTab from './Tabs/StudentMutationTab.vue';
 import StudentCounselingTab from './Tabs/StudentCounselingTab.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({ 
   student: Object,

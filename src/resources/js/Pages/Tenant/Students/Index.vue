@@ -2,14 +2,14 @@
 import { Link, Head, router, usePage } from '@inertiajs/vue3';
 import ImportModal from './ImportModal.vue';
 import { ref, watch } from 'vue';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import SearchInput from '@/Components/UI/SearchInput.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   students: Object,

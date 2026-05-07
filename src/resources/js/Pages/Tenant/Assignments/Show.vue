@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
@@ -9,7 +9,7 @@ import Textarea from '@/Components/UI/Textarea.vue';
 import Input from '@/Components/UI/Input.vue';
 import ActivityNavigation from '@/Components/UI/ActivityNavigation.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   assignment: Object,

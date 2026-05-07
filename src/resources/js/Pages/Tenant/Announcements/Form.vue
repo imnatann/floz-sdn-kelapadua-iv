@@ -1,12 +1,12 @@
 <script setup>
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import Button from '@/Components/UI/Button.vue';
 import TiptapEditor from '@/Components/Editor/TiptapEditor.vue';
 import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   announcement: {

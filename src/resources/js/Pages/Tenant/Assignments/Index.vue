@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import SearchInput from '@/Components/UI/SearchInput.vue';
@@ -9,7 +9,7 @@ import FormSelect from '@/Components/UI/FormSelect.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
 import debounce from 'lodash/debounce';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   assignments: Object,

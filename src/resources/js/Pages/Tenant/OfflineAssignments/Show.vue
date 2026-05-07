@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
@@ -9,7 +9,7 @@ import Label from '@/Components/UI/Label.vue';
 import Input from '@/Components/UI/Input.vue';
 import Textarea from '@/Components/UI/Textarea.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   assignment: Object,

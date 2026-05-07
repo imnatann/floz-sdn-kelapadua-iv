@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -11,7 +11,7 @@ import 'dayjs/locale/id';
 dayjs.extend(relativeTime);
 dayjs.locale('id');
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const notifications = ref({ data: [], links: [] });
 const loading = ref(true);

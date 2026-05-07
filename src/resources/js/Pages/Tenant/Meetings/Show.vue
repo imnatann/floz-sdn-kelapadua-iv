@@ -1,11 +1,11 @@
 <script setup>
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Button from '@/Components/UI/Button.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   course: Object,

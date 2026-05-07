@@ -1,5 +1,5 @@
 <script setup>
-import TenantLayout from '@/Layouts/TenantLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import Modal from '@/Components/UI/Modal.vue';
@@ -7,7 +7,7 @@ import FormInput from '@/Components/UI/FormInput.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
 import Button from '@/Components/UI/Button.vue';
 
-defineOptions({ layout: TenantLayout });
+defineOptions({ layout: AppLayout });
 
 const props = defineProps({
     classes: Array,
