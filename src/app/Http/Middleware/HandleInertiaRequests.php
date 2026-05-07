@@ -34,17 +34,14 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => function () use ($request) {
                     $user = $request->user();
-                    if ($user && app()->bound('currentTenant')) {
+                    if ($user) {
                         $user->load(['student:id,email', 'teacher:id,email']);
                     }
                     return $user;
                 },
                 'permissions' => function () use ($request) {
                     $user = $request->user();
-                    
-                    // Only check School Permissions if the user is a Tenant User (Teacher/Student/School Admin)
-                    // This prevents "TypeError: Argument #1 must be of type App\Models\User"
-                    // when a Central Admin (App\Models\User) accesses the dashboard.
+
                     if (! $user instanceof \App\Models\User) {
                         return [];
                     }
@@ -60,8 +57,12 @@ class HandleInertiaRequests extends Middleware
                     ];
                 },
             ],
-            'tenant' => fn () => $request->attributes->get('tenant') ?? (app()->bound('currentTenant') ? app('currentTenant') : null),
-            'subscription' => fn () => $request->attributes->get('subscription'),
+            'school' => fn () => [
+                'name'    => config('school.name'),
+                'address' => config('school.address'),
+                'email'   => config('school.email'),
+                'phone'   => config('school.phone'),
+            ],
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'error'   => fn () => $request->session()->get('error'),

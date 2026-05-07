@@ -42,7 +42,7 @@ class NewAssignmentNotification extends Notification
             'type'    => 'assignment',
             'title'   => 'Penugasan Baru',
             'message' => "Anda ditugaskan mengajar {$this->assignment->subject->name} di kelas {$this->assignment->schoolClass->name}.",
-            'link'    => route('tenant.teaching-assignments.index'),
+            'link'    => route('teaching-assignments.index'),
         ];
     }
 
@@ -56,7 +56,7 @@ class NewAssignmentNotification extends Notification
             'type'    => 'assignment',
             'title'   => 'Penugasan Baru',
             'message' => "Anda ditugaskan mengajar {$this->assignment->subject->name} di kelas {$this->assignment->schoolClass->name}.",
-            'link'    => route('tenant.teaching-assignments.index'),
+            'link'    => route('teaching-assignments.index'),
             'created_at' => now()->toIso8601String(),
             'read_at' => null,
         ]);

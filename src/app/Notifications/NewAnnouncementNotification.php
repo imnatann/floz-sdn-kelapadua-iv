@@ -44,7 +44,7 @@ class NewAnnouncementNotification extends Notification implements ShouldBroadcas
             'type'    => 'announcement',
             'title'   => 'Pengumuman Baru',
             'message' => $this->announcement->title,
-            'link'    => route('tenant.announcements.show', $this->announcement->id), // Assuming show route exists
+            'link'    => route('announcements.show', $this->announcement->id), // Assuming show route exists
         ];
     }
 
@@ -58,7 +58,7 @@ class NewAnnouncementNotification extends Notification implements ShouldBroadcas
             'type'    => 'announcement',
             'title'   => 'Pengumuman Baru',
             'message' => $this->announcement->title,
-            'link'    => route('tenant.announcements.show', $this->announcement->id),
+            'link'    => route('announcements.show', $this->announcement->id),
             'created_at' => now()->toIso8601String(),
             'read_at' => null,
         ]);

@@ -139,9 +139,8 @@ class GradeController extends Controller
             'grades.*.student_id' => 'required|exists:students,id',
         ]);
 
-        $tenant = app('currentTenant');
         $subject = Subject::findOrFail($validated['subject_id']);
-        $educationLevel = $tenant->education_level->value ?? 'SMA';
+        $educationLevel = config('school.education_level', 'SD');
 
         $studentIdsToUpdate = [];
 

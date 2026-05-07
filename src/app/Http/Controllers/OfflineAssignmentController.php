@@ -169,7 +169,7 @@ class OfflineAssignmentController extends Controller
         if ($request->meeting_id) {
             $meeting = \App\Models\Meeting::find($request->meeting_id);
             if ($meeting) {
-                return redirect("/tenant/courses/{$meeting->teaching_assignment_id}")->with('success', 'Tugas berhasil dibuat.');
+                return redirect("/courses/{$meeting->teaching_assignment_id}")->with('success', 'Tugas berhasil dibuat.');
             }
         }
 

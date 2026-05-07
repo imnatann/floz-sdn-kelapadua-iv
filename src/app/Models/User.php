@@ -96,6 +96,6 @@ class User extends Authenticatable
      */
     public function receivesBroadcastNotificationsOn(): string
     {
-        return 'App.Models.Tenant.User.'.$this->id;
+        return 'App.Models.User.'.$this->id;
     }
 }

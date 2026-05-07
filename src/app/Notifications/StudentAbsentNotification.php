@@ -46,7 +46,7 @@ class StudentAbsentNotification extends Notification implements ShouldQueue
             'type'    => 'attendance',
             'title'   => 'Pemberitahuan Ketidakhadiran',
             'message' => "{$studentName} tercatat {$status} pada {$date}.",
-            'link'    => route('tenant.attendance.index'), // Or link to specific detail if available
+            'link'    => route('attendance.index'), // Or link to specific detail if available
         ];
     }
 
@@ -64,7 +64,7 @@ class StudentAbsentNotification extends Notification implements ShouldQueue
             'type'    => 'attendance',
             'title'   => 'Pemberitahuan Ketidakhadiran',
             'message' => "{$studentName} tercatat {$status} pada {$date}.",
-            'link'    => route('tenant.attendance.index'),
+            'link'    => route('attendance.index'),
             'created_at' => now()->toIso8601String(),
             'read_at' => null,
         ]);
