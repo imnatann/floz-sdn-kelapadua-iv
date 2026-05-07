@@ -79,7 +79,7 @@ const closeMaterialModal = () => {
 };
 
 const submitMaterial = () => {
-  materialForm.post(`/tenant/meetings/${props.meeting.id}/materials`, {
+  materialForm.post(`/meetings/${props.meeting.id}/materials`, {
     preserveScroll: true,
     forceFormData: true,
     onSuccess: () => closeMaterialModal(),
@@ -88,7 +88,7 @@ const submitMaterial = () => {
 
 const deleteMaterial = (materialId) => {
   if (!confirm('Hapus materi ini?')) return;
-  router.delete(`/tenant/materials/${materialId}`, { preserveScroll: true });
+  router.delete(`/materials/${materialId}`, { preserveScroll: true });
 };
 </script>
 

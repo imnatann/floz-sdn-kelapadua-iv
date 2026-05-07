@@ -41,7 +41,7 @@ const form = useForm({
 });
 
 const submitAssignment = () => {
-    form.post(`/tenant/offline-assignments/${props.assignment.id}/submit`, {
+    form.post(`/offline-assignments/${props.assignment.id}/submit`, {
         preserveScroll: true,
         onSuccess: () => {
             form.reset('file');

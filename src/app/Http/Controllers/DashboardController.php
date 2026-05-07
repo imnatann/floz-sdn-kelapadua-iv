@@ -19,10 +19,10 @@ use OpenApi\Attributes as OA;
 class DashboardController extends Controller
 {
     #[OA\Get(
-        path: "/tenant/dashboard",
-        tags: ["Tenant Dashboard"],
-        summary: "Tenant Dashboard Stats",
-        description: "Get statistics for the tenant dashboard"
+        path: "/dashboard",
+        tags: ["Dashboard"],
+        summary: "Dashboard Stats",
+        description: "Get statistics for the school dashboard"
     )]
     #[OA\Response(
         response: 200,

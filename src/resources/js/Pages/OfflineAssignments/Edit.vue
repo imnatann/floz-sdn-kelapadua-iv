@@ -32,7 +32,7 @@ const toggleClass = (classId) => {
 };
 
 const submit = () => {
-    form.post(`/tenant/offline-assignments/${props.assignment.id}`);
+    form.post(`/offline-assignments/${props.assignment.id}`);
 };
 </script>
 

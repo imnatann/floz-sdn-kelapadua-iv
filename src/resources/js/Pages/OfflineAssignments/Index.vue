@@ -52,7 +52,7 @@ const formatClasses = (classes) => {
 
 const deleteAssignment = (id) => {
   if (confirm('Hapus tugas ini?')) {
-    router.delete(`/tenant/offline-assignments/${id}`);
+    router.delete(`/offline-assignments/${id}`);
   }
 };
 

@@ -21,8 +21,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | JSON API endpoints for the FLOZ Mobile App (Flutter).
-| All routes prefixed with /api/v1
-| No tenant identification needed — single school system.
+| All routes prefixed with /api/v1.
 |
 */
 

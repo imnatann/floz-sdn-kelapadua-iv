@@ -40,9 +40,9 @@
 <body>
     <div class="header">
         <h2>Laporan Hasil Belajar</h2>
-        <h2>{{ $tenant->name }}</h2>
-        <p>{{ $tenant->address }}</p>
-        <p>Email: {{ $tenant->email }} | Telp: {{ $tenant->phone }}</p>
+        <h2>{{ $school->name }}</h2>
+        <p>{{ $school->address }}</p>
+        <p>Email: {{ $school->email }} | Telp: {{ $school->phone }}</p>
     </div>
 
     @yield('content')

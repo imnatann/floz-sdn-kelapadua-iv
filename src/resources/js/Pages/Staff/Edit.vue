@@ -22,7 +22,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.put(`/tenant/staff/${props.teacher.id}`, {
+  form.put(`/staff/${props.teacher.id}`, {
     preserveScroll: true,
   });
 };

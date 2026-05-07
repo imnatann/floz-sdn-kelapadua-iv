@@ -50,7 +50,7 @@ if (props.answers) {
 }
 
 const submitManual = () => {
-  manualForm.post(`/tenant/assignments/${props.assignment.id}/submit`, {
+  manualForm.post(`/assignments/${props.assignment.id}/submit`, {
     preserveScroll: true,
     onSuccess: () => manualForm.reset('file'),
   });
@@ -61,7 +61,7 @@ const submitQuiz = () => {
     question_id: q.id,
     answer: quizAnswers[q.id] || '',
   }));
-  router.post(`/tenant/assignments/${props.assignment.id}/submit`, {
+  router.post(`/assignments/${props.assignment.id}/submit`, {
     answers: answersArr,
   }, { preserveScroll: true });
 };

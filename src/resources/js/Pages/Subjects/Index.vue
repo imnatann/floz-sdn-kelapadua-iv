@@ -32,7 +32,7 @@ const applyFilters = () => {
 
 const confirmDelete = (subject) => {
   if (confirm(`Yakin ingin menghapus mata pelajaran ${subject.name}?`)) {
-    router.delete(`/tenant/subjects/${subject.id}`);
+    router.delete(`/subjects/${subject.id}`);
   }
 };
 

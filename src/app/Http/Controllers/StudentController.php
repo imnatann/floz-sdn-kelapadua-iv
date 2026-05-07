@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
 class StudentController extends Controller
 {
     #[OA\Post(
-        path: "/tenant/students/import",
+        path: "/students/import",
         tags: ["Students"],
         summary: "Import Students",
         description: "Import students from Excel/CSV file"
@@ -60,7 +60,7 @@ class StudentController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/students/template",
+        path: "/students/template",
         tags: ["Students"],
         summary: "Download Import Template",
         description: "Download CSV template for student import"
@@ -93,7 +93,7 @@ class StudentController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/students",
+        path: "/students",
         tags: ["Students"],
         summary: "List Students",
         description: "Get list of students with filtering"
@@ -143,7 +143,7 @@ class StudentController extends Controller
     }
 
     #[OA\Post(
-        path: "/tenant/students",
+        path: "/students",
         tags: ["Students"],
         summary: "Create Student",
         description: "Create a new student"
@@ -199,7 +199,6 @@ class StudentController extends Controller
         if ($request->create_account) {
             $email = $request->nis . '@siswa.sekolah.id';
             
-            // Check if user with email already exists in TENANT database
             $existingUser = User::where('email', $email)->first();
             
             if (!$existingUser) {
@@ -220,7 +219,7 @@ class StudentController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/students/{student}",
+        path: "/students/{student}",
         tags: ["Students"],
         summary: "Show Student",
         description: "Get student details"
@@ -284,7 +283,7 @@ class StudentController extends Controller
     }
 
     #[OA\Put(
-        path: "/tenant/students/{student}",
+        path: "/students/{student}",
         tags: ["Students"],
         summary: "Update Student",
         description: "Update student details"
@@ -363,7 +362,7 @@ class StudentController extends Controller
     }
 
     #[OA\Delete(
-        path: "/tenant/students/{student}",
+        path: "/students/{student}",
         tags: ["Students"],
         summary: "Delete Student",
         description: "Delete a student"

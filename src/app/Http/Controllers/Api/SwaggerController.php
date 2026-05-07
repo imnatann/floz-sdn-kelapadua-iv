@@ -8,7 +8,7 @@ use OpenApi\Attributes as OA;
 #[OA\Info(
     version: '1.0.0',
     title: 'FLOZ Platform API',
-    description: 'API documentation for FLOZ Platform and Tenant specific features'
+    description: 'API documentation for SDN Kelapadua IV school management system'
 )]
 #[OA\Server(
     url: 'http://localhost:8000/api',

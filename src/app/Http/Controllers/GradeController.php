@@ -23,7 +23,7 @@ class GradeController extends Controller
     ) {}
 
     #[OA\Get(
-        path: "/tenant/grades",
+        path: "/grades",
         tags: ["Grades"],
         summary: "List Grades",
         description: "Get list of grades with filtering"
@@ -63,7 +63,7 @@ class GradeController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/grades/batch",
+        path: "/grades/batch",
         tags: ["Grades"],
         summary: "Batch Input View",
         description: "Get view for batch grade input"
@@ -99,7 +99,7 @@ class GradeController extends Controller
     }
 
     #[OA\Post(
-        path: "/tenant/grades/batch",
+        path: "/grades/batch",
         tags: ["Grades"],
         summary: "Store Batch Grades",
         description: "Store multiple grades at once"

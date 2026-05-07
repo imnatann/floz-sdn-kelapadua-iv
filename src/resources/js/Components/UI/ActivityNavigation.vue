@@ -55,9 +55,9 @@ const nextActivity = computed(() => {
 const navigateTo = (activity) => {
   if (!activity) return;
   if (activity.itemType === 'material') {
-    router.visit(`/tenant/materials/${activity.id}`);
+    router.visit(`/materials/${activity.id}`);
   } else if (activity.itemType === 'assignment') {
-    router.visit(`/tenant/assignments/${activity.id}`);
+    router.visit(`/assignments/${activity.id}`);
   }
 };
 
@@ -67,9 +67,9 @@ const jumpToActivity = (event) => {
   if (!value) return;
   const [type, id] = value.split('-');
   if (type === 'material') {
-    router.visit(`/tenant/materials/${id}`);
+    router.visit(`/materials/${id}`);
   } else {
-    router.visit(`/tenant/assignments/${id}`);
+    router.visit(`/assignments/${id}`);
   }
 };
 </script>

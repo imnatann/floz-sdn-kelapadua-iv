@@ -37,7 +37,7 @@ const applyFilters = () => {
 
 const confirmDelete = (assignment) => {
   if (confirm('Yakin ingin menghapus penugasan ini?')) {
-    router.delete(`/tenant/teaching-assignments/${assignment.id}`);
+    router.delete(`/teaching-assignments/${assignment.id}`);
   }
 };
 </script>

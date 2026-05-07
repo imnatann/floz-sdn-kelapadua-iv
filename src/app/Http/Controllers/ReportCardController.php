@@ -20,7 +20,7 @@ class ReportCardController extends Controller
     ) {}
 
     #[OA\Get(
-        path: "/tenant/report-cards",
+        path: "/report-cards",
         tags: ["Report Cards"],
         summary: "List Report Cards",
         description: "Get list of report cards with filtering"
@@ -92,7 +92,7 @@ class ReportCardController extends Controller
     }
 
     #[OA\Post(
-        path: "/tenant/report-cards/generate",
+        path: "/report-cards/generate",
         tags: ["Report Cards"],
         summary: "Generate Report Cards",
         description: "Generate report cards for a class and semester"
@@ -142,7 +142,7 @@ class ReportCardController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/report-cards/{reportCard}",
+        path: "/report-cards/{reportCard}",
         tags: ["Report Cards"],
         summary: "Show Report Card",
         description: "Get detailed view of a report card"
@@ -170,7 +170,7 @@ class ReportCardController extends Controller
     }
 
     #[OA\Post(
-        path: "/tenant/report-cards/{reportCard}/publish",
+        path: "/report-cards/{reportCard}/publish",
         tags: ["Report Cards"],
         summary: "Publish Report Card",
         description: "Mark a report card as published"
@@ -185,7 +185,7 @@ class ReportCardController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/report-cards/{reportCard}/pdf",
+        path: "/report-cards/{reportCard}/pdf",
         tags: ["Report Cards"],
         summary: "Download Report Card PDF",
         description: "Download the PDF version of the report card"

@@ -27,7 +27,7 @@ const startEditMeeting = (meeting) => {
 const cancelEditMeeting = () => { editingMeetingId.value = null; };
 
 const saveEditMeeting = (meeting) => {
-  router.put(`/tenant/meetings/${meeting.id}`, {
+  router.put(`/meetings/${meeting.id}`, {
     title: editForm.title,
     description: editForm.description,
   }, { 
@@ -38,7 +38,7 @@ const saveEditMeeting = (meeting) => {
 
 // ---- LOCK/UNLOCK ----
 const toggleLock = (meeting) => {
-  router.put(`/tenant/meetings/${meeting.id}`, {
+  router.put(`/meetings/${meeting.id}`, {
     is_locked: !meeting.is_locked,
   }, { preserveScroll: true });
 };
@@ -67,7 +67,7 @@ const closeMaterialModal = () => {
 };
 
 const submitMaterial = () => {
-  materialForm.post(`/tenant/meetings/${activeMeetingId.value}/materials`, {
+  materialForm.post(`/meetings/${activeMeetingId.value}/materials`, {
     preserveScroll: true,
     forceFormData: true,
     onSuccess: () => closeMaterialModal(),

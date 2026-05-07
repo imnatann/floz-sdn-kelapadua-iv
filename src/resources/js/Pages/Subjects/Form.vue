@@ -60,7 +60,7 @@ watch(() => form.education_level, (newLevel) => {
 
 const submit = () => {
   if (isEdit) {
-    form.put(`/tenant/subjects/${props.subject.id}`, { preserveScroll: true });
+    form.put(`/subjects/${props.subject.id}`, { preserveScroll: true });
   } else {
     form.post('/subjects', { preserveScroll: true });
   }

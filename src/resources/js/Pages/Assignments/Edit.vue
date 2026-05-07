@@ -63,7 +63,7 @@ const removeOption = (qIndex, oIndex) => {
 };
 
 const submit = () => {
-    form.post(`/tenant/assignments/${props.assignment.id}`);
+    form.post(`/assignments/${props.assignment.id}`);
 };
 
 const isQuiz = computed(() => form.type === 'quiz');

@@ -20,7 +20,7 @@ const form = useForm({
 });
 
 const submitCorrection = () => {
-  form.post(`/tenant/assignments/${props.assignment.id}/student/${props.student.id}`, {
+  form.post(`/assignments/${props.assignment.id}/student/${props.student.id}`, {
     preserveScroll: true,
     forceFormData: true,
   });
