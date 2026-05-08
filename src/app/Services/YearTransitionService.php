@@ -20,6 +20,28 @@ class YearTransitionService
     private const GRADE_STEP = [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6];
 
     /**
+     * Compute a stable SHA-256 fingerprint of the full mutation plan.
+     *
+     * Canonical form: mutations sorted by student_id + summary + source/target AY IDs.
+     * Returns a 64-char lowercase hex string.
+     */
+    public function computePlanHash(array $plan, int $sourceAyId, int $targetAyId): string
+    {
+        // Sort mutations by student_id for canonical ordering
+        $mutations = $plan['mutations'];
+        usort($mutations, fn ($a, $b) => $a['student_id'] <=> $b['student_id']);
+
+        $canonical = json_encode([
+            'source_ay_id' => $sourceAyId,
+            'target_ay_id' => $targetAyId,
+            'summary'      => $plan['summary'],
+            'mutations'    => $mutations,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return hash('sha256', $canonical);
+    }
+
+    /**
      * Build full mutation plan without writing to DB.
      *
      * BLOCK-4: Uses composite key (grade_level + section letter) to resolve target class.
@@ -116,13 +138,27 @@ class YearTransitionService
 
         $summary['excluded'] += $excludedStudents;
 
-        return [
+        // Annotate each new class with estimated student count (students being promoted/retained into it)
+        $studentCountByTargetName = [];
+        foreach ($mutations as $m) {
+            if ($m['to_class_name'] !== null) {
+                $studentCountByTargetName[$m['to_class_name']] = ($studentCountByTargetName[$m['to_class_name']] ?? 0) + 1;
+            }
+        }
+        $newClasses = array_map(function ($c) use ($studentCountByTargetName) {
+            $c['student_count'] = $studentCountByTargetName[$c['name']] ?? 0;
+            return $c;
+        }, $newClasses);
+
+        $plan = [
             'source_ay'   => $sourceAy->toArray(),
             'target_ay'   => $targetAy->toArray(),
             'new_classes' => $newClasses,
             'mutations'   => $mutations,
             'summary'     => $summary,
         ];
+
+        return $plan;
     }
 
     /**

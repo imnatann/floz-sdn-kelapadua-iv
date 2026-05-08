@@ -111,6 +111,7 @@ const gradeLabel = (g) => `Kelas ${g}`;
                         </th>
                         <th class="px-4 py-3 text-left">Nama Kelas</th>
                         <th class="px-4 py-3 text-left">Tingkat</th>
+                        <th class="px-4 py-3 text-right">Jumlah Siswa</th>
                         <th class="px-4 py-3 text-left">Wali Kelas</th>
                     </tr>
                 </thead>
@@ -140,8 +141,12 @@ const gradeLabel = (g) => `Kelas ${g}`;
                         <td class="px-4 py-3 text-sm text-slate-600">
                             {{ gradeLabel(cls.grade_level) }}
                         </td>
+                        <td class="px-4 py-3 text-sm text-right">
+                            <span v-if="cls.student_count > 0" class="font-medium text-slate-700">{{ cls.student_count }}</span>
+                            <span v-else class="text-slate-400">—</span>
+                        </td>
                         <td class="px-4 py-3 text-sm text-slate-400 italic">
-                            (Belum ditentukan)
+                            Wali kelas akan diisi setelahnya
                         </td>
                     </tr>
                 </tbody>
