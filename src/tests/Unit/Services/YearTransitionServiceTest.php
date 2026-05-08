@@ -439,3 +439,193 @@ it('computePlanHash returns different hash when mutations differ', function () {
 
     expect($hash1)->not->toBe($hash2);
 });
+
+// ── T3: zero eligible students → empty log ────────────────────────────────────
+
+it('executeTransition with zero eligible students writes empty log', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    // Source AY has a class but NO students in it
+    makeClass($sourceAy, 3, 'Kelas 3A');
+    $admin = \App\Models\User::factory()->create(['role' => 'school_admin']);
+
+    $service = new YearTransitionService();
+    $log = $service->executeTransition($sourceAy->id, $targetAy->id, [], $admin);
+
+    expect($log->promoted_count)->toBe(0);
+    expect($log->graduated_count)->toBe(0);
+    expect($log->retained_count)->toBe(0);
+    expect(StudentMutation::count())->toBe(0);
+});
+
+// ── T4: grade-6 retained via override stays in new kelas 6 ───────────────────
+
+it('executeTransition grade 6 retained via override stays in new kelas 6', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    $class6a  = makeClass($sourceAy, 6, 'Kelas 6A');
+    $student  = Student::factory()->create(['class_id' => $class6a->id, 'status' => 'active']);
+    $admin    = \App\Models\User::factory()->create(['role' => 'school_admin']);
+
+    $overrides = [$student->id => ['action' => 'retain', 'reason' => 'Keputusan kepala sekolah']];
+
+    $service = new YearTransitionService();
+    $service->executeTransition($sourceAy->id, $targetAy->id, $overrides, $admin);
+
+    $newGrade6Class = SchoolClass::where('academic_year_id', $targetAy->id)
+        ->where('grade_level', 6)
+        ->first();
+
+    expect($newGrade6Class)->not->toBeNull();
+    expect($student->fresh()->class_id)->toBe($newGrade6Class->id);
+    expect($student->fresh()->class_id)->not->toBeNull();
+    expect(StudentMutation::where('student_id', $student->id)->where('type', 'retention')->exists())->toBeTrue();
+});
+
+// ── T5: transfer_out override sets class_id null and status transferred ────────
+
+it('executeTransition transfer_out override sets class_id null and status transferred', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    $class5a  = makeClass($sourceAy, 5, 'Kelas 5A');
+    $student  = Student::factory()->create(['class_id' => $class5a->id, 'status' => 'active']);
+    $admin    = \App\Models\User::factory()->create(['role' => 'school_admin']);
+
+    $overrides = [$student->id => ['action' => 'transfer_out', 'reason' => 'Pindah sekolah']];
+
+    $service = new YearTransitionService();
+    $log = $service->executeTransition($sourceAy->id, $targetAy->id, $overrides, $admin);
+
+    expect($student->fresh()->class_id)->toBeNull();
+    expect($student->fresh()->status)->toBe('transferred');
+    expect(StudentMutation::where('student_id', $student->id)->where('type', 'transfer_out')->exists())->toBeTrue();
+    expect($log->excluded_count)->toBe(1);
+});
+
+// ── T6: full grade ladder K1-K6 creates 6 classes and correct mutation counts ──
+
+function makeFullGradeLadder(AcademicYear $ay): array
+{
+    $grades = [1, 2, 3, 4, 5, 6];
+    $classes = [];
+    $students = [];
+    foreach ($grades as $grade) {
+        $class = makeClass($ay, $grade, "Kelas {$grade}A");
+        $classes[$grade] = $class;
+        $students[$grade] = Student::factory()->create(['class_id' => $class->id, 'status' => 'active']);
+    }
+    return [$classes, $students];
+}
+
+it('executeTransition full grade ladder K1-K6 creates 6 classes and correct mutation counts', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    [$classes, $students] = makeFullGradeLadder($sourceAy);
+    $admin = \App\Models\User::factory()->create(['role' => 'school_admin']);
+
+    $service = new YearTransitionService();
+    $log = $service->executeTransition($sourceAy->id, $targetAy->id, [], $admin);
+
+    // 6 source classes → 6 new target classes
+    expect(SchoolClass::where('academic_year_id', $targetAy->id)->count())->toBe(6);
+
+    // Grades 1-5 promoted (5 students), grade 6 graduated (1 student)
+    expect($log->promoted_count)->toBe(5);
+    expect($log->graduated_count)->toBe(1);
+
+    // Verify each promoted student's class maps to the correct new grade
+    $gradeStep = [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6];
+    foreach ([1, 2, 3, 4, 5] as $grade) {
+        $expectedGrade = $gradeStep[$grade];
+        $newClass = SchoolClass::where('academic_year_id', $targetAy->id)
+            ->where('grade_level', $expectedGrade)
+            ->where('name', "Kelas {$expectedGrade}A")
+            ->first();
+        expect($newClass)->not->toBeNull();
+        expect($students[$grade]->fresh()->class_id)->toBe($newClass->id);
+    }
+
+    // Grade-6 student graduated
+    expect($students[6]->fresh()->status)->toBe('graduated');
+    expect($students[6]->fresh()->class_id)->toBeNull();
+});
+
+// ── T7: audit log retained_count matches actual retained students ─────────────
+
+it('executeTransition audit log retained_count matches actual retained students', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+
+    // Grade 3 → promote
+    $class3a    = makeClass($sourceAy, 3, 'Kelas 3A');
+    $promoted   = Student::factory()->create(['class_id' => $class3a->id, 'status' => 'active']);
+
+    // Grade 6 → graduate
+    $class6a    = makeClass($sourceAy, 6, 'Kelas 6A');
+    $graduated  = Student::factory()->create(['class_id' => $class6a->id, 'status' => 'active']);
+
+    // Grade 4 → retain via override
+    $class4a    = makeClass($sourceAy, 4, 'Kelas 4A');
+    $retained   = Student::factory()->create(['class_id' => $class4a->id, 'status' => 'active']);
+
+    $admin = \App\Models\User::factory()->create(['role' => 'school_admin']);
+    $overrides = [$retained->id => ['action' => 'retain', 'reason' => 'Nilai tidak memenuhi KKM']];
+
+    $service = new YearTransitionService();
+    $log = $service->executeTransition($sourceAy->id, $targetAy->id, $overrides, $admin);
+
+    expect($log->promoted_count)->toBe(1);
+    expect($log->graduated_count)->toBe(1);
+    expect($log->retained_count)->toBe(1);
+
+    expect(StudentMutation::where('type', 'promotion')->count())->toBe(1);
+    expect(StudentMutation::where('type', 'graduated')->count())->toBe(1);
+    expect(StudentMutation::where('type', 'retention')->count())->toBe(1);
+});
+
+// ── T8: audit log records executed_by and plan_snapshot ──────────────────────
+
+it('executeTransition audit log records executed_by and plan_snapshot', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    $class4a  = makeClass($sourceAy, 4, 'Kelas 4A');
+    makeClass($sourceAy, 5, 'Kelas 5A'); // needed so classMap has grade-5 target for promoted grade-4 students
+    makeStudents($class4a, 2);
+    $admin = \App\Models\User::factory()->create(['role' => 'school_admin']);
+
+    $service = new YearTransitionService();
+    $log = $service->executeTransition($sourceAy->id, $targetAy->id, [], $admin);
+
+    expect($log->executed_by)->toBe($admin->id);
+    expect($log->plan_snapshot)->toBeArray();
+    expect($log->plan_snapshot)->toHaveKey('mutations');
+    // ip_address may be null or a string depending on test request context
+    expect($log->ip_address === null || is_string($log->ip_address))->toBeTrue();
+});
+
+// ── T9: orphaned students in source AY are silently skipped ──────────────────
+
+it('executeTransition orphaned students in source AY are excluded at execute time', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    $class5a  = makeClass($sourceAy, 5, 'Kelas 5A');
+    makeClass($sourceAy, 6, 'Kelas 6A'); // needed so classMap has grade-6 target for promoted grade-5 student
+
+    // 1 in-class active student
+    $inClass = Student::factory()->create(['class_id' => $class5a->id, 'status' => 'active']);
+
+    // 1 orphan active student (no class_id)
+    $orphan = Student::factory()->create(['class_id' => null, 'status' => 'active']);
+
+    $admin = \App\Models\User::factory()->create(['role' => 'school_admin']);
+
+    $service = new YearTransitionService();
+    $log = $service->executeTransition($sourceAy->id, $targetAy->id, [], $admin);
+
+    // Only the in-class student gets promoted
+    expect($log->promoted_count)->toBe(1);
+    expect(StudentMutation::count())->toBe(1);
+
+    // Orphan is untouched
+    expect($orphan->fresh()->class_id)->toBeNull();
+});
