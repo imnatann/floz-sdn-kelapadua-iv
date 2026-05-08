@@ -67,6 +67,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/student/courses', [MobileStudentCoursesController::class, 'index']);
             Route::get('/student/courses/{ta}/meetings', [MobileStudentCoursesController::class, 'meetings']);
             Route::get('/student/meetings/{meeting}', [MobileStudentCoursesController::class, 'meeting']);
+            Route::post('/student/assignments/{id}/submit', [MobileAssignmentController::class, 'submit']);
         });
 
         // Notifications (shared by student + teacher)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\SubmitAssignmentRequest;
 use App\Services\Mobile\AssignmentService;
 use Illuminate\Http\Request;
 
@@ -28,5 +29,12 @@ class MobileAssignmentController extends Controller
         }
 
         return response()->json(['data' => $data]);
+    }
+
+    public function submit(SubmitAssignmentRequest $request, int $id)
+    {
+        $data = $this->service->submitForStudent($request->user(), $id, $request->validated());
+
+        return response()->json(['data' => $data], 201);
     }
 }
