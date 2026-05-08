@@ -18,6 +18,7 @@ use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OfflineAssignmentController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\YearTransitionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -125,4 +126,13 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('academic-years.semesters', SemesterController::class)->shallow();
     Route::post('semesters/{semester}/activate', [SemesterController::class, 'activate'])
         ->name('semesters.activate');
+
+    // Year Transition (Kenaikan Kelas)
+    Route::prefix('year-transition')->name('year-transition.')->group(function () {
+        Route::get('/',           [YearTransitionController::class, 'index'])->name('index');
+        Route::post('/preview',   [YearTransitionController::class, 'preview'])->name('preview');
+        Route::post('/execute',   [YearTransitionController::class, 'execute'])->name('execute');
+        Route::get('/logs',       [YearTransitionController::class, 'logs'])->name('logs');
+        Route::get('/logs/{log}', [YearTransitionController::class, 'showLog'])->name('logs.show');
+    });
 });
