@@ -61,9 +61,9 @@ const close = () => {
                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div class="ml-3 w-0 flex-1 pt-0.5">
+          <div class="ml-3 w-0 flex-1 min-w-0 pt-0.5">
             <p class="text-sm font-medium text-gray-900">{{ type === 'success' ? 'Sukses' : type === 'error' ? 'Error' : 'Info' }}</p>
-            <p class="mt-1 text-sm text-gray-500">{{ message }}</p>
+            <p class="mt-1 text-sm text-gray-500 break-words">{{ message }}</p>
           </div>
           <div class="ml-4 flex flex-shrink-0">
             <button type="button" @click="close" class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
