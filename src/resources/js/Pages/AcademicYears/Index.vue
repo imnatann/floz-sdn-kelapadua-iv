@@ -17,12 +17,18 @@ const canManage = computed(() => page.props.auth?.permissions?.manage_academic_y
 const flash = computed(() => page.props.flash || {});
 
 function activate(id) {
-    router.post(route('academic-years.activate', id));
+    router.post(route('academic-years.activate', id), {}, {
+        preserveScroll: false,
+        replace: false,
+    });
 }
 
 function destroy(id) {
     if (confirm('Hapus tahun ajaran ini? Pastikan tidak ada kelas yang terkait.')) {
-        router.delete(route('academic-years.destroy', id));
+        router.delete(route('academic-years.destroy', id), {}, {
+            preserveScroll: false,
+            replace: false,
+        });
     }
 }
 </script>
