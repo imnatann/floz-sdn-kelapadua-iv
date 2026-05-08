@@ -270,6 +270,127 @@ it('execute with expired/missing cache returns 409', function () {
         ->assertJsonFragment(['message' => 'Pratinjau telah kedaluwarsa. Silakan muat ulang dan tinjau kembali.']);
 });
 
+// ── T1: Concurrent lock (BLOCK-5) ────────────────────────────────────────────
+
+it('execute returns 409 when cache lock is already held', function () {
+    $admin  = User::factory()->create(['role' => 'school_admin']);
+    $source = AcademicYear::factory()->create(['is_active' => true]);
+    $target = AcademicYear::factory()->create();
+    $class3 = SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level'      => 3,
+        'name'             => 'Kelas 3A',
+    ]);
+    SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level'      => 4,
+        'name'             => 'Kelas 4A',
+    ]);
+    Student::factory()->count(2)->create(['class_id' => $class3->id, 'status' => 'active']);
+
+    // Call preview first to cache the hash
+    $previewResponse = $this->actingAs($admin)
+        ->postJson(route('year-transition.preview'), [
+            'source_academic_year_id' => $source->id,
+            'target_academic_year_id' => $target->id,
+        ])
+        ->assertOk();
+    $planHash = $previewResponse->json('plan_hash');
+
+    // Option B: Pre-acquire the same lock the service uses to simulate concurrent execution
+    $lockKey = "year_transition_{$source->id}_{$target->id}";
+    $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 120);
+    $lock->get(); // Acquire — service will fail to acquire this
+
+    $this->actingAs($admin)
+        ->postJson(route('year-transition.execute'), [
+            'source_academic_year_id' => $source->id,
+            'target_academic_year_id' => $target->id,
+            'confirmation_word'       => 'TERAPKAN',
+            'plan_hash'               => $planHash,
+        ])
+        ->assertStatus(409)
+        ->assertJsonFragment(['message' => 'Transisi sedang berjalan. Tunggu beberapa detik.']);
+
+    $lock->release();
+});
+
+// ── T2: Same source and target AY ────────────────────────────────────────────
+
+it('execute returns 422 when source and target academic year are the same', function () {
+    $admin = User::factory()->create(['role' => 'school_admin']);
+    $ay    = AcademicYear::factory()->create();
+
+    $this->actingAs($admin)
+        ->postJson(route('year-transition.execute'), [
+            'source_academic_year_id' => $ay->id,
+            'target_academic_year_id' => $ay->id,
+            'confirmation_word'       => 'TERAPKAN',
+            'plan_hash'               => str_repeat('a', 64),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['target_academic_year_id']);
+});
+
+// ── T10: Execute with transfer_out override ───────────────────────────────────
+
+it('execute with overrides for transfer_out returns 200 and excluded_count in summary', function () {
+    $admin  = User::factory()->create(['role' => 'school_admin']);
+    $source = AcademicYear::factory()->create(['is_active' => true]);
+    $target = AcademicYear::factory()->create();
+    $class3 = SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level'      => 3,
+        'name'             => 'Kelas 3A',
+    ]);
+    SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level'      => 4,
+        'name'             => 'Kelas 4A',
+    ]);
+    $students = Student::factory()->count(3)->create(['class_id' => $class3->id, 'status' => 'active']);
+    $transferOutStudent = $students->first();
+
+    // Call preview first to cache the hash (without overrides — hash must match)
+    $previewResponse = $this->actingAs($admin)
+        ->postJson(route('year-transition.preview'), [
+            'source_academic_year_id' => $source->id,
+            'target_academic_year_id' => $target->id,
+        ])
+        ->assertOk();
+    $planHashNoOverride = $previewResponse->json('plan_hash');
+
+    // Call preview again WITH the override so server caches the overridden plan hash
+    $overrides = [
+        $transferOutStudent->id => ['action' => 'transfer_out', 'reason' => 'Pindah sekolah'],
+    ];
+    $previewWithOverride = $this->actingAs($admin)
+        ->postJson(route('year-transition.preview'), [
+            'source_academic_year_id' => $source->id,
+            'target_academic_year_id' => $target->id,
+            'overrides'               => $overrides,
+        ])
+        ->assertOk();
+    $planHash = $previewWithOverride->json('plan_hash');
+
+    $response = $this->actingAs($admin)
+        ->postJson(route('year-transition.execute'), [
+            'source_academic_year_id' => $source->id,
+            'target_academic_year_id' => $target->id,
+            'confirmation_word'       => 'TERAPKAN',
+            'plan_hash'               => $planHash,
+            'overrides'               => $overrides,
+        ])
+        ->assertOk()
+        ->assertJsonStructure(['log_id', 'summary']);
+
+    // The transfer_out student counts as excluded
+    expect($response->json('summary.excluded'))->toBeGreaterThanOrEqual(1);
+    expect(YearTransitionLog::count())->toBe(1);
+});
+
+// ── Idempotency guard ─────────────────────────────────────────────────────────
+
 it('execute returns 409 when target AY already has classes (idempotency)', function () {
     $admin  = User::factory()->create(['role' => 'school_admin']);
     $source = AcademicYear::factory()->create(['is_active' => true]);
