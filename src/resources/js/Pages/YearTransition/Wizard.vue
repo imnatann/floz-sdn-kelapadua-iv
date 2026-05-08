@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SelectYears from './Steps/SelectYears.vue';
@@ -21,7 +21,7 @@ const stepLabels = [
     'Pilih Tahun Ajaran',
     'Struktur Kelas',
     'Review Siswa',
-    'Preview Mutasi',
+    'Pratinjau',
     'Konfirmasi',
 ];
 
@@ -33,11 +33,35 @@ const wizardData = ref({
     plan: null,
 });
 
+// W-03: beforeunload guard — warn user when navigating away mid-wizard
+function beforeUnloadHandler(e) {
+    e.preventDefault();
+    e.returnValue = 'Proses transisi belum selesai. Yakin ingin meninggalkan halaman ini?';
+    return e.returnValue;
+}
+
+watch(currentStep, (step) => {
+    if (step >= 2) {
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+    } else {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+    }
+});
+
+onUnmounted(() => {
+    window.removeEventListener('beforeunload', beforeUnloadHandler);
+});
+
 function next() {
     currentStep.value = Math.min(currentStep.value + 1, totalSteps);
 }
 function back() {
     currentStep.value = Math.max(currentStep.value - 1, 1);
+}
+
+// Remove guard on Step 5 confirm success (called from Confirm component via event)
+function onTransitionComplete() {
+    window.removeEventListener('beforeunload', beforeUnloadHandler);
 }
 </script>
 
@@ -70,7 +94,7 @@ function back() {
                         <span v-else>{{ i + 1 }}</span>
                     </div>
                     <span
-                        class="text-sm hidden md:block truncate max-w-[100px]"
+                        class="text-sm hidden md:block truncate max-w-[140px]"
                         :class="currentStep === i + 1 ? 'font-semibold text-slate-800' : currentStep > i + 1 ? 'text-emerald-600 font-medium' : 'text-slate-400'"
                     >
                         {{ label }}
