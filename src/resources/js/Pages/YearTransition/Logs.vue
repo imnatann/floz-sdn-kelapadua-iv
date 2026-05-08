@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
 import Button from '@/Components/UI/Button.vue';
+import EmptyState from '@/Components/UI/EmptyState.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -98,18 +99,12 @@ function formatDate(dateStr) {
                         </td>
                     </tr>
                     <tr v-if="!logs.data?.length">
-                        <td colspan="8" class="px-4 py-16 text-center">
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-                                    <svg class="h-7 w-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-slate-600">Belum ada riwayat transisi.</p>
-                                    <p class="text-xs text-slate-400 mt-1">Mulai proses transisi tahun ajaran untuk melihat riwayat di sini.</p>
-                                </div>
-                            </div>
+                        <td colspan="8">
+                            <EmptyState
+                                icon="📋"
+                                title="Belum ada riwayat transisi"
+                                description="Mulai proses transisi tahun ajaran untuk melihat riwayat di sini."
+                            />
                         </td>
                     </tr>
                 </tbody>
