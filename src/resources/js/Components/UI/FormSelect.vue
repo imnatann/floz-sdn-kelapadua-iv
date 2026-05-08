@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-1.5">
-    <label v-if="label" :for="id" class="flex items-center gap-1 text-xs font-medium text-slate-600">
+    <label v-if="label" :for="resolvedId" class="flex items-center gap-1 text-xs font-medium text-slate-600">
       {{ label }}
       <span v-if="required" class="text-orange-500">*</span>
     </label>
     <div class="relative">
       <select
-        :id="id"
+        :id="resolvedId"
         :value="modelValue"
         @change="$emit('update:modelValue', $event.target.value)"
         :required="required"
@@ -22,9 +22,9 @@
       >
         <option v-if="placeholder" value="" disabled selected>{{ placeholder }}</option>
         <template v-if="options && options.length">
-            <option 
-                v-for="(opt, index) in options" 
-                :key="index" 
+            <option
+                v-for="(opt, index) in options"
+                :key="index"
                 :value="typeof opt === 'object' ? opt.value : opt"
             >
                 {{ typeof opt === 'object' ? opt.label : opt }}
@@ -45,10 +45,15 @@
   </div>
 </template>
 
-<script setup>
-let _counter = 0;
+<script>
+// Module-level counter — stable, deterministic ids with no Math.random (L-10)
+let _selectIdCounter = 0;
+</script>
 
-defineProps({
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
   modelValue: { type: [String, Number], default: '' },
   label:      { type: String, default: '' },
   options:    { type: Array, default: () => [] },
@@ -56,7 +61,10 @@ defineProps({
   required:   { type: Boolean, default: false },
   disabled:   { type: Boolean, default: false },
   error:      { type: String, default: '' },
-  id:         { type: String, default: () => `select-${++_counter}` },
+  id:         { type: String, default: '' },
 });
 defineEmits(['update:modelValue']);
+
+// Use prop id if provided; otherwise assign a stable counter-based id per instance
+const resolvedId = props.id || `select-${++_selectIdCounter}`;
 </script>
