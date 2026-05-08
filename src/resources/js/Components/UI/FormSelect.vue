@@ -46,6 +46,8 @@
 </template>
 
 <script setup>
+let _counter = 0;
+
 defineProps({
   modelValue: { type: [String, Number], default: '' },
   label:      { type: String, default: '' },
@@ -54,7 +56,7 @@ defineProps({
   required:   { type: Boolean, default: false },
   disabled:   { type: Boolean, default: false },
   error:      { type: String, default: '' },
-  id:         { type: String, default: () => `select-${Math.random().toString(36).slice(2, 9)}` },
+  id:         { type: String, default: () => `select-${++_counter}` },
 });
 defineEmits(['update:modelValue']);
 </script>
