@@ -15,17 +15,8 @@ const submitError = ref('');
 
 const plan = computed(() => props.modelValue.plan);
 const summary = computed(() => plan.value?.summary || { promoted: 0, graduated: 0, retained: 0, excluded: 0 });
-const planHash = computed(() => {
-    if (!plan.value) return null;
-    // Simple hash from summary counts for display
-    const str = JSON.stringify(summary.value);
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
-    }
-    return Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
-});
+// W-04: use server-side SHA-256 plan_hash from preview response (not client djb2)
+const planHash = computed(() => plan.value?.plan_hash ?? null);
 
 const canExecute = computed(() => confirmWord.value === 'TERAPKAN' && !isSubmitting.value);
 
@@ -39,6 +30,7 @@ function handleExecute() {
         target_academic_year_id: props.modelValue.targetAyId,
         overrides: props.modelValue.overrides || {},
         confirmation_word: confirmWord.value,
+        plan_hash: planHash.value,
     }, {
         onSuccess: (page) => {
             // Inertia redirect will be handled by server flash

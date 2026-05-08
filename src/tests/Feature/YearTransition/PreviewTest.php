@@ -82,3 +82,30 @@ it('preview returns 422 when confirmation_word is missing (execute route only)',
         ])
         ->assertOk();
 });
+
+// ── W-04: preview must return server-side plan_hash ───────────────────────────
+
+it('preview returns plan_hash as 64-char hex string in response', function () {
+    $admin  = adminForTransition();
+    $source = AcademicYear::factory()->create(['is_active' => true]);
+    $target = AcademicYear::factory()->create();
+    $class  = SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level'      => 3,
+        'name'             => 'Kelas 3A',
+    ]);
+    Student::factory()->count(3)->create(['class_id' => $class->id, 'status' => 'active']);
+
+    $response = $this->actingAs($admin)
+        ->postJson(route('year-transition.preview'), [
+            'source_academic_year_id' => $source->id,
+            'target_academic_year_id' => $target->id,
+        ])
+        ->assertOk()
+        ->assertJsonStructure(['mutations', 'summary', 'new_classes', 'plan_hash']);
+
+    $hash = $response->json('plan_hash');
+    expect($hash)->toBeString();
+    expect(strlen($hash))->toBe(64);
+    expect(ctype_xdigit($hash))->toBeTrue();
+});

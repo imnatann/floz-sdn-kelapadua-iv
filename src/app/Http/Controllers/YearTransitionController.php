@@ -7,6 +7,7 @@ use App\Http\Requests\YearTransition\PreviewRequest;
 use App\Models\YearTransitionLog;
 use App\Services\YearTransitionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,17 +30,45 @@ class YearTransitionController extends Controller
 
     public function preview(PreviewRequest $request): JsonResponse
     {
+        $sourceAyId = $request->integer('source_academic_year_id');
+        $targetAyId = $request->integer('target_academic_year_id');
+
         $plan = $this->service->previewTransition(
-            $request->integer('source_academic_year_id'),
-            $request->integer('target_academic_year_id'),
+            $sourceAyId,
+            $targetAyId,
             (array) $request->input('overrides', []),
         );
 
-        return response()->json($plan);
+        // W-04: compute server-side fingerprint and store snapshot in cache (30-min TTL)
+        $planHash = $this->service->computePlanHash($plan, $sourceAyId, $targetAyId);
+        $cacheKey = "year-transition:preview:{$request->user()->id}:{$sourceAyId}:{$targetAyId}";
+        Cache::put($cacheKey, $planHash, now()->addMinutes(30));
+
+        return response()->json(array_merge($plan, ['plan_hash' => $planHash]));
     }
 
     public function execute(ExecuteRequest $request): JsonResponse
     {
+        // W-04: Verify plan_hash against cached snapshot before executing
+        $sourceAyId = $request->integer('source_academic_year_id');
+        $targetAyId = $request->integer('target_academic_year_id');
+        $submittedHash = $request->string('plan_hash')->toString();
+        $cacheKey = "year-transition:preview:{$request->user()->id}:{$sourceAyId}:{$targetAyId}";
+
+        $cachedHash = Cache::get($cacheKey);
+
+        if ($cachedHash === null) {
+            return response()->json([
+                'message' => 'Pratinjau telah kedaluwarsa. Silakan muat ulang dan tinjau kembali.',
+            ], 409);
+        }
+
+        if (!hash_equals($cachedHash, $submittedHash)) {
+            return response()->json([
+                'message' => 'Data telah berubah sejak Anda meninjau pratinjau. Silakan muat ulang dan tinjau kembali.',
+            ], 409);
+        }
+
         try {
             $log = $this->service->executeTransition(
                 $request->integer('source_academic_year_id'),

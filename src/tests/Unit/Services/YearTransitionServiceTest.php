@@ -402,3 +402,40 @@ it('it_writes_audit_log_inside_transaction — rollback removes audit entries', 
     // Rollback must have removed all audit entries created inside the transaction
     expect(\App\Models\AuditLog::count())->toBe($auditCountBefore);
 });
+
+// ── W-04: computePlanHash — deterministic SHA-256 ────────────────────────────
+
+it('computePlanHash returns same hash for identical plan data', function () {
+    $sourceAy = makeAY('2025/2026', true);
+    $targetAy = makeAY('2026/2027');
+    $class4a  = makeClass($sourceAy, 4, 'Kelas 4A');
+    makeStudents($class4a, 3);
+
+    $service = new YearTransitionService();
+    $plan    = $service->previewTransition($sourceAy->id, $targetAy->id, []);
+
+    $hash1 = $service->computePlanHash($plan, $sourceAy->id, $targetAy->id);
+    $hash2 = $service->computePlanHash($plan, $sourceAy->id, $targetAy->id);
+
+    expect($hash1)->toBe($hash2);
+    expect(strlen($hash1))->toBe(64); // SHA-256 hex = 64 chars
+});
+
+it('computePlanHash returns different hash when mutations differ', function () {
+    $sourceAy  = makeAY('2025/2026', true);
+    $targetAy  = makeAY('2026/2027');
+    $class4a   = makeClass($sourceAy, 4, 'Kelas 4A');
+    $students  = makeStudents($class4a, 3);
+
+    $service = new YearTransitionService();
+    $plan1   = $service->previewTransition($sourceAy->id, $targetAy->id, []);
+
+    // Override one student to retain
+    $override = [$students->first()->id => ['action' => 'retain', 'reason' => null]];
+    $plan2    = $service->previewTransition($sourceAy->id, $targetAy->id, $override);
+
+    $hash1 = $service->computePlanHash($plan1, $sourceAy->id, $targetAy->id);
+    $hash2 = $service->computePlanHash($plan2, $sourceAy->id, $targetAy->id);
+
+    expect($hash1)->not->toBe($hash2);
+});

@@ -23,6 +23,7 @@ class ExecuteRequest extends FormRequest
             'overrides.*.action'      => 'required|string|in:promote,graduate,retain,transfer_out,dropout',
             'overrides.*.reason'      => 'nullable|string|max:500',
             'confirmation_word'       => 'required|string|in:TERAPKAN',
+            'plan_hash'               => 'required|string|size:64',
         ];
     }
 
