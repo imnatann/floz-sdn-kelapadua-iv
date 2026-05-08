@@ -140,20 +140,22 @@ it('attendanceTrend returns weekly present-% for last N weeks for a class', func
     $sem   = Semester::factory()->create(['is_active' => true]);
     $s     = Student::factory()->create(['class_id' => $class->id, 'status' => 'active']);
 
-    // 2 records this week: 1 present, 1 absent
+    // 2 records this week: 1 present, 1 absent (different meeting_number to avoid unique violation)
     Attendance::factory()->create([
-        'class_id'   => $class->id,
-        'student_id' => $s->id,
-        'semester_id' => $sem->id,
-        'date'       => now()->startOfWeek()->toDateString(),
-        'status'     => 'present',
+        'class_id'      => $class->id,
+        'student_id'    => $s->id,
+        'semester_id'   => $sem->id,
+        'date'          => now()->startOfWeek()->toDateString(),
+        'meeting_number' => 1,
+        'status'        => 'present',
     ]);
     Attendance::factory()->create([
-        'class_id'   => $class->id,
-        'student_id' => $s->id,
-        'semester_id' => $sem->id,
-        'date'       => now()->startOfWeek()->addDay()->toDateString(),
-        'status'     => 'absent',
+        'class_id'      => $class->id,
+        'student_id'    => $s->id,
+        'semester_id'   => $sem->id,
+        'date'          => now()->startOfWeek()->addDay()->toDateString(),
+        'meeting_number' => 2,
+        'status'        => 'absent',
     ]);
 
     $result = app(AnalyticsService::class)->attendanceTrend($class->id, $sem->id, 4);
