@@ -15,6 +15,7 @@ use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Models\User;
 use App\Models\TeachingAssignment;
 use App\Policies\AnnouncementPolicy;
 use App\Policies\AttendancePolicy;
@@ -31,6 +32,8 @@ use App\Models\AcademicYear;
 use App\Policies\AcademicYearPolicy;
 use App\Models\Semester;
 use App\Policies\SemesterPolicy;
+use App\Models\YearTransitionLog;
+use App\Policies\YearTransitionPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -67,6 +70,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Meeting::class, MeetingPolicy::class);
         Gate::policy(AcademicYear::class, AcademicYearPolicy::class);
         Gate::policy(Semester::class, SemesterPolicy::class);
+        Gate::policy(YearTransitionLog::class, YearTransitionPolicy::class);
+
+        // Gate definition for year transition management (used in controller + FormRequests)
+        Gate::define('manage_year_transition', function (User $user) {
+            return $user->isSchoolAdmin() || $user->isSuperAdmin();
+        });
 
         try { $queryLoggingEnabled = \Illuminate\Support\Facades\Cache::get('query_logging_enabled'); } catch (\Throwable) { $queryLoggingEnabled = false; }
         if ($queryLoggingEnabled) {
