@@ -59,6 +59,8 @@ Build a 5-step admin wizard (`/year-transition`) that automates the annual Indon
 - Warning merah: "Proses ini tidak dapat dibatalkan secara otomatis. Pastikan data sudah benar."
 - Input: ketik kata "TERAPKAN" untuk mengaktifkan tombol konfirmasi
 - Button (disabled until TERAPKAN typed): "Konfirmasi & Terapkan Transisi"
+  <!-- L-08 NOTE: Implementation uses "Konfirmasi & Terapkan Transisi" which is idiomatic
+       Bahasa Indonesia and kept as-is. Spec label was loosely worded; implementation is correct. -->
 - Setelah berhasil: redirect ke `/year-transition/logs` dengan flash success
 
 ---
