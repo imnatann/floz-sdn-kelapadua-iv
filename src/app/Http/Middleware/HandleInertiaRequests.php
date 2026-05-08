@@ -56,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                         'manage_assignments' => $user->isSchoolAdmin(),
                         'manage_academic_years'     => $user->isSchoolAdmin(),
                         'manage_year_transition'    => $user->isSchoolAdmin() || $user->isSuperAdmin(),
+                        'view_analytics'            => $user->isSchoolAdmin(),
                     ];
                 },
             ],

@@ -77,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
             return $user->isSchoolAdmin() || $user->isSuperAdmin();
         });
 
+        // Gate definition for analytics (model-less policy — WARN-4: use Gate::define, not Gate::policy)
+        Gate::define('view-analytics', fn (User $user) => $user->isSchoolAdmin());
+
         try { $queryLoggingEnabled = \Illuminate\Support\Facades\Cache::get('query_logging_enabled'); } catch (\Throwable) { $queryLoggingEnabled = false; }
         if ($queryLoggingEnabled) {
             \Illuminate\Support\Facades\DB::listen(function ($query) {
