@@ -27,6 +27,10 @@ use App\Policies\TeacherPolicy;
 use App\Policies\TeachingAssignmentPolicy;
 use App\Models\Meeting;
 use App\Policies\MeetingPolicy;
+use App\Models\AcademicYear;
+use App\Policies\AcademicYearPolicy;
+use App\Models\Semester;
+use App\Policies\SemesterPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +65,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ReportCard::class, ReportCardPolicy::class);
         Gate::policy(OfflineAssignment::class, OfflineAssignmentPolicy::class);
         Gate::policy(Meeting::class, MeetingPolicy::class);
+        Gate::policy(AcademicYear::class, AcademicYearPolicy::class);
+        Gate::policy(Semester::class, SemesterPolicy::class);
 
         try { $queryLoggingEnabled = \Illuminate\Support\Facades\Cache::get('query_logging_enabled'); } catch (\Throwable) { $queryLoggingEnabled = false; }
         if ($queryLoggingEnabled) {

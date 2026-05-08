@@ -16,6 +16,8 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OfflineAssignmentController;
+use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\SemesterController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -113,4 +115,14 @@ Route::middleware(['auth'])->group(function () {
 
     // Announcements (Pengumuman)
     Route::resource('announcements', AnnouncementController::class);
+
+    // Academic Years
+    Route::resource('academic-years', AcademicYearController::class);
+    Route::post('academic-years/{academicYear}/activate', [AcademicYearController::class, 'activate'])
+        ->name('academic-years.activate');
+
+    // Semesters (nested + shallow)
+    Route::resource('academic-years.semesters', SemesterController::class)->shallow();
+    Route::post('semesters/{semester}/activate', [SemesterController::class, 'activate'])
+        ->name('semesters.activate');
 });
