@@ -1,0 +1,88 @@
+{
+  "source_ay": {
+    "id": 15,
+    "name": "2070/2071",
+    "start_date": "2070-07-01T00:00:00.000000Z",
+    "end_date": "2071-06-30T00:00:00.000000Z",
+    "is_active": true,
+    "created_at": "2026-05-08T08:01:58.000000Z",
+    "updated_at": "2026-05-08T11:12:15.000000Z"
+  },
+  "target_ay": {
+    "id": 16,
+    "name": "2065/2066",
+    "start_date": "2065-07-01T00:00:00.000000Z",
+    "end_date": "2066-06-30T00:00:00.000000Z",
+    "is_active": false,
+    "created_at": "2026-05-08T08:01:58.000000Z",
+    "updated_at": "2026-05-08T11:12:15.000000Z"
+  },
+  "new_classes": [
+    {
+      "source_class_id": 14,
+      "name": "Kelas 3A",
+      "grade_level": 3,
+      "homeroom_teacher_id": null
+    }
+  ],
+  "mutations": [
+    {
+      "student_id": 35,
+      "student_name": "Gilda Nabila Andriani",
+      "nis": "3844511090",
+      "from_class_id": 14,
+      "from_class_name": "Kelas 3A",
+      "from_grade_level": 3,
+      "action": "promote",
+      "to_class_id": null,
+      "to_class_name": "Kelas 4A",
+      "reason": null,
+      "warnings": []
+    },
+    {
+      "student_id": 36,
+      "student_name": "Eka Laksmiwati",
+      "nis": "8590713235",
+      "from_class_id": 14,
+      "from_class_name": "Kelas 3A",
+      "from_grade_level": 3,
+      "action": "promote",
+      "to_class_id": null,
+      "to_class_name": "Kelas 4A",
+      "reason": null,
+      "warnings": []
+    },
+    {
+      "student_id": 37,
+      "student_name": "Wirda Purwanti",
+      "nis": "5055280197",
+      "from_class_id": 14,
+      "from_class_name": "Kelas 3A",
+      "from_grade_level": 3,
+      "action": "promote",
+      "to_class_id": null,
+      "to_class_name": "Kelas 4A",
+      "reason": null,
+      "warnings": []
+    },
+    {
+      "student_id": 38,
+      "student_name": "Ratna Yuliarti",
+      "nis": "6861671521",
+      "from_class_id": 14,
+      "from_class_name": "Kelas 3A",
+      "from_grade_level": 3,
+      "action": "promote",
+      "to_class_id": null,
+      "to_class_name": "Kelas 4A",
+      "reason": null,
+      "warnings": []
+    }
+  ],
+  "summary": {
+    "promoted": 4,
+    "graduated": 0,
+    "retained": 0,
+    "excluded": 0
+  }
+}
