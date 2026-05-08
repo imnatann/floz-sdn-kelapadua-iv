@@ -77,6 +77,9 @@ watch(() => props.academicYears, (years) => {
 watch(sourceAyId, () => {
     if (sourceAyId.value == targetAyId.value) targetAyId.value = null;
 });
+
+// W-08: Clear validation error when user changes either selection
+watch([sourceAyId, targetAyId], () => { error.value = ''; });
 </script>
 
 <template>
