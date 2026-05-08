@@ -107,6 +107,46 @@ it('store validates name uniqueness', function () {
         ->assertSessionHasErrors(['name']);
 });
 
+it('enforces unique name on create', function () {
+    $admin = adminUser();
+    AcademicYear::factory()->create(['name' => '2024/2025 - Ganjil']);
+
+    $this->actingAs($admin)
+        ->post(route('academic-years.store'), [
+            'name'       => '2024/2025 - Ganjil',
+            'start_date' => '2024-07-15',
+            'end_date'   => '2025-01-10',
+        ])
+        ->assertSessionHasErrors(['name']);
+});
+
+it('enforces unique name on update rejects another row name', function () {
+    $admin = adminUser();
+    AcademicYear::factory()->create(['name' => '2024/2025 - Ganjil']);
+    $ay2 = AcademicYear::factory()->create(['name' => '2024/2025 - Genap']);
+
+    $this->actingAs($admin)
+        ->put(route('academic-years.update', $ay2), [
+            'name'       => '2024/2025 - Ganjil', // taken by ay1
+            'start_date' => $ay2->start_date->toDateString(),
+            'end_date'   => $ay2->end_date->toDateString(),
+        ])
+        ->assertSessionHasErrors(['name']);
+});
+
+it('allows update keeping own name', function () {
+    $admin = adminUser();
+    $ay = AcademicYear::factory()->create(['name' => '2024/2025 - Ganjil']);
+
+    $this->actingAs($admin)
+        ->put(route('academic-years.update', $ay), [
+            'name'       => '2024/2025 - Ganjil', // same name, same row — OK
+            'start_date' => $ay->start_date->toDateString(),
+            'end_date'   => $ay->end_date->toDateString(),
+        ])
+        ->assertRedirect(route('academic-years.index'));
+});
+
 // ── update ────────────────────────────────────────────────────────────
 
 it('admin can update an academic year', function () {
