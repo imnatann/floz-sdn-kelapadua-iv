@@ -29,4 +29,6 @@ class ApiEndpoints {
   static const String notifications = '/notifications';
   static String notificationRead(String id) => '/notifications/$id/read';
   static const String notificationsReadAll = '/notifications/read-all';
+
+  static String studentAssignmentSubmit(int id) => '/student/assignments/$id/submit';
 }

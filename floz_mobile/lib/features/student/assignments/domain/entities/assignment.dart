@@ -54,3 +54,26 @@ class AssignmentDetail {
 
   bool get isOverdue => dueDate != null && dueDate!.isBefore(DateTime.now());
 }
+
+class SubmissionResult {
+  final int submissionId;
+  final String status;
+  final DateTime submittedAt;
+  final bool isLate;
+
+  const SubmissionResult({
+    required this.submissionId,
+    required this.status,
+    required this.submittedAt,
+    required this.isLate,
+  });
+
+  factory SubmissionResult.fromJson(Map<String, dynamic> json) {
+    return SubmissionResult(
+      submissionId: (json['submission_id'] as num).toInt(),
+      status: json['status'] as String,
+      submittedAt: DateTime.parse(json['submitted_at'] as String),
+      isLate: json['is_late'] as bool? ?? false,
+    );
+  }
+}

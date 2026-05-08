@@ -6,6 +6,7 @@ import '../models/assignment_dto.dart';
 abstract class AssignmentRemoteDataSource {
   Future<List<AssignmentSummary>> fetchList({String status = 'upcoming'});
   Future<AssignmentDetail> fetchDetail(int id);
+  Future<SubmissionResult> submitAssignment(int id, {String? answerText, String? answerLink});
 }
 
 class AssignmentRemoteDataSourceImpl implements AssignmentRemoteDataSource {
@@ -29,5 +30,15 @@ class AssignmentRemoteDataSourceImpl implements AssignmentRemoteDataSource {
     final body = res.data as Map<String, dynamic>;
     final data = body['data'] as Map<String, dynamic>? ?? {};
     return AssignmentDto.detailFromJson(data);
+  }
+
+  @override
+  Future<SubmissionResult> submitAssignment(int id, {String? answerText, String? answerLink}) async {
+    final res = await _client.post(
+      ApiEndpoints.studentAssignmentSubmit(id),
+      body: {'answer_text': answerText, 'answer_link': answerLink},
+    );
+    final body = res.data as Map<String, dynamic>;
+    return SubmissionResult.fromJson(body['data'] as Map<String, dynamic>);
   }
 }
