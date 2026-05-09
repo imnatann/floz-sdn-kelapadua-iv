@@ -36,25 +36,37 @@ All accounts use password **`password123`**.
 
 ---
 
-## 📊 Final DB State
+## 📊 Final DB State (after expand seeder)
 
 ```
+Active semester:      Genap 2025/2026 (Jan-Jun 2026, matches today)
 Users:                101  (1 admin + 10 teachers + 90 students)
-AcademicYears:        2    (active: 1)   → 2025/2026 active, 2026/2027 future
-Semesters:            4    (active: 1)   → 1 Ganjil 2025/2026 active
+AcademicYears:        2    (2025/2026 active, 2026/2027 future)
+Semesters:            4    (Genap 2025/2026 active — switched from Ganjil)
 Subjects:             10
 Teachers:             10
-SchoolClasses:        6    (Kelas 1A – 6A, semua dengan wali kelas)
+SchoolClasses:        6    (Kelas 1A – 6A, all with wali kelas)
 TeachingAssignments:  60
-Students:             90   (15 per kelas × 6 kelas)
-Meetings (auto-gen):  960  ← TeachingAssignment::booted() observer fires
-Attendance:           270  (3 meetings × 6 kelas × 15 siswa)
-Grade entries:        900  ← storeBatch auto-generates ReportCard which back-fills all subjects
-ReportCards:          90   ← auto-synced after grade batch input
+Meetings (auto-gen):  960  ← TeachingAssignment::booted() observer fired
+Schedules:            173  ← weekly Mon-Fri × 6 classes
+Students:             90   (87 active + 3 transferred for variety)
+Tasks:                36   ← online assignments
+TaskScores:           261
+Exams:                84   ← UH + UTS + UAS mix
+ExamScores:           1131
+Attendance:           1080 ← 12 meetings × 6 classes × 15 students
+Grades:               1800 ← 2 semesters × 90 students × 10 subjects
+ReportCards:          180  ← regenerated after UTS+UAS data
 Announcements:        6
-Notifications:        ~450 ← NewAnnouncementNotification + GradePostedNotification
-AuditLogs:            ~4089 ← Auditable trait fired on every create
+AuditLogs:            9180 ← Auditable trait fired on every CRUD
 ```
+
+**Analytics dashboard now non-empty:**
+- todaysAttendance: 86.7% present (156 hadir / 180 total)
+- classAvgComparison: 6 classes ranked Kelas 2A (35.5) → Kelas 6A (28.6)
+- missingAttendance: 0 (all classes covered today)
+- teacherWorkload: real teacher names + ta_count + weekly_sessions
+- atRiskStudents: filterable per attendance/grade thresholds
 
 ---
 
@@ -114,21 +126,28 @@ Setiap entitas dibuat lewat HTTP POST ke routes Inertia, yang berarti **semua ob
 
 ---
 
-## 🛠️ Bugs Fixed Selama Seeding
-
-Dua bug pre-existing surfaced + diperbaiki:
+## 🛠️ Bugs Fixed Selama Seeding (4 pre-existing)
 
 ### Bug 1: `GradeController::storeBatch` calls `calculateRankings` with wrong arity
 **File:** `src/app/Http/Controllers/GradeController.php:196`
-**Issue:** Memanggil `$this->reportCardService->calculateRankings($classId, $semId)` — tapi service signature butuh 3 arg termasuk `$reportType`. 500 error.
-**Fix:** Tambah `'final'` sebagai 3rd arg untuk both `generate()` dan `calculateRankings()` calls.
+**Issue:** Memanggil `calculateRankings($classId, $semId)` — service butuh 3 arg termasuk `$reportType` → 500 error.
+**Fix:** Tambah `'final'` sebagai 3rd arg.
 
 ### Bug 2: `AnnouncementController::store` — `DB` class not imported
-**File:** `src/app/Http/Controllers/AnnouncementController.php:10`
-**Issue:** Method pakai `DB::table('notifications')->insert()` tapi `use Illuminate\Support\Facades\DB;` missing → Class not found 500.
+**File:** `src/app/Http/Controllers/AnnouncementController.php`
+**Issue:** Pakai `DB::table('notifications')` tapi `use Illuminate\Support\Facades\DB;` missing → 500.
 **Fix:** Tambah import.
 
-Both bugs would have surfaced di production juga. Bagus diketahui sekarang.
+### Bug 3: `GradeController::storeBatch` validation drops grade field values
+**File:** `src/app/Http/Controllers/GradeController.php:138-147`
+**Issue:** `$request->validate()` rules hanya validate `student_id` per grade row. Laravel filter validated fields, jadi `daily_test_avg/mid_test/final_test` ter-drop dari `$validated['grades']`. Nilai disimpan sebagai 0. Bug serius: setiap input nilai batch via UI silently masuk dengan nilai 0.
+**Fix:** Tambah validation rules untuk semua field nilai (`nullable|numeric|min:0|max:100`).
+
+### Bug 4 (architectural insight, not fixed): ReportCardService overwrites grades
+**Detail:** `ReportCardService::calculateSubjectGrade()` derives `daily_test_avg/mid_test/final_test` dari `task_scores` + `exam_scores` (not from grade input). Setiap kali `storeBatch` save grade, `generate()` runs setelahnya dan overwrite columns dengan derivasi dari exam scores. Workflow expected: user input nilai via Tasks/Exams, BUKAN langsung via Grades batch UI.
+**Implication for demo:** Untuk dapat nilai non-zero di analytics, harus generate UTS+UAS exams + scores (done via tinker post-seed).
+
+All bugs would have surfaced in production. Bug 3 specifically would silently corrupt teacher input.
 
 ---
 

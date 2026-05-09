@@ -136,7 +136,14 @@ class GradeController extends Controller
             'semester_id' => 'required|exists:semesters,id',
             'subject_id'  => 'required|exists:subjects,id',
             'grades'      => 'required|array',
-            'grades.*.student_id' => 'required|exists:students,id',
+            'grades.*.student_id'      => 'required|exists:students,id',
+            'grades.*.daily_test_avg'  => 'nullable|numeric|min:0|max:100',
+            'grades.*.mid_test'        => 'nullable|numeric|min:0|max:100',
+            'grades.*.final_test'      => 'nullable|numeric|min:0|max:100',
+            'grades.*.knowledge_score' => 'nullable|numeric|min:0|max:100',
+            'grades.*.skill_score'     => 'nullable|numeric|min:0|max:100',
+            'grades.*.attitude_score'  => 'nullable|string|max:5',
+            'grades.*.notes'           => 'nullable|string|max:255',
         ]);
 
         $subject = Subject::findOrFail($validated['subject_id']);
