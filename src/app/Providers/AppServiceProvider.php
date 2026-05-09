@@ -34,6 +34,7 @@ use App\Models\Semester;
 use App\Policies\SemesterPolicy;
 use App\Models\YearTransitionLog;
 use App\Policies\YearTransitionPolicy;
+use App\Policies\AnalyticsPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -77,8 +78,12 @@ class AppServiceProvider extends ServiceProvider
             return $user->isSchoolAdmin() || $user->isSuperAdmin();
         });
 
-        // Gate definition for analytics (model-less policy — WARN-4: use Gate::define, not Gate::policy)
-        Gate::define('view-analytics', fn (User $user) => $user->isSchoolAdmin());
+        // Analytics policy — registered for model-less authorization via Gate::define
+        // view-analytics: used by controller $this->authorize('view-analytics')
+        Gate::define('view-analytics', fn (User $user) => (new AnalyticsPolicy)->view($user));
+
+        // viewWidget gate: controller uses Gate::allows('viewWidget', $widget)
+        Gate::define('viewWidget', fn (User $user, string $widget) => (new AnalyticsPolicy)->viewWidget($user, $widget));
 
         try { $queryLoggingEnabled = \Illuminate\Support\Facades\Cache::get('query_logging_enabled'); } catch (\Throwable) { $queryLoggingEnabled = false; }
         if ($queryLoggingEnabled) {

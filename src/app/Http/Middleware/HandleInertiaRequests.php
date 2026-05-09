@@ -56,7 +56,12 @@ class HandleInertiaRequests extends Middleware
                         'manage_assignments' => $user->isSchoolAdmin(),
                         'manage_academic_years'     => $user->isSchoolAdmin(),
                         'manage_year_transition'    => $user->isSchoolAdmin() || $user->isSuperAdmin(),
-                        'view_analytics'            => $user->isSchoolAdmin(),
+                        'manage_analytics'           => $user->isSchoolAdmin(),
+                        'view_own_class_analytics'   => $user->isTeacher() && $user->teacher !== null
+                                                            && (
+                                                                \App\Models\SchoolClass::where('homeroom_teacher_id', $user->teacher->id)->exists()
+                                                                || \App\Models\TeachingAssignment::where('teacher_id', $user->teacher->id)->exists()
+                                                            ),
                     ];
                 },
             ],
