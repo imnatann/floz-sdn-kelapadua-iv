@@ -27,6 +27,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+// ─── Health Checks (no auth, no CSRF) ────────────────────────────────
+Route::get('/healthz', [\App\Http\Controllers\HealthController::class, 'check'])
+    ->name('health.check');
+
 // ─── Public / Auth ───────────────────────────────────────────────────
 Route::get('/', [\App\Http\Controllers\WelcomeController::class, 'index'])->name('home');
 Route::get('/docs', function () {
