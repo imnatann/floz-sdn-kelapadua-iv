@@ -40,6 +40,25 @@ const formatDate = (dateString) => {
     year: 'numeric',
   });
 };
+
+const stripHtml = (raw) => {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const cleanExcerpt = (announcement) => {
+  const raw = announcement.excerpt || announcement.content || '';
+  return stripHtml(raw) || 'Tidak ada ringkasan.';
+};
 </script>
 
 <template>
@@ -107,7 +126,7 @@ const formatDate = (dateString) => {
            </h3>
            
            <p class="mb-4 text-sm text-slate-500 line-clamp-3 flex-1">
-             {{ announcement.excerpt || 'Tidak ada ringkasan.' }}
+             {{ cleanExcerpt(announcement) }}
            </p>
 
            <!-- Footer -->
