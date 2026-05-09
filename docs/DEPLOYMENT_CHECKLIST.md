@@ -251,6 +251,100 @@ Uptime Kuma has `restart: always` — it restarts automatically with Docker.
 
 ---
 
+## 11. Backup Operations
+
+### 11.1 Verify cron is running (host)
+
+The `scheduler` container runs `php artisan schedule:run` every 60 seconds. Confirm it's up:
+
+```bash
+docker compose ps scheduler
+# Should be: running
+```
+
+### 11.2 Trigger a manual backup
+
+```bash
+docker compose exec app php artisan backup:database
+# Expected: "Backup created: backups/daily/floz_<timestamp>.sql.gz"
+ls src/storage/app/backups/daily/
+```
+
+### 11.3 Restore from backup (DANGER — overwrites DB)
+
+```bash
+# Dry-run first to confirm the file is intact
+docker compose exec app php artisan backup:restore \
+    storage/app/backups/daily/floz_<timestamp>.sql.gz --dry-run
+
+# Full restore (will prompt for confirmation)
+docker compose exec app php artisan backup:restore \
+    storage/app/backups/daily/floz_<timestamp>.sql.gz
+```
+
+### 11.4 Backup retention verification
+
+```bash
+ls -la src/storage/app/backups/daily/    # expect <= 7 files
+ls -la src/storage/app/backups/weekly/   # expect <= 4 files
+ls -la src/storage/app/backups/monthly/  # expect <= 6 files
+```
+
+### 11.5 Optional: rclone offsite to Google Drive
+
+Install rclone on host, configure a remote named `gdrive`:
+```bash
+rclone copy ./src/storage/app/backups gdrive:floz-backups/ --progress
+```
+Add to host crontab (runs at 03:00 daily, after the 02:00 backup):
+```
+0 3 * * * rclone copy /path/to/floz/src/storage/app/backups gdrive:floz-backups/ >> /var/log/rclone.log 2>&1
+```
+
+---
+
+## 12. Running deploy.sh
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Pass `--skip-build` to skip `npm ci && npm run build` (e.g., config-only deploy):
+
+```bash
+./deploy.sh --skip-build
+```
+
+The maintenance secret used by `php artisan down --secret` is printed at the start of the script.
+Bypass maintenance mode by appending `?secret=<token>` to any URL during deploy.
+
+---
+
+## 13. Reverb WebSocket in Production
+
+Reverb runs as a separate container (`floz-reverb`) on internal port 8080.
+Nginx routes WebSocket traffic from `/app/*` and `/apps/*` to this container.
+
+```bash
+# Check Reverb is running
+docker compose ps reverb
+docker compose logs reverb --tail=20
+
+# Restart Reverb without downtime for other services
+docker compose restart reverb
+
+# Signal Reverb to reload config gracefully (if supported)
+docker compose exec app php artisan reverb:restart
+```
+
+**Sanctum / WebSocket auth note:**
+Reverb uses Laravel Echo with Sanctum tokens. Ensure `REVERB_APP_KEY` and `REVERB_APP_SECRET`
+in `.env` match `config/reverb.php`. The frontend Echo client must send the Sanctum token
+in the auth request to `/broadcasting/auth`.
+
+---
+
 ## Rollback Procedure
 
 ```bash
