@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
@@ -8,6 +8,9 @@ import Badge from '@/Components/UI/Badge.vue';
 import BaseChart from '@/Components/Charts/BaseChart.vue';
 
 defineOptions({ layout: AppLayout });
+
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.permissions?.manage_analytics === true);
 
 const props = defineProps({
   todaysAttendance: { type: Object, default: () => null },
@@ -88,7 +91,9 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-xl font-bold text-slate-800">Dasbor Analitik</h2>
-        <p class="mt-0.5 text-sm text-slate-400">Ringkasan kehadiran dan performa kelas hari ini</p>
+        <p class="mt-0.5 text-sm text-slate-400">
+          {{ isAdmin ? 'Ringkasan seluruh sekolah' : 'Menampilkan kelas yang Anda ampu' }}
+        </p>
       </div>
       <Button variant="secondary" size="sm" :disabled="refreshing" @click="refresh">
         <svg
@@ -155,8 +160,8 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
         </div>
       </Card>
 
-      <!-- W2: Missing Attendance Alert -->
-      <Card title="Status Absensi Kelas" subtitle="Kelas yang belum mengisi absensi hari ini">
+      <!-- W2: Missing Attendance Alert (admin only) -->
+      <Card v-if="isAdmin" title="Status Absensi Kelas" subtitle="Kelas yang belum mengisi absensi hari ini">
         <div v-if="hasMissingAttendance">
           <div class="mb-3 flex items-center gap-2">
             <span class="flex h-6 w-6 items-center justify-center rounded-full bg-red-100">
@@ -211,8 +216,8 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
         </div>
       </Card>
 
-      <!-- W8: Top + At-risk Class -->
-      <Card title="Performa Kelas" subtitle="Kelas terbaik dan kelas berisiko">
+      <!-- W8: Top + At-risk Class (admin only) -->
+      <Card v-if="isAdmin" title="Performa Kelas" subtitle="Kelas terbaik dan kelas berisiko">
         <div class="space-y-4">
           <!-- Top class -->
           <div>

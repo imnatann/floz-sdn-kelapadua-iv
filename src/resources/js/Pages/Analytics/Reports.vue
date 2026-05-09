@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue';
 import axios from 'axios';
+import { usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
@@ -9,6 +10,9 @@ import FormSelect from '@/Components/UI/FormSelect.vue';
 import BaseChart from '@/Components/Charts/BaseChart.vue';
 
 defineOptions({ layout: AppLayout });
+
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.permissions?.manage_analytics === true);
 
 const props = defineProps({
   classes: { type: Array, default: () => [] },
@@ -192,12 +196,15 @@ const subjectOptions = computed(() => [
         <h2 class="text-xl font-bold text-slate-800">Laporan Analitik</h2>
         <p class="mt-0.5 text-sm text-slate-400">Analisis nilai, kehadiran, dan beban kerja guru</p>
       </div>
-      <Button variant="primary" size="sm" :disabled="exporting" @click="exportExcel">
-        <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-        </svg>
-        Export Excel
-      </Button>
+      <div class="flex flex-col items-end gap-1">
+        <Button variant="primary" size="sm" :disabled="exporting" @click="exportExcel">
+          <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Export Excel
+        </Button>
+        <span v-if="!isAdmin" class="text-[10px] text-slate-400">Hanya kelas yang Anda ampu</span>
+      </div>
     </div>
 
     <!-- Filter Panel -->
@@ -319,8 +326,8 @@ const subjectOptions = computed(() => [
       </div>
     </Card>
 
-    <!-- W7: Teacher Workload Table (BLOCK-2 fix) -->
-    <Card title="W7 — Beban Kerja Guru" subtitle="Jumlah tugas ajar dan total jam per minggu">
+    <!-- W7: Teacher Workload Table (admin only) -->
+    <Card v-if="isAdmin" title="W7 — Beban Kerja Guru" subtitle="Jumlah tugas ajar dan total jam per minggu">
       <div v-if="widgets.w7.loading" class="space-y-2">
         <div v-for="i in 5" :key="i" class="animate-pulse h-10 rounded-lg bg-slate-100" />
       </div>
