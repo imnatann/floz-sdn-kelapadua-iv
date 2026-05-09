@@ -76,7 +76,9 @@ class ReportCardController extends Controller
             ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
             ->when($request->semester_id, fn($q, $s) => $q->where('semester_id', $s))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
-            ->latest()
+            ->orderByRaw('CASE WHEN rank IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('rank')
+            ->orderBy('id')
             ->paginate(20)
             ->withQueryString();
 
