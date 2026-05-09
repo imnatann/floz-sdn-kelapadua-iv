@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\ReportCardController;
@@ -47,6 +48,10 @@ Route::controller(LoginController::class)->group(function () {
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profile / Password
+    Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('profile.password');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
     // Notifications
     Route::get('/notifications/data', [NotificationController::class, 'data'])->name('notifications.data');
