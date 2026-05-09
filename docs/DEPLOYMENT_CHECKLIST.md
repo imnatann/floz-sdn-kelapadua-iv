@@ -221,6 +221,36 @@ docker compose logs horizon --tail=20
 
 ---
 
+## 10. Uptime Kuma Monitoring
+
+Uptime Kuma runs at `http://your-server-ip:3001` after `docker compose up -d uptime-kuma`.
+
+### Initial setup (one-time, manual)
+
+1. Open `http://your-server-ip:3001` in browser.
+2. Create admin account (username + password — store in school password manager).
+3. Add monitors:
+
+| Monitor name | Type | URL / Address | Expected | Interval |
+|---|---|---|---|---|
+| Floz App | HTTP/HTTPS | `https://floz.example.com/up` | 200 | 60s |
+| Floz Healthz | HTTP/HTTPS | `https://floz.example.com/healthz` | 200 | 120s |
+| Redis | TCP Port | `redis:6379` | open | 60s |
+| PostgreSQL | TCP Port | `postgres:5432` | open | 60s |
+
+4. Add Telegram notification:
+   - Create a Telegram bot: chat with `@BotFather`, run `/newbot`, copy the token.
+   - Get your chat ID: message `@userinfobot`.
+   - In Uptime Kuma: Settings → Notifications → Add → Telegram.
+   - Enter bot token and chat ID. Test notification.
+5. Assign the Telegram notification to all four monitors.
+
+### Restart after server reboot
+
+Uptime Kuma has `restart: always` — it restarts automatically with Docker.
+
+---
+
 ## Rollback Procedure
 
 ```bash
