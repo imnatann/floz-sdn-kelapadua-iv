@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\AcademicYear;
 use App\Models\SchoolClass;
+use App\Models\TeachingAssignment;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
@@ -12,15 +15,66 @@ class AnalyticsService
         private readonly GradeCalculationService $gradeCalc,
     ) {}
 
+    // ── Scope Helper ──────────────────────────────────────────────────────────
+
+    /**
+     * Returns array of class IDs visible to the given user.
+     *
+     * - School admin: all class IDs in active AY
+     * - Teacher with homeroom and/or TAs: union of those IDs
+     * - Teacher with no Teacher record or no assignments: []
+     */
+    private function visibleClassIds(User $scope): array
+    {
+        $teacher = $scope->teacher;
+
+        if (! $teacher) {
+            return [];
+        }
+
+        $homeroom = SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id');
+        $taught   = TeachingAssignment::where('teacher_id', $teacher->id)->pluck('class_id');
+
+        return $homeroom->merge($taught)->unique()->values()->all();
+    }
+
     // ── W1: Today's Attendance ────────────────────────────────────────────────
 
-    public function todaysAttendance(): array
+    public function todaysAttendance(?User $scope = null): array
     {
-        $rows = DB::table('attendance')
-            ->whereDate('date', today())
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            $ids = $this->visibleClassIds($scope);
+
+            if (empty($ids)) {
+                return [
+                    'data' => [
+                        'present'    => 0,
+                        'sick'       => 0,
+                        'permit'     => 0,
+                        'absent'     => 0,
+                        'percentage' => 0.0,
+                    ],
+                    'meta' => [
+                        'generated_at' => now()->toIso8601String(),
+                        'note'         => 'Tidak ada kelas yang dikelola.',
+                        'empty_reason' => 'no_assigned_classes',
+                    ],
+                ];
+            }
+
+            $rows = DB::table('attendance')
+                ->whereDate('date', today())
+                ->whereIn('class_id', $ids)
+                ->selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
+        } else {
+            $rows = DB::table('attendance')
+                ->whereDate('date', today())
+                ->selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
+        }
 
         $present = (int) ($rows['present'] ?? 0);
         $sick    = (int) ($rows['sick']    ?? 0);
@@ -42,8 +96,12 @@ class AnalyticsService
 
     // ── W2: Classes Missing Attendance ────────────────────────────────────────
 
-    public function classesMissingAttendance(): array
+    public function classesMissingAttendance(?User $scope = null): array
     {
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            throw new AuthorizationException('Widget ini hanya tersedia untuk admin.');
+        }
+
         $activeAyId = AcademicYear::where('is_active', true)->value('id');
 
         $classesWithAttendance = DB::table('attendance')
@@ -71,16 +129,37 @@ class AnalyticsService
 
     // ── W3: Class Average Comparison ──────────────────────────────────────────
 
-    public function classAvgComparison(int $semesterId): array
+    public function classAvgComparison(int $semesterId, ?User $scope = null): array
     {
-        $rows = DB::table('report_cards')
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            $ids = $this->visibleClassIds($scope);
+
+            if (empty($ids)) {
+                return [
+                    'data' => [],
+                    'meta' => [
+                        'semester_id'  => $semesterId,
+                        'generated_at' => now()->toIso8601String(),
+                        'note'         => 'Tidak ada kelas yang diampu.',
+                        'empty_reason' => 'no_assigned_classes',
+                    ],
+                ];
+            }
+        }
+
+        $query = DB::table('report_cards')
             ->join('classes', 'report_cards.class_id', '=', 'classes.id')
             ->where('report_cards.semester_id', $semesterId)
             ->where('report_cards.report_type', 'final')
             ->selectRaw('report_cards.class_id, classes.name as class_name, ROUND(AVG(report_cards.average_score)::numeric, 2) as avg')
             ->groupBy('report_cards.class_id', 'classes.name')
-            ->orderByDesc('avg')
-            ->get();
+            ->orderByDesc('avg');
+
+        if (isset($ids)) {
+            $query->whereIn('report_cards.class_id', $ids);
+        }
+
+        $rows = $query->get();
 
         // WARN-1: empty state with meta note
         if ($rows->isEmpty()) {
@@ -110,8 +189,25 @@ class AnalyticsService
 
     // ── W4: Subject Grade Distribution ───────────────────────────────────────
 
-    public function subjectGradeDistribution(int $classId, int $semesterId): array
+    public function subjectGradeDistribution(int $classId, int $semesterId, ?User $scope = null): array
     {
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            $ids = $this->visibleClassIds($scope);
+
+            if (! in_array($classId, $ids, true)) {
+                return [
+                    'data' => [],
+                    'meta' => [
+                        'class_id'     => $classId,
+                        'semester_id'  => $semesterId,
+                        'generated_at' => now()->toIso8601String(),
+                        'note'         => 'Anda tidak memiliki akses ke kelas ini.',
+                        'empty_reason' => 'access_denied',
+                    ],
+                ];
+            }
+        }
+
         $rows = DB::table('grades')
             ->join('subjects', 'grades.subject_id', '=', 'subjects.id')
             ->where('grades.class_id', $classId)
@@ -146,8 +242,25 @@ class AnalyticsService
 
     // ── W5: Attendance Trend ──────────────────────────────────────────────────
 
-    public function attendanceTrend(int $classId, int $semesterId, int $weeks = 12): array
+    public function attendanceTrend(int $classId, int $semesterId, int $weeks = 12, ?User $scope = null): array
     {
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            $ids = $this->visibleClassIds($scope);
+
+            if (! in_array($classId, $ids, true)) {
+                return [
+                    'data' => [],
+                    'meta' => [
+                        'class_id'     => $classId,
+                        'semester_id'  => $semesterId,
+                        'weeks'        => $weeks,
+                        'note'         => 'Anda tidak memiliki akses ke kelas ini.',
+                        'empty_reason' => 'access_denied',
+                    ],
+                ];
+            }
+        }
+
         $since = now()->subWeeks($weeks)->startOfWeek();
 
         // BLOCK-1 fix: explicit pgsql branch (PLAN_CHECK requirement)
@@ -192,13 +305,30 @@ class AnalyticsService
 
     // ── W6: At-Risk Students ──────────────────────────────────────────────────
 
-    public function atRiskStudents(int $semesterId, ?float $kktp = null): array
+    public function atRiskStudents(int $semesterId, ?float $kktp = null, ?User $scope = null): array
     {
-        // WARN-2: read from config (PLAN_CHECK requirement)
-        $kktp              ??= (float) config('floz.analytics.at_risk_grade_kktp', 70);
-        $attendanceThreshold = (float) config('floz.analytics.at_risk_attendance_threshold', 0.85);
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            $ids = $this->visibleClassIds($scope);
 
-        $rows = DB::table('report_cards')
+            if (empty($ids)) {
+                return [
+                    'data' => [],
+                    'meta' => [
+                        'semester_id'          => $semesterId,
+                        'kktp'                 => $kktp ?? (float) config('floz.analytics.at_risk_grade_kktp', 70),
+                        'attendance_threshold' => (float) config('floz.analytics.at_risk_attendance_threshold', 0.85) * 100,
+                        'note'                 => 'Tidak ada kelas yang diampu.',
+                        'empty_reason'         => 'no_assigned_classes',
+                    ],
+                ];
+            }
+        }
+
+        // WARN-2: read from config (PLAN_CHECK requirement)
+        $kktp                ??= (float) config('floz.analytics.at_risk_grade_kktp', 70);
+        $attendanceThreshold   = (float) config('floz.analytics.at_risk_attendance_threshold', 0.85);
+
+        $query = DB::table('report_cards')
             ->join('students', 'report_cards.student_id', '=', 'students.id')
             ->join('classes',  'report_cards.class_id',   '=', 'classes.id')
             ->where('report_cards.semester_id', $semesterId)
@@ -215,8 +345,13 @@ class AnalyticsService
                 report_cards.attendance_sick,
                 report_cards.attendance_permit,
                 report_cards.attendance_absent
-            ')
-            ->get();
+            ');
+
+        if (isset($ids)) {
+            $query->whereIn('report_cards.class_id', $ids);
+        }
+
+        $rows = $query->get();
 
         // WARN-1: empty state with meta note
         if ($rows->isEmpty()) {
@@ -266,8 +401,12 @@ class AnalyticsService
 
     // ── W7: Teacher Workload ──────────────────────────────────────────────────
 
-    public function teacherWorkload(int $academicYearId): array
+    public function teacherWorkload(int $academicYearId, ?User $scope = null): array
     {
+        if ($scope !== null && ! $scope->isSchoolAdmin()) {
+            throw new AuthorizationException('Widget ini hanya tersedia untuk admin.');
+        }
+
         $rows = DB::table('teaching_assignments as ta')
             ->join('teachers', 'ta.teacher_id', '=', 'teachers.id')
             ->leftJoin('schedules', 'schedules.teaching_assignment_id', '=', 'ta.id')
