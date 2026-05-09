@@ -27,11 +27,54 @@ const refresh = () => {
   router.reload({ onFinish: () => { refreshing.value = false; } });
 };
 
+// Normalize backend wrapper: backend returns {data: {...}, meta: {...}}
+const todays = computed(() => {
+  const raw = props.todaysAttendance?.data ?? props.todaysAttendance ?? null;
+  if (!raw) return null;
+  // Map English snake_case from backend to Indonesian aliases used in template
+  const present = raw.present ?? raw.hadir ?? 0;
+  const sick = raw.sick ?? raw.sakit ?? 0;
+  const permit = raw.permit ?? raw.izin ?? 0;
+  const absent = raw.absent ?? raw.alpha ?? 0;
+  const percentage = raw.percentage ?? raw.attendance_rate ?? 0;
+  const total = raw.total ?? (present + sick + permit + absent);
+  return { hadir: present, sakit: sick, izin: permit, alpha: absent, total, percentage };
+});
+
+const comparison = computed(() => {
+  const list = props.classAvgComparison?.data ?? props.classAvgComparison ?? [];
+  return Array.isArray(list) ? list.map(d => ({
+    class_id: d.class_id,
+    class_name: d.class_name,
+    // Backend may return either avg (grade) or avg_percent (attendance)
+    avg: d.avg_percent ?? d.avg ?? 0,
+  })) : [];
+});
+
+const missingClasses = computed(() => {
+  const raw = props.classesMissingAttendance ?? props.missingAttendance?.data ?? props.missingAttendance ?? [];
+  return Array.isArray(raw) ? raw : [];
+});
+
+// Derive topClass/atRiskClass from comparison if backend didn't provide explicit ones
+const topClassDerived = computed(() => {
+  if (props.topClass) return props.topClass;
+  if (comparison.value.length === 0) return null;
+  const top = [...comparison.value].sort((a, b) => b.avg - a.avg)[0];
+  return top ? { name: top.class_name, avg_percent: top.avg } : null;
+});
+const atRiskClassDerived = computed(() => {
+  if (props.atRiskClass) return props.atRiskClass;
+  if (comparison.value.length === 0) return null;
+  const bottom = [...comparison.value].sort((a, b) => a.avg - b.avg)[0];
+  return bottom ? { name: bottom.class_name, avg_percent: bottom.avg } : null;
+});
+
 // W1: Attendance gauge data
 const attendanceSeries = computed(() => {
-  if (!props.todaysAttendance) return [];
-  const a = props.todaysAttendance;
-  return [a.hadir ?? 0, a.sakit ?? 0, a.izin ?? 0, a.alpha ?? 0];
+  const a = todays.value;
+  if (!a) return [];
+  return [a.hadir, a.sakit, a.izin, a.alpha];
 });
 
 const attendanceOptions = computed(() => ({
@@ -49,7 +92,7 @@ const attendanceOptions = computed(() => ({
             label: 'Total Siswa',
             fontSize: '13px',
             color: '#64748b',
-            formatter: () => props.todaysAttendance?.total ?? 0,
+            formatter: () => todays.value?.total ?? 0,
           },
         },
       },
@@ -58,31 +101,30 @@ const attendanceOptions = computed(() => ({
 }));
 
 const attendancePercent = computed(() => {
-  if (!props.todaysAttendance) return 0;
-  const { hadir, total } = props.todaysAttendance;
-  if (!total) return 0;
-  return Math.round((hadir / total) * 100);
+  const a = todays.value;
+  if (!a) return 0;
+  if (a.percentage) return Math.round(a.percentage);
+  if (!a.total) return 0;
+  return Math.round((a.hadir / a.total) * 100);
 });
 
 // W3: Class avg comparison horizontal bar
 const comparisonSeries = computed(() => {
-  if (!props.classAvgComparison?.data) return [];
-  return [{ name: 'Rata-rata Kehadiran (%)', data: props.classAvgComparison.data.map(d => d.avg_percent ?? 0) }];
+  if (comparison.value.length === 0) return [];
+  return [{ name: 'Rata-rata', data: comparison.value.map(d => d.avg) }];
 });
 
 const comparisonOptions = computed(() => ({
   chart: { type: 'bar' },
   plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
   xaxis: {
-    categories: props.classAvgComparison?.data?.map(d => d.class_name) ?? [],
-    max: 100,
-    labels: { formatter: (v) => `${v}%` },
+    categories: comparison.value.map(d => d.class_name),
   },
-  dataLabels: { enabled: true, formatter: (v) => `${v}%` },
+  dataLabels: { enabled: true, formatter: (v) => Number(v).toFixed(1) },
   colors: ['#f97316'],
 }));
 
-const hasMissingAttendance = computed(() => props.classesMissingAttendance?.length > 0);
+const hasMissingAttendance = computed(() => missingClasses.value.length > 0);
 </script>
 
 <template>
@@ -111,7 +153,7 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
 
       <!-- W1: Today's Attendance -->
       <Card title="Kehadiran Hari Ini" subtitle="Rekap absensi seluruh kelas">
-        <div v-if="todaysAttendance">
+        <div v-if="todays">
           <!-- Big stat -->
           <div class="mb-4 flex items-center gap-4">
             <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-orange-50">
@@ -119,26 +161,26 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
             </div>
             <div>
               <p class="text-sm font-medium text-slate-700">Tingkat Kehadiran</p>
-              <p class="text-xs text-slate-400">{{ todaysAttendance.total ?? 0 }} siswa terdaftar</p>
+              <p class="text-xs text-slate-400">{{ todays?.total ?? 0 }} siswa terdaftar</p>
             </div>
           </div>
 
           <!-- H/S/I/A breakdown -->
           <div class="mb-4 grid grid-cols-4 gap-2">
             <div class="rounded-lg bg-green-50 p-3 text-center">
-              <p class="text-lg font-bold text-green-600">{{ todaysAttendance.hadir ?? 0 }}</p>
+              <p class="text-lg font-bold text-green-600">{{ todays?.hadir ?? 0 }}</p>
               <p class="text-xs text-green-500">Hadir</p>
             </div>
             <div class="rounded-lg bg-blue-50 p-3 text-center">
-              <p class="text-lg font-bold text-blue-600">{{ todaysAttendance.sakit ?? 0 }}</p>
+              <p class="text-lg font-bold text-blue-600">{{ todays?.sakit ?? 0 }}</p>
               <p class="text-xs text-blue-500">Sakit</p>
             </div>
             <div class="rounded-lg bg-amber-50 p-3 text-center">
-              <p class="text-lg font-bold text-amber-600">{{ todaysAttendance.izin ?? 0 }}</p>
+              <p class="text-lg font-bold text-amber-600">{{ todays?.izin ?? 0 }}</p>
               <p class="text-xs text-amber-500">Izin</p>
             </div>
             <div class="rounded-lg bg-red-50 p-3 text-center">
-              <p class="text-lg font-bold text-red-600">{{ todaysAttendance.alpha ?? 0 }}</p>
+              <p class="text-lg font-bold text-red-600">{{ todays?.alpha ?? 0 }}</p>
               <p class="text-xs text-red-500">Alpha</p>
             </div>
           </div>
@@ -197,7 +239,7 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
 
       <!-- W3: Class Avg Comparison -->
       <Card title="Perbandingan Rata-rata Kehadiran" subtitle="Rata-rata kehadiran per kelas semester ini">
-        <div v-if="classAvgComparison?.data?.length">
+        <div v-if="comparison.length">
           <BaseChart
             type="bar"
             :series="comparisonSeries"
@@ -222,16 +264,16 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
           <!-- Top class -->
           <div>
             <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Kelas Terbaik</p>
-            <div v-if="topClass" class="flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 p-4">
+            <div v-if="topClassDerived" class="flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 p-4">
               <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100">
                 <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-800">{{ topClass.name }}</p>
+                <p class="text-sm font-semibold text-slate-800">{{ topClassDerived.name }}</p>
                 <p class="text-xs text-slate-500">
-                  Kehadiran: <span class="font-medium text-green-600">{{ topClass.avg_percent ?? topClass.attendance_rate ?? '-' }}%</span>
+                  Kehadiran: <span class="font-medium text-green-600">{{ Number(topClassDerived.avg_percent ?? 0).toFixed(1) }}</span>
                 </p>
               </div>
               <Badge variant="success" size="sm">Terbaik</Badge>
@@ -244,16 +286,16 @@ const hasMissingAttendance = computed(() => props.classesMissingAttendance?.leng
           <!-- At-risk class -->
           <div>
             <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Kelas Berisiko</p>
-            <div v-if="atRiskClass" class="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4">
+            <div v-if="atRiskClassDerived" class="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-4">
               <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
                 <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-slate-800">{{ atRiskClass.name }}</p>
+                <p class="text-sm font-semibold text-slate-800">{{ atRiskClassDerived.name }}</p>
                 <p class="text-xs text-slate-500">
-                  Kehadiran: <span class="font-medium text-red-600">{{ atRiskClass.avg_percent ?? atRiskClass.attendance_rate ?? '-' }}%</span>
+                  Kehadiran: <span class="font-medium text-red-600">{{ Number(atRiskClassDerived.avg_percent ?? 0).toFixed(1) }}</span>
                 </p>
               </div>
               <Badge variant="danger" size="sm">Berisiko</Badge>
