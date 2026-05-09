@@ -55,10 +55,12 @@ class AttendanceController extends Controller
         }
 
         // Get all unique meetings for this class and semester
+        // Use groupBy meeting_number to ensure one row per meeting (avoids duplicate headers
+        // if recorded_by differs across records in the same session).
         $meetings = Attendance::where('class_id', $class->id)
             ->where('semester_id', $activeSemester->id)
-            ->select('meeting_number', 'date', 'recorded_by')
-            ->distinct()
+            ->select('meeting_number', \Illuminate\Support\Facades\DB::raw('MIN(date) as date'), \Illuminate\Support\Facades\DB::raw('MIN(recorded_by) as recorded_by'))
+            ->groupBy('meeting_number')
             ->orderBy('meeting_number')
             ->get();
 
