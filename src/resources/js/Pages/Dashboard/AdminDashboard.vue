@@ -27,6 +27,20 @@ const formatDate = (dateString) => {
     year: 'numeric',
   });
 };
+
+const stripHtml = (raw) => {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 </script>
 
 <template>
@@ -114,7 +128,7 @@ const formatDate = (dateString) => {
             >
               <div class="text-xs text-slate-400">{{ formatDate(announcement.created_at) }}</div>
               <h4 class="text-sm font-semibold text-slate-800 group-hover:text-blue-600">{{ announcement.title }}</h4>
-              <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ announcement.content }}</p>
+              <p class="mt-1 line-clamp-2 text-xs text-slate-500">{{ stripHtml(announcement.excerpt || announcement.content) }}</p>
             </Link>
             <div v-if="!recentAnnouncements?.length" class="py-8 text-center">
               <p class="text-sm text-slate-400">Belum ada pengumuman.</p>
