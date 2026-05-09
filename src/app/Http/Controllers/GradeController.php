@@ -182,20 +182,22 @@ class GradeController extends Controller
             }
         }
 
-        // Auto-synchronize Report Cards for these students
+        // Auto-synchronize Report Cards for these students (default report type 'final')
         $studentIdsToUpdate = array_unique($studentIdsToUpdate);
         foreach ($studentIdsToUpdate as $studentId) {
             $this->reportCardService->generate(
                 $studentId,
                 $validated['class_id'],
-                $validated['semester_id']
+                $validated['semester_id'],
+                'final'
             );
         }
 
-        // Auto-recalculate class rankings
+        // Auto-recalculate class rankings for the same report type
         $this->reportCardService->calculateRankings(
             $validated['class_id'],
-            $validated['semester_id']
+            $validated['semester_id'],
+            'final'
         );
 
         return redirect()->route('grades.index', [
