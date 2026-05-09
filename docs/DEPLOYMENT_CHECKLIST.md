@@ -183,6 +183,44 @@ See the e2e audit report for edge cases discovered during testing:
 
 ---
 
+## 9. Health Endpoints
+
+Two endpoints are available for monitoring:
+
+### 9.1 `/up` — Laravel built-in (use for Uptime Kuma primary monitor)
+
+Checks that the application boots and the default DB connection is ready.
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://floz.example.com/up
+# Expected: 200
+```
+
+### 9.2 `/healthz` — Custom (DB + Redis + queue check)
+
+Returns JSON with per-service status. Use for alerting dashboards.
+
+```bash
+curl -s https://floz.example.com/healthz | jq .
+# Expected:
+# {
+#   "status": "ok",
+#   "db": "ok",
+#   "redis": "ok",
+#   "queue": "ok",
+#   "timestamp": "2026-05-09T02:00:00+07:00"
+# }
+```
+
+HTTP 503 means at least one service is degraded — check logs immediately:
+
+```bash
+docker compose logs app --tail=50
+docker compose logs horizon --tail=20
+```
+
+---
+
 ## Rollback Procedure
 
 ```bash
