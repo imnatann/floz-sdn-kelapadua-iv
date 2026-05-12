@@ -78,13 +78,23 @@ watch(filters, () => {
   fetchAll();
 }, { deep: true });
 
-// Export Excel
+// Export Excel (Kehadiran)
 const exporting = ref(false);
 const exportExcel = () => {
   const params = new URLSearchParams();
   if (filters.semester_id) params.append('semester_id', filters.semester_id);
   if (filters.class_id) params.append('class_id', filters.class_id);
   window.location.href = `/analytics/export/attendance?${params.toString()}`;
+};
+
+// Export Nilai
+const exportingGrades = ref(false);
+const exportGrades = () => {
+  const params = new URLSearchParams();
+  if (filters.semester_id) params.append('semester_id', filters.semester_id);
+  if (filters.class_id) params.append('class_id', filters.class_id);
+  if (filters.subject_id) params.append('subject_id', filters.subject_id);
+  window.location.href = `/analytics/export/grades?${params.toString()}`;
 };
 
 // W4: Grade distribution stacked bar
@@ -197,12 +207,20 @@ const subjectOptions = computed(() => [
         <p class="mt-0.5 text-sm text-slate-400">Analisis nilai, kehadiran, dan beban kerja guru</p>
       </div>
       <div class="flex flex-col items-end gap-1">
-        <Button variant="primary" size="sm" :disabled="exporting" @click="exportExcel">
-          <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-          </svg>
-          Export Excel
-        </Button>
+        <div class="flex gap-2">
+          <Button variant="secondary" size="sm" :disabled="exporting" @click="exportExcel">
+            <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Export Kehadiran
+          </Button>
+          <Button variant="primary" size="sm" :disabled="exportingGrades" @click="exportGrades">
+            <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Export Nilai
+          </Button>
+        </div>
         <span v-if="!isAdmin" class="text-[10px] text-slate-400">Hanya kelas yang Anda ampu</span>
       </div>
     </div>

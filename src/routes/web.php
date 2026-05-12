@@ -151,5 +151,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports',            [\App\Http\Controllers\AnalyticsController::class, 'reports'])->name('reports');
         Route::get('/data/{widget}',      [\App\Http\Controllers\AnalyticsController::class, 'data'])->name('data');
         Route::get('/export/attendance',  [\App\Http\Controllers\AnalyticsController::class, 'exportAttendance'])->name('export.attendance');
+        Route::get('/export/grades',      [\App\Http\Controllers\AnalyticsController::class, 'exportGrades'])->name('export.grades');
     });
 });

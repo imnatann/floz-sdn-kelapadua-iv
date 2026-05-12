@@ -111,4 +111,70 @@ class AnalyticsController extends Controller
             $filename
         );
     }
+
+    public function exportGrades(Request $request)
+    {
+        $this->authorize('view-analytics');
+
+        $request->validate([
+            'class_id'   => 'required|integer|exists:classes,id',
+            'semester_id'=> 'required|integer|exists:semesters,id',
+            'subject_id' => 'nullable|integer|exists:subjects,id',
+        ]);
+
+        $user      = Auth::user();
+        $classId   = (int) $request->class_id;
+        $semId     = (int) $request->semester_id;
+        $subjectId = $request->subject_id ? (int) $request->subject_id : null;
+
+        // Authorization: non-admin teachers may only export subjects they teach in that class
+        if (! $user->isSchoolAdmin()) {
+            $teacher = $user->teacher;
+            if (! $teacher) {
+                abort(403, 'Akses ditolak.');
+            }
+
+            if ($subjectId !== null) {
+                // Teacher must teach this subject in this class
+                $hasAssignment = TeachingAssignment::where('teacher_id', $teacher->id)
+                    ->where('class_id', $classId)
+                    ->where('subject_id', $subjectId)
+                    ->exists();
+
+                if (! $hasAssignment) {
+                    // Homeroom teacher may export all subjects for their class
+                    $isHomeroom = \App\Models\SchoolClass::where('id', $classId)
+                        ->where('homeroom_teacher_id', $teacher->id)
+                        ->exists();
+
+                    if (! $isHomeroom) {
+                        abort(403, 'Anda tidak mengajar mata pelajaran ini di kelas ini.');
+                    }
+                }
+            } else {
+                // Exporting all subjects: must be homeroom or have at least one assignment in class
+                $isHomeroom = \App\Models\SchoolClass::where('id', $classId)
+                    ->where('homeroom_teacher_id', $teacher->id)
+                    ->exists();
+
+                $hasAnyAssignment = TeachingAssignment::where('teacher_id', $teacher->id)
+                    ->where('class_id', $classId)
+                    ->exists();
+
+                if (! $isHomeroom && ! $hasAnyAssignment) {
+                    abort(403, 'Anda tidak memiliki akses ke kelas ini.');
+                }
+            }
+        }
+
+        $class    = \App\Models\SchoolClass::findOrFail($classId);
+        $semester = Semester::findOrFail($semId);
+
+        $filename = "Rekap_Nilai_{$class->name}_{$semester->name}_" . now()->format('Ymd') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GradeRecapExport($classId, $semId, $subjectId, $user),
+            $filename
+        );
+    }
 }
