@@ -146,6 +146,17 @@ class GradeController extends Controller
             'grades.*.notes'           => 'nullable|string|max:255',
         ]);
 
+        // A3/A4 guard: teacher must have a TA for this class+subject to submit grades.
+        $user = $request->user();
+        if ($user->isTeacher() && $user->teacher) {
+            $hasTA = \Illuminate\Support\Facades\DB::table('teaching_assignments')
+                ->where('teacher_id', $user->teacher->id)
+                ->where('class_id', $validated['class_id'])
+                ->where('subject_id', $validated['subject_id'])
+                ->exists();
+            abort_unless($hasTA, 403, 'Anda tidak mengajar mata pelajaran ini di kelas tersebut.');
+        }
+
         $subject = Subject::findOrFail($validated['subject_id']);
         $educationLevel = config('school.education_level', 'SD');
 

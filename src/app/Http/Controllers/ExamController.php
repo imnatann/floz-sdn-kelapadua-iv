@@ -16,6 +16,41 @@ use Carbon\Carbon;
 class ExamController extends Controller
 {
     /**
+     * Assert the authenticated user may manage exams for the given class+subject.
+     * - Admin: always allowed.
+     * - Teacher: must have a TeachingAssignment for (teacher_id, class_id, subject_id).
+     * - Others (student, etc.): 403.
+     */
+    private function authorizeManage(Request $request, int $classId, int $subjectId): void
+    {
+        $user = $request->user();
+
+        if ($user->isSchoolAdmin()) {
+            return;
+        }
+
+        if ($user->isTeacher() && $user->teacher) {
+            $hasTA = DB::table('teaching_assignments')
+                ->where('teacher_id', $user->teacher->id)
+                ->where('class_id', $classId)
+                ->where('subject_id', $subjectId)
+                ->exists();
+
+            abort_unless($hasTA, 403, 'Anda tidak mengajar mata pelajaran ini di kelas tersebut.');
+            return;
+        }
+
+        abort(403, 'Unauthorized');
+    }
+
+    /**
+     * Assert the authenticated user may manage an existing exam (storeScores / destroy).
+     */
+    private function authorizeExamOwnership(Request $request, Exam $exam): void
+    {
+        $this->authorizeManage($request, $exam->class_id, $exam->subject_id);
+    }
+    /**
      * Display a listing of classes to choose from.
      */
     public function index(Request $request)
@@ -121,6 +156,9 @@ class ExamController extends Controller
             'max_score' => 'required|numeric|min:1|max:100',
         ]);
 
+        // A4/A5 guard: only admin or teacher with TA for this class+subject may create exams.
+        $this->authorizeManage($request, $validated['class_id'], $validated['subject_id']);
+
         $activeSemester = Semester::where('is_active', true)->first();
         if (!$activeSemester) {
             return redirect()->back()->with('error', 'Tidak ada semester aktif.');
@@ -172,6 +210,9 @@ class ExamController extends Controller
      */
     public function storeScores(Request $request, Exam $exam)
     {
+        // A4/A5 guard: only admin or the teacher who owns this exam's TA may input scores.
+        $this->authorizeExamOwnership($request, $exam);
+
         $validated = $request->validate([
             'scores' => 'required|array',
             'scores.*.student_id' => 'required|exists:students,id',
@@ -220,6 +261,9 @@ class ExamController extends Controller
      */
     public function destroy(Exam $exam)
     {
+        // A4/A5 guard: only admin or the teacher with TA for this exam may delete it.
+        $this->authorizeExamOwnership(request(), $exam);
+
         $classId = $exam->class_id;
         $exam->delete();
         

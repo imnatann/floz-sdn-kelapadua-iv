@@ -16,6 +16,41 @@ use Carbon\Carbon;
 class TaskController extends Controller
 {
     /**
+     * Assert the authenticated user may manage tasks for the given class+subject.
+     * - Admin: always allowed.
+     * - Teacher: must have a TeachingAssignment for (teacher_id, class_id, subject_id).
+     * - Others (student, etc.): 403.
+     */
+    private function authorizeManage(Request $request, int $classId, int $subjectId): void
+    {
+        $user = $request->user();
+
+        if ($user->isSchoolAdmin()) {
+            return;
+        }
+
+        if ($user->isTeacher() && $user->teacher) {
+            $hasTA = DB::table('teaching_assignments')
+                ->where('teacher_id', $user->teacher->id)
+                ->where('class_id', $classId)
+                ->where('subject_id', $subjectId)
+                ->exists();
+
+            abort_unless($hasTA, 403, 'Anda tidak mengajar mata pelajaran ini di kelas tersebut.');
+            return;
+        }
+
+        abort(403, 'Unauthorized');
+    }
+
+    /**
+     * Assert the authenticated user may manage an existing task (storeScores / destroy).
+     */
+    private function authorizeTaskOwnership(Request $request, Task $task): void
+    {
+        $this->authorizeManage($request, $task->class_id, $task->subject_id);
+    }
+    /**
      * Display a listing of classes to choose from.
      */
     public function index(Request $request)
@@ -122,6 +157,9 @@ class TaskController extends Controller
             'max_score' => 'required|numeric|min:1|max:1000',
         ]);
 
+        // A4/A5 guard: only admin or teacher with TA for this class+subject may create tasks.
+        $this->authorizeManage($request, $validated['class_id'], $validated['subject_id']);
+
         $activeSemester = Semester::where('is_active', true)->first();
         if (!$activeSemester) {
             return redirect()->back()->with('error', 'Tidak ada semester aktif.');
@@ -174,6 +212,9 @@ class TaskController extends Controller
      */
     public function storeScores(Request $request, Task $task)
     {
+        // A4/A5 guard: only admin or the teacher who owns this task's TA may input scores.
+        $this->authorizeTaskOwnership($request, $task);
+
         $validated = $request->validate([
             'scores' => 'required|array',
             'scores.*.student_id' => 'required|exists:students,id',
@@ -222,6 +263,9 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
+        // A4/A5 guard: only admin or the teacher with TA for this task may delete it.
+        $this->authorizeTaskOwnership(request(), $task);
+
         $classId = $task->class_id;
         $task->delete();
         
