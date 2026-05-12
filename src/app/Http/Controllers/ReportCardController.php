@@ -70,9 +70,19 @@ class ReportCardController extends Controller
             ]);
         }
 
-        // For teachers and administrators, show the regular view
+        // Compute teacher's visible class IDs (homeroom + TA). Admin sees all.
+        $visibleIds = null; // null = no scope (admin)
+        if ($user->isTeacher() && $user->teacher) {
+            $teacherId = $user->teacher->id;
+            $taClassIds = \App\Models\TeachingAssignment::where('teacher_id', $teacherId)->pluck('class_id')->all();
+            $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)->pluck('id')->all();
+            $visibleIds = array_values(array_unique(array_merge($taClassIds, $homeroomClassIds)));
+        }
+
+        // For teachers and administrators, show the regular view (scoped)
         $reportCards = ReportCard::query()
             ->with(['student', 'schoolClass', 'semester.academicYear'])
+            ->when($visibleIds !== null, fn($q) => $q->whereIn('class_id', $visibleIds ?: [0]))
             ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
             ->when($request->semester_id, fn($q, $s) => $q->where('semester_id', $s))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
@@ -82,12 +92,17 @@ class ReportCardController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
+        // Class dropdown: admin sees all active classes; teacher only their visible classes
+        $classesQuery = SchoolClass::where('status', 'active')->orderBy('name');
+        if ($visibleIds !== null) {
+            $classesQuery->whereIn('id', $visibleIds ?: [0]);
+        }
+        $classes = $classesQuery->get(['id', 'name']);
         $semesters = Semester::with('academicYear')->get();
 
-        // Class IDs the user may generate/publish report cards for:
-        //  - admin: all active classes
-        //  - teacher: only classes where they are homeroom teacher (wali kelas)
+        // Class IDs the user may generate/publish report cards for (subset of visible):
+        //  - admin: all visible classes
+        //  - teacher: only homeroom classes (wali kelas)
         if ($user->isSchoolAdmin()) {
             $manageableClassIds = $classes->pluck('id')->all();
         } elseif ($user->isTeacher() && $user->teacher) {

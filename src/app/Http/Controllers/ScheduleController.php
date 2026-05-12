@@ -17,7 +17,7 @@ class ScheduleController extends Controller
         $user = $request->user();
 
         // Students are always scoped to their own class
-        if ($user->role === 'student' && $user->student) {
+        if ($user->isStudent() && $user->student) {
             $classId = $user->student->class_id;
             $classes = SchoolClass::with('homeroomTeacher')
                 ->withCount(['students', 'teachingAssignments'])
@@ -27,10 +27,20 @@ class ScheduleController extends Controller
         } else {
             // For filtering by class in the admin/teacher view
             $classId = $request->input('class_id');
-            $classes = SchoolClass::with('homeroomTeacher')
+            $classesQuery = SchoolClass::with('homeroomTeacher')
                 ->withCount(['students', 'teachingAssignments'])
-                ->orderBy('name')
-                ->get();
+                ->orderBy('name');
+
+            // Scope teacher: only classes they are homeroom of OR have a TA in
+            if ($user->isTeacher() && $user->teacher) {
+                $teacherId = $user->teacher->id;
+                $taClassIds = TeachingAssignment::where('teacher_id', $teacherId)->pluck('class_id')->all();
+                $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)->pluck('id')->all();
+                $visibleIds = array_values(array_unique(array_merge($taClassIds, $homeroomClassIds)));
+                $classesQuery->whereIn('id', $visibleIds ?: [0]);
+            }
+
+            $classes = $classesQuery->get();
         }
         
         $schedules = [];

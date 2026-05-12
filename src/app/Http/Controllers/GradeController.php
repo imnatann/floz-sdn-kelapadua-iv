@@ -36,7 +36,21 @@ class GradeController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('viewAny', Grade::class);
 
-        $classes = SchoolClass::where('status', 'active')->with('academicYear')->get();
+        $user = $request->user();
+        $classesQuery = SchoolClass::where('status', 'active')->with('academicYear')->orderBy('name');
+
+        // Scope teacher: only classes they are homeroom of OR have a TA in
+        if ($user->isTeacher() && $user->teacher) {
+            $teacherId = $user->teacher->id;
+            $taClassIds = \App\Models\TeachingAssignment::where('teacher_id', $teacherId)->pluck('class_id')->all();
+            $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)->pluck('id')->all();
+            $visibleIds = array_values(array_unique(array_merge($taClassIds, $homeroomClassIds)));
+            $classesQuery->whereIn('id', $visibleIds ?: [0]);
+        } elseif ($user->isStudent() && $user->student) {
+            $classesQuery->where('id', $user->student->class_id);
+        }
+
+        $classes = $classesQuery->get();
         $semesters = Semester::where('is_active', true)->with('academicYear')->get();
         $subjects = Subject::active()->get();
 

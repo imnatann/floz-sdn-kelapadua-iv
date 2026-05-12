@@ -20,7 +20,7 @@ class AttendanceController extends Controller
         
         $query = SchoolClass::where('status', 'active');
         
-        if ($user->role === 'teacher' && $user->teacher) {
+        if ($user->isTeacher() && $user->teacher) {
             // Get classes where the teacher is either homeroom or teaches a subject
             $teacherId = $user->teacher->id;
             $classIds = DB::table('teaching_assignments')

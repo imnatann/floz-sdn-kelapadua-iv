@@ -58,10 +58,10 @@ class TaskController extends Controller
         $user = $request->user();
         $query = SchoolClass::where('status', 'active');
 
-        if ($user->role === 'student' && $user->student) {
+        if ($user->isStudent() && $user->student) {
             // Students only see their own class
             $query->where('id', $user->student->class_id);
-        } elseif ($user->role === 'teacher' && $user->teacher) {
+        } elseif ($user->isTeacher() && $user->teacher) {
             $teacherId = $user->teacher->id;
             $classIds = DB::table('teaching_assignments')
                 ->where('teacher_id', $teacherId)
@@ -89,7 +89,7 @@ class TaskController extends Controller
     public function classIndex(SchoolClass $class)
     {
         $user = request()->user();
-        if ($user->role === 'student' && $user->student && $user->student->class_id !== $class->id) {
+        if ($user->isStudent() && $user->student && $user->student->class_id !== $class->id) {
             abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
         }
 
@@ -128,7 +128,7 @@ class TaskController extends Controller
         // Get subjects taught by this teacher in this class
         $subjectsQuery = Subject::where('status', 'active');
         
-        if ($user->role === 'teacher' && $user->teacher) {
+        if ($user->isTeacher() && $user->teacher) {
             $isHomeroom = $class->homeroom_teacher_id === $user->teacher->id;
             if (!$isHomeroom) {
                 // If not homeroom, only show subjects they teach
