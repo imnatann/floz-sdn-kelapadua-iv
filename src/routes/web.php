@@ -120,29 +120,32 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
     Route::get('/report-cards/{reportCard}/pdf', [ReportCardController::class, 'downloadPdf'])->name('report-cards.pdf');
 
-    // Audit Logs
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-
-    // Announcements (Pengumuman)
+    // Announcements (Pengumuman) — open to all auth'd roles; policy gates write
     Route::resource('announcements', AnnouncementController::class);
 
-    // Academic Years
-    Route::resource('academic-years', AcademicYearController::class);
-    Route::post('academic-years/{academicYear}/activate', [AcademicYearController::class, 'activate'])
-        ->name('academic-years.activate');
+    // ─── SCHOOL_ADMIN-ONLY ROUTES ───────────────────────────────────
+    Route::middleware('role:school_admin')->group(function () {
+        // Audit Logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
-    // Semesters (nested + shallow)
-    Route::resource('academic-years.semesters', SemesterController::class)->shallow();
-    Route::post('semesters/{semester}/activate', [SemesterController::class, 'activate'])
-        ->name('semesters.activate');
+        // Academic Years
+        Route::resource('academic-years', AcademicYearController::class);
+        Route::post('academic-years/{academicYear}/activate', [AcademicYearController::class, 'activate'])
+            ->name('academic-years.activate');
 
-    // Year Transition (Kenaikan Kelas)
-    Route::prefix('year-transition')->name('year-transition.')->group(function () {
-        Route::get('/',           [YearTransitionController::class, 'index'])->name('index');
-        Route::post('/preview',   [YearTransitionController::class, 'preview'])->name('preview');
-        Route::post('/execute',   [YearTransitionController::class, 'execute'])->name('execute');
-        Route::get('/logs',       [YearTransitionController::class, 'logs'])->name('logs');
-        Route::get('/logs/{log}', [YearTransitionController::class, 'showLog'])->name('logs.show');
+        // Semesters (nested + shallow)
+        Route::resource('academic-years.semesters', SemesterController::class)->shallow();
+        Route::post('semesters/{semester}/activate', [SemesterController::class, 'activate'])
+            ->name('semesters.activate');
+
+        // Year Transition (Kenaikan Kelas)
+        Route::prefix('year-transition')->name('year-transition.')->group(function () {
+            Route::get('/',           [YearTransitionController::class, 'index'])->name('index');
+            Route::post('/preview',   [YearTransitionController::class, 'preview'])->name('preview');
+            Route::post('/execute',   [YearTransitionController::class, 'execute'])->name('execute');
+            Route::get('/logs',       [YearTransitionController::class, 'logs'])->name('logs');
+            Route::get('/logs/{log}', [YearTransitionController::class, 'showLog'])->name('logs.show');
+        });
     });
 
     // Analytics Dashboard (school_admin + teacher — policy enforces per-user scope)
