@@ -5,8 +5,8 @@ import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
 import SearchInput from '@/Components/UI/SearchInput.vue';
-import { Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
 import debounce from 'lodash/debounce';
 
 defineOptions({ layout: AppLayout });
@@ -14,6 +14,12 @@ defineOptions({ layout: AppLayout });
 const props = defineProps({
   announcements: Object,
   filters: Object,
+});
+
+const page = usePage();
+const canManage = computed(() => {
+  const role = page.props.auth?.user?.role;
+  return role === 'school_admin' || role === 'teacher';
 });
 
 const search = ref(props.filters.search || '');
@@ -71,7 +77,7 @@ const cleanExcerpt = (announcement) => {
       </div>
       <div class="flex items-center gap-3">
         <SearchInput v-model="search" placeholder="Cari pengumuman..." class="w-full sm:w-64" />
-        <Button href="/announcements/create" class="flex items-center gap-2">
+        <Button v-if="canManage" href="/announcements/create" class="flex items-center gap-2">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
            Buat Baru
         </Button>
@@ -99,7 +105,8 @@ const cleanExcerpt = (announcement) => {
            </div>
            
            <!-- Delete Button (Visible on Hover) -->
-           <button 
+           <button
+             v-if="canManage"
              @click.prevent="deleteAnnouncement(announcement)"
              class="absolute top-2 right-2 p-2 bg-white/90 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm z-10"
              title="Hapus Pengumuman"
