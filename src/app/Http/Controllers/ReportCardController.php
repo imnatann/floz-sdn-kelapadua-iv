@@ -85,12 +85,46 @@ class ReportCardController extends Controller
         $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
         $semesters = Semester::with('academicYear')->get();
 
+        // Class IDs the user may generate/publish report cards for:
+        //  - admin: all active classes
+        //  - teacher: only classes where they are homeroom teacher (wali kelas)
+        if ($user->isSchoolAdmin()) {
+            $manageableClassIds = $classes->pluck('id')->all();
+        } elseif ($user->isTeacher() && $user->teacher) {
+            $manageableClassIds = SchoolClass::where('homeroom_teacher_id', $user->teacher->id)
+                ->pluck('id')
+                ->all();
+        } else {
+            $manageableClassIds = [];
+        }
+
         return Inertia::render('ReportCards/Index', [
-            'reportCards' => $reportCards,
-            'classes'     => $classes,
-            'semesters'   => $semesters,
-            'filters'     => $request->only(['class_id', 'semester_id', 'status']),
+            'reportCards'         => $reportCards,
+            'classes'             => $classes,
+            'semesters'           => $semesters,
+            'filters'             => $request->only(['class_id', 'semester_id', 'status']),
+            'manageableClassIds'  => $manageableClassIds,
         ]);
+    }
+
+    /**
+     * Assert the user may generate/publish report cards for the given class.
+     * Admin: always allowed. Teacher: only if homeroom of that class.
+     */
+    private function authorizeManageClass(int $classId): void
+    {
+        $user = auth()->user();
+        if ($user->isSchoolAdmin()) {
+            return;
+        }
+        if ($user->isTeacher() && $user->teacher) {
+            $isHomeroom = SchoolClass::where('id', $classId)
+                ->where('homeroom_teacher_id', $user->teacher->id)
+                ->exists();
+            abort_unless($isHomeroom, 403, 'Hanya wali kelas yang dapat mengelola rapor kelas ini.');
+            return;
+        }
+        abort(403, 'Unauthorized');
     }
 
     #[OA\Post(
@@ -118,6 +152,8 @@ class ReportCardController extends Controller
             'semester_id' => 'required|exists:semesters,id',
             'report_type' => 'required|in:uts,final',
         ]);
+
+        $this->authorizeManageClass((int) $validated['class_id']);
 
         $class = SchoolClass::with('students')->findOrFail($validated['class_id']);
 
@@ -165,9 +201,16 @@ class ReportCardController extends Controller
             ->orderBy('subject_id')
             ->get();
 
+        $user = auth()->user();
+        $canManage = $user->isSchoolAdmin()
+            || ($user->isTeacher() && $user->teacher && SchoolClass::where('id', $reportCard->class_id)
+                ->where('homeroom_teacher_id', $user->teacher->id)
+                ->exists());
+
         return Inertia::render('ReportCards/Show', [
             'reportCard' => $reportCard,
             'grades'     => $grades,
+            'canManage'  => $canManage,
         ]);
     }
 
@@ -181,6 +224,8 @@ class ReportCardController extends Controller
     #[OA\Response(response: 302, description: "Redirect back")]
     public function publish(ReportCard $reportCard)
     {
+        $this->authorizeManageClass($reportCard->class_id);
+
         $this->reportCardService->publish($reportCard);
 
         return back()->with('success', 'Rapor berhasil dipublikasikan.');

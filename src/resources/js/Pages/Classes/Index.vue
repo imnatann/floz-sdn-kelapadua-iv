@@ -18,6 +18,7 @@ const props = defineProps({
 
 const page = usePage();
 const flash = computed(() => page.props.flash || {});
+const canManage = computed(() => !!page.props.auth?.permissions?.manage_classes);
 
 const search = ref(props.filters?.search || '');
 const yearFilter = ref(props.filters?.academic_year_id || '');
@@ -48,7 +49,7 @@ const confirmDelete = (cls) => {
         <h2 class="text-xl font-bold text-slate-800">Manajemen Kelas</h2>
         <p class="text-sm text-slate-500 mt-0.5">Kelola kelas dan wali kelas</p>
       </div>
-      <Button href="/classes/create">
+      <Button v-if="canManage" href="/classes/create">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Tambah Kelas
       </Button>
@@ -120,7 +121,7 @@ const confirmDelete = (cls) => {
         </div>
 
         <!-- Card Footer / Actions -->
-        <div class="mt-auto border-t border-slate-100 pt-4 flex items-center justify-between">
+        <div v-if="canManage" class="mt-auto border-t border-slate-100 pt-4 flex items-center justify-between">
           <Link :href="`/classes/${cls.id}/edit`" class="text-sm font-medium text-orange-600 hover:text-orange-700">
             Edit Kelas
           </Link>
@@ -136,7 +137,7 @@ const confirmDelete = (cls) => {
       <svg class="h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
       <h3 class="text-sm font-semibold text-slate-600 mb-1">Belum ada data kelas</h3>
       <p class="text-xs text-slate-400 mb-4">Mulai tambahkan kelas untuk sekolah Anda</p>
-      <Button href="/classes/create">
+      <Button v-if="canManage" href="/classes/create">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Tambah Kelas Pertama
       </Button>

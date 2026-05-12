@@ -1,6 +1,6 @@
 <script setup>
-import { Link, Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Link, Head, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
@@ -13,12 +13,21 @@ const props = defineProps({
   classes: Array,
   semesters: Array,
   filters: Object,
+  manageableClassIds: { type: Array, default: () => [] },
 });
+
+const page = usePage();
 
 const classId = ref(props.filters?.class_id || '');
 const semesterId = ref(props.filters?.semester_id || '');
 const reportType = ref(props.filters?.report_type || 'final');
 const generating = ref(false);
+
+const canGenerate = computed(() => {
+  const cid = classId.value ? Number(classId.value) : null;
+  return cid !== null && props.manageableClassIds.map(Number).includes(cid);
+});
+const canManageClass = (cid) => props.manageableClassIds.map(Number).includes(Number(cid));
 
 const applyFilters = () => {
   router.get('/report-cards', {
@@ -45,6 +54,7 @@ const generateReportCards = () => {
         <p class="mt-0.5 text-sm text-slate-400">Generate dan kelola rapor digital</p>
       </div>
       <Button
+        v-if="canGenerate"
         @click="generateReportCards"
         :disabled="!classId || !semesterId || generating"
         :loading="generating"
@@ -124,7 +134,7 @@ const generateReportCards = () => {
                 <div class="flex items-center justify-end gap-1">
                   <Button :href="`/report-cards/${rc.id}`" variant="ghost" size="xs">Detail</Button>
                   <Link
-                    v-if="rc.status === 'draft'"
+                    v-if="rc.status === 'draft' && canManageClass(rc.class_id)"
                     :href="`/report-cards/${rc.id}/publish`"
                     method="post"
                     as="button"

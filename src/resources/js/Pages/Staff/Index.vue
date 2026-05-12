@@ -17,6 +17,7 @@ const props = defineProps({
 
 const page = usePage();
 const flash = computed(() => page.props.flash || {});
+const canManage = computed(() => !!page.props.auth?.permissions?.manage_teachers);
 
 const search = ref(props.filters?.search || '');
 const statusFilter = ref(props.filters?.status || '');
@@ -50,7 +51,7 @@ const confirmDelete = (teacher) => {
         <h2 class="text-xl font-bold text-slate-800">Guru & Staff</h2>
         <p class="text-sm text-slate-500 mt-0.5">Kelola data guru dan tenaga kependidikan</p>
       </div>
-      <Button href="/staff/create">
+      <Button v-if="canManage" href="/staff/create">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Tambah Guru
       </Button>
@@ -108,7 +109,7 @@ const confirmDelete = (teacher) => {
             </div>
           </div>
           <!-- Actions -->
-          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div v-if="canManage" class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Link
               :href="`/staff/${teacher.id}/edit`"
               class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-orange-50 hover:text-orange-600"
@@ -159,7 +160,7 @@ const confirmDelete = (teacher) => {
       <svg class="h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       <h3 class="text-sm font-semibold text-slate-600 mb-1">Belum ada data guru</h3>
       <p class="text-xs text-slate-400 mb-4">Mulai tambahkan guru dan staff sekolah</p>
-      <Button href="/staff/create">
+      <Button v-if="canManage" href="/staff/create">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Tambah Guru Pertama
       </Button>

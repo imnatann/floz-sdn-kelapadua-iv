@@ -10,6 +10,7 @@ defineOptions({ layout: AppLayout });
 const props = defineProps({
   reportCard: Object,
   grades: Array,
+  canManage: { type: Boolean, default: false },
 });
 
 const predicateColor = (p) => p === 'A' ? 'emerald' : p === 'B' ? 'blue' : p === 'C' ? 'amber' : 'rose';
@@ -41,7 +42,7 @@ const predicateColor = (p) => p === 'A' ? 'emerald' : p === 'B' ? 'blue' : p ===
           Download PDF
         </Button>
         <Link
-          v-if="reportCard.status === 'draft'"
+          v-if="reportCard.status === 'draft' && canManage"
           :href="`/report-cards/${reportCard.id}/publish`"
           method="post"
           as="button"

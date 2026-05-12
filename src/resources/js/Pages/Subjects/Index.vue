@@ -17,6 +17,7 @@ const props = defineProps({
 
 const page = usePage();
 const flash = computed(() => page.props.flash || {});
+const canManage = computed(() => !!page.props.auth?.permissions?.manage_subjects);
 
 const search = ref(props.filters?.search || '');
 const categoryFilter = ref(props.filters?.category || '');
@@ -52,7 +53,7 @@ const categoryLabel = (cat) => {
         <h2 class="text-xl font-bold text-slate-800">Mata Pelajaran</h2>
         <p class="text-sm text-slate-500 mt-0.5">Kelola daftar mata pelajaran sekolah</p>
       </div>
-      <Button href="/subjects/create">
+      <Button v-if="canManage" href="/subjects/create">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Tambah Mapel
       </Button>
@@ -101,7 +102,7 @@ const categoryLabel = (cat) => {
             <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">KKM</th>
             <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Kategori</th>
             <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
-            <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500">Aksi</th>
+            <th v-if="canManage" class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -120,7 +121,7 @@ const categoryLabel = (cat) => {
                 {{ s.status === 'active' ? 'Aktif' : 'Nonaktif' }}
               </Badge>
             </td>
-            <td class="px-5 py-3.5 text-right">
+            <td v-if="canManage" class="px-5 py-3.5 text-right">
               <div class="flex items-center justify-end gap-1">
                 <Link :href="`/subjects/${s.id}/edit`" class="rounded-lg p-1.5 text-slate-400 hover:bg-orange-50 hover:text-orange-600" title="Edit">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -140,7 +141,7 @@ const categoryLabel = (cat) => {
       <svg class="h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
       <h3 class="text-sm font-semibold text-slate-600 mb-1">Belum ada mata pelajaran</h3>
       <p class="text-xs text-slate-400 mb-4">Tambahkan mata pelajaran untuk sekolah Anda</p>
-      <Button href="/subjects/create">
+      <Button v-if="canManage" href="/subjects/create">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Tambah Mapel Pertama
       </Button>
