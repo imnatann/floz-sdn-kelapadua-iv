@@ -78,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('teaching-assignments', TeachingAssignmentController::class)->except(['show']);
 
     // Schedules (Jadwal Pelajaran)
-    Route::resource('schedules', ScheduleController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('schedules', ScheduleController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // ─── AKADEMIK ────────────────────────────────────────────────────
 

@@ -85,6 +85,26 @@ class ScheduleController extends Controller
         return redirect()->back()->with('success', 'Jadwal berhasil ditambahkan.');
     }
 
+    public function update(Request $request, Schedule $schedule)
+    {
+        if (! $request->user()->isSchoolAdmin()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'teaching_assignment_id' => 'required|exists:teaching_assignments,id',
+            'day_of_week' => 'required|integer|min:1|max:7',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+        ], [
+            'end_time.after' => 'Jam selesai harus setelah jam mulai.',
+        ]);
+
+        $schedule->update($validated);
+
+        return redirect()->back()->with('success', 'Jadwal berhasil diperbarui.');
+    }
+
     public function destroy(Schedule $schedule)
     {
         if (! request()->user()->isSchoolAdmin()) {
