@@ -1,16 +1,41 @@
 <script setup>
-import { Link, router } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
+import FormSelect from '@/Components/UI/FormSelect.vue';
 
 defineOptions({ layout: AppLayout });
 
-defineProps({
+const props = defineProps({
     schoolClass: Object,
     tasks: Array,
+    subjects: { type: Array, default: () => [] },
+    semesters: { type: Array, default: () => [] },
+    filters: { type: Object, default: () => ({}) },
     studentsCount: Number,
 });
+
+const page = usePage();
+const isStudent = computed(() => page.props.auth?.user?.role === 'student');
+const canManage = computed(() => !isStudent.value);
+
+const subjectId = ref(props.filters?.subject_id ?? '');
+const semesterId = ref(props.filters?.semester_id ?? '');
+
+const applyFilters = () => {
+    router.get(
+        route('tasks.class', props.schoolClass.id),
+        {
+            subject_id:  subjectId.value || undefined,
+            semester_id: semesterId.value || undefined,
+        },
+        { preserveState: true, preserveScroll: true, replace: true }
+    );
+};
+
+watch([subjectId, semesterId], applyFilters);
 
 const formatDate = (raw) => {
     if (!raw) return '-';
@@ -19,7 +44,6 @@ const formatDate = (raw) => {
         ? raw
         : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 };
-
 </script>
 
 <template>
@@ -33,12 +57,30 @@ const formatDate = (raw) => {
         </div>
         <h2 class="text-xl font-bold text-slate-800">Daftar Tugas Kelas {{ schoolClass.name }}</h2>
       </div>
-      <div>
+      <div v-if="canManage">
          <Link :href="route('tasks.create', schoolClass.id)">
              <Button>
                 Buat Tugas Baru
              </Button>
          </Link>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <div class="w-full sm:w-64">
+        <FormSelect v-model="subjectId" label="Mata Pelajaran">
+          <option value="">Semua Mapel</option>
+          <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+        </FormSelect>
+      </div>
+      <div class="w-full sm:w-72">
+        <FormSelect v-model="semesterId" label="Semester">
+          <option v-for="sem in semesters" :key="sem.id" :value="sem.id">
+            Sem. {{ sem.semester_number }} — {{ sem.academic_year?.name }}{{ sem.is_active ? ' (Aktif)' : '' }}
+          </option>
+          <option v-if="!semesters.length" value="">Tidak ada data</option>
+        </FormSelect>
       </div>
     </div>
 
@@ -89,15 +131,17 @@ const formatDate = (raw) => {
                             </span>
                         </td>
                         <td class="px-5 py-4 text-right">
-                             <Link :href="route('tasks.show', task.id)" class="text-sm font-medium text-orange-600 hover:text-orange-900 hover:underline">Input Nilai &rarr;</Link>
+                             <Link :href="route('tasks.show', task.id)" class="text-sm font-medium text-orange-600 hover:text-orange-900 hover:underline">
+                                {{ canManage ? 'Input Nilai' : 'Lihat Detail' }} &rarr;
+                             </Link>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        
+
         <div v-if="tasks.length === 0" class="text-center py-12 p-4 border border-dashed border-slate-200 mt-4 rounded-xl mx-4 mb-4">
-            <p class="text-slate-500">Belum ada tugas untuk kelas ini di semester aktif.</p>
+            <p class="text-slate-500">Belum ada tugas yang cocok dengan filter ini.</p>
         </div>
     </Card>
   </div>

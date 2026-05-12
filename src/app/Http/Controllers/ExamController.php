@@ -86,21 +86,35 @@ class ExamController extends Controller
     /**
      * Display exams for a specific class.
      */
-    public function classIndex(SchoolClass $class)
+    public function classIndex(SchoolClass $class, Request $request)
     {
-        $user = request()->user();
+        $user = $request->user();
         if ($user->isStudent() && $user->student && $user->student->class_id !== $class->id) {
             abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
         }
 
+        $semesters = Semester::with('academicYear')
+            ->whereIn('id', Exam::where('class_id', $class->id)->distinct()->pluck('semester_id'))
+            ->orderByDesc('start_date')
+            ->get();
         $activeSemester = Semester::where('is_active', true)->first();
-        
-        if (!$activeSemester) {
-            return redirect()->back()->with('error', 'Tidak ada semester aktif.');
+        $selectedSemesterId = $request->integer('semester_id')
+            ?: ($activeSemester?->id ?? $semesters->first()?->id);
+
+        if (!$selectedSemesterId) {
+            return Inertia::render('Exams/ClassIndex', [
+                'schoolClass'   => $class,
+                'exams'         => [],
+                'subjects'      => [],
+                'semesters'     => $semesters,
+                'filters'       => ['subject_id' => null, 'semester_id' => null],
+                'studentsCount' => $class->students()->count(),
+            ]);
         }
 
         $exams = Exam::where('class_id', $class->id)
-            ->where('semester_id', $activeSemester->id)
+            ->where('semester_id', $selectedSemesterId)
+            ->when($request->subject_id, fn ($q, $s) => $q->where('subject_id', $s))
             ->with(['subject', 'teacher'])
             ->withCount([
                 'scores',
@@ -110,11 +124,21 @@ class ExamController extends Controller
             ])
             ->orderByDesc('exam_date')
             ->get();
-            
+
+        $subjects = Subject::whereIn('id', Exam::where('class_id', $class->id)->distinct()->pluck('subject_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Exams/ClassIndex', [
-            'schoolClass' => $class,
-            'exams' => $exams,
-            'studentsCount' => $class->students()->count()
+            'schoolClass'   => $class,
+            'exams'         => $exams,
+            'subjects'      => $subjects,
+            'semesters'     => $semesters,
+            'filters'       => [
+                'subject_id'  => $request->integer('subject_id') ?: null,
+                'semester_id' => $selectedSemesterId,
+            ],
+            'studentsCount' => $class->students()->count(),
         ]);
     }
 

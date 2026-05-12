@@ -1,17 +1,41 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
+import FormSelect from '@/Components/UI/FormSelect.vue';
 
 defineOptions({ layout: AppLayout });
 
 const props = defineProps({
     schoolClass: Object,
     exams: Array,
+    subjects: { type: Array, default: () => [] },
+    semesters: { type: Array, default: () => [] },
+    filters: { type: Object, default: () => ({}) },
     studentsCount: Number,
 });
+
+const page = usePage();
+const isStudent = computed(() => page.props.auth?.user?.role === 'student');
+const canManage = computed(() => !isStudent.value);
+
+const subjectId = ref(props.filters?.subject_id ?? '');
+const semesterId = ref(props.filters?.semester_id ?? '');
+
+const applyFilters = () => {
+    router.get(
+        route('exams.class', props.schoolClass.id),
+        {
+            subject_id:  subjectId.value || undefined,
+            semester_id: semesterId.value || undefined,
+        },
+        { preserveState: true, preserveScroll: true, replace: true }
+    );
+};
+
+watch([subjectId, semesterId], applyFilters);
 
 const currentTab = ref('all');
 
@@ -65,12 +89,30 @@ const examTypeLabel = (type) => {
         </div>
         <h2 class="text-xl font-bold text-slate-800">Daftar Ujian Kelas {{ schoolClass.name }}</h2>
       </div>
-      <div>
+      <div v-if="canManage">
          <Link :href="route('exams.create', schoolClass.id)">
              <Button>
                 Buat Ujian Baru
              </Button>
          </Link>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <div class="w-full sm:w-64">
+        <FormSelect v-model="subjectId" label="Mata Pelajaran">
+          <option value="">Semua Mapel</option>
+          <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+        </FormSelect>
+      </div>
+      <div class="w-full sm:w-72">
+        <FormSelect v-model="semesterId" label="Semester">
+          <option v-for="sem in semesters" :key="sem.id" :value="sem.id">
+            Sem. {{ sem.semester_number }} — {{ sem.academic_year?.name }}{{ sem.is_active ? ' (Aktif)' : '' }}
+          </option>
+          <option v-if="!semesters.length" value="">Tidak ada data</option>
+        </FormSelect>
       </div>
     </div>
 
@@ -141,7 +183,9 @@ const examTypeLabel = (type) => {
                             </span>
                         </td>
                         <td class="px-5 py-4 text-right">
-                             <Link :href="route('exams.show', exam.id)" class="text-sm font-medium text-blue-600 hover:text-blue-900 hover:underline">Input Nilai &rarr;</Link>
+                             <Link :href="route('exams.show', exam.id)" class="text-sm font-medium text-blue-600 hover:text-blue-900 hover:underline">
+                                {{ canManage ? 'Input Nilai' : 'Lihat Detail' }} &rarr;
+                             </Link>
                         </td>
                     </tr>
                 </tbody>

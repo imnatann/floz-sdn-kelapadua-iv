@@ -86,21 +86,36 @@ class TaskController extends Controller
     /**
      * Display tasks for a specific class.
      */
-    public function classIndex(SchoolClass $class)
+    public function classIndex(SchoolClass $class, Request $request)
     {
-        $user = request()->user();
+        $user = $request->user();
         if ($user->isStudent() && $user->student && $user->student->class_id !== $class->id) {
             abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
         }
 
+        // Resolve semester filter: explicit `semester_id` → active semester → most recent semester with tasks in class
+        $semesters = Semester::with('academicYear')
+            ->whereIn('id', Task::where('class_id', $class->id)->distinct()->pluck('semester_id'))
+            ->orderByDesc('start_date')
+            ->get();
         $activeSemester = Semester::where('is_active', true)->first();
-        
-        if (!$activeSemester) {
-            return redirect()->back()->with('error', 'Tidak ada semester aktif.');
+        $selectedSemesterId = $request->integer('semester_id')
+            ?: ($activeSemester?->id ?? $semesters->first()?->id);
+
+        if (!$selectedSemesterId) {
+            return Inertia::render('Tasks/ClassIndex', [
+                'schoolClass'   => $class,
+                'tasks'         => [],
+                'subjects'      => [],
+                'semesters'     => $semesters,
+                'filters'       => ['subject_id' => null, 'semester_id' => null],
+                'studentsCount' => $class->students()->count(),
+            ]);
         }
 
-        $tasks = Task::where('class_id', $class->id)
-            ->where('semester_id', $activeSemester->id)
+        $tasksQuery = Task::where('class_id', $class->id)
+            ->where('semester_id', $selectedSemesterId)
+            ->when($request->subject_id, fn ($q, $s) => $q->where('subject_id', $s))
             ->with(['subject', 'teacher'])
             ->withCount([
                 'scores',
@@ -108,13 +123,25 @@ class TaskController extends Controller
                 'scores as terlambat_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_TERLAMBAT),
                 'scores as tidak_kumpul_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_TIDAK_KUMPUL),
             ])
-            ->orderByDesc('task_date')
-            ->get();
-            
+            ->orderByDesc('task_date');
+
+        $tasks = $tasksQuery->get();
+
+        // Subjects available for filter dropdown: distinct subjects that have tasks in this class (across all semesters)
+        $subjects = Subject::whereIn('id', Task::where('class_id', $class->id)->distinct()->pluck('subject_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Tasks/ClassIndex', [
-            'schoolClass' => $class,
-            'tasks' => $tasks,
-            'studentsCount' => $class->students()->count()
+            'schoolClass'   => $class,
+            'tasks'         => $tasks,
+            'subjects'      => $subjects,
+            'semesters'     => $semesters,
+            'filters'       => [
+                'subject_id'  => $request->integer('subject_id') ?: null,
+                'semester_id' => $selectedSemesterId,
+            ],
+            'studentsCount' => $class->students()->count(),
         ]);
     }
 
