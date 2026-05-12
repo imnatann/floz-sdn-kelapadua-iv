@@ -79,8 +79,35 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * Assert the authenticated user is the homeroom teacher (wali kelas) of $class.
+     * Admin is always allowed.
+     */
+    private function authorizeHomeroomOrAdmin(Request $request, SchoolClass $class): void
+    {
+        $user = $request->user();
+
+        if ($user->isSchoolAdmin()) {
+            return;
+        }
+
+        if ($user->isTeacher() && $user->teacher) {
+            abort_unless(
+                (int) $class->homeroom_teacher_id === (int) $user->teacher->id,
+                403,
+                'Hanya wali kelas yang dapat mengelola absensi kelas ini.'
+            );
+            return;
+        }
+
+        abort(403, 'Unauthorized');
+    }
+
     public function create(SchoolClass $class)
     {
+        // A8 guard: only wali kelas (homeroom teacher) or admin may input attendance.
+        $this->authorizeHomeroomOrAdmin(request(), $class);
+
         $activeSemester = Semester::where('is_active', true)->first();
         
         if (!$activeSemester) {
@@ -109,6 +136,9 @@ class AttendanceController extends Controller
 
     public function store(Request $request, SchoolClass $class)
     {
+        // A8 guard: only wali kelas (homeroom teacher) or admin may store attendance.
+        $this->authorizeHomeroomOrAdmin($request, $class);
+
         $activeSemester = Semester::where('is_active', true)->first();
         
         // Add custom validation for unique meeting_number per class and semester
@@ -160,6 +190,9 @@ class AttendanceController extends Controller
 
     public function edit(SchoolClass $class, $meeting)
     {
+        // A8 guard: only wali kelas (homeroom teacher) or admin may edit attendance.
+        $this->authorizeHomeroomOrAdmin(request(), $class);
+
         $activeSemester = Semester::where('is_active', true)->first();
         
         $attendances = Attendance::where('class_id', $class->id)
@@ -185,6 +218,9 @@ class AttendanceController extends Controller
 
     public function update(Request $request, SchoolClass $class, $meeting)
     {
+        // A8 guard: only wali kelas (homeroom teacher) or admin may update attendance.
+        $this->authorizeHomeroomOrAdmin($request, $class);
+
         $validated = $request->validate([
             'date' => 'required|date',
             'attendances' => 'required|array',
