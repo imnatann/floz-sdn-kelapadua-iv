@@ -57,22 +57,25 @@ class TaskController extends Controller
     {
         $user = $request->user();
         $query = SchoolClass::where('status', 'active');
-        
-        if ($user->role === 'teacher' && $user->teacher) {
+
+        if ($user->role === 'student' && $user->student) {
+            // Students only see their own class
+            $query->where('id', $user->student->class_id);
+        } elseif ($user->role === 'teacher' && $user->teacher) {
             $teacherId = $user->teacher->id;
             $classIds = DB::table('teaching_assignments')
                 ->where('teacher_id', $teacherId)
                 ->pluck('class_id')
                 ->toArray();
-                
+
             $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)
                 ->pluck('id')
                 ->toArray();
-                
+
             $allClassIds = array_unique(array_merge($classIds, $homeroomClassIds));
             $query->whereIn('id', $allClassIds);
         }
-        
+
         $classes = $query->withCount('students')->orderBy('name')->get();
 
         return Inertia::render('Tasks/Index', [
@@ -85,6 +88,11 @@ class TaskController extends Controller
      */
     public function classIndex(SchoolClass $class)
     {
+        $user = request()->user();
+        if ($user->role === 'student' && $user->student && $user->student->class_id !== $class->id) {
+            abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
+        }
+
         $activeSemester = Semester::where('is_active', true)->first();
         
         if (!$activeSemester) {

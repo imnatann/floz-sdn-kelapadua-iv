@@ -14,12 +14,24 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
-        // For filtering by class in the admin view
-        $classId = $request->input('class_id');
-        $classes = SchoolClass::with('homeroomTeacher')
-            ->withCount(['students', 'teachingAssignments'])
-            ->orderBy('name')
-            ->get();
+        $user = $request->user();
+
+        // Students are always scoped to their own class
+        if ($user->role === 'student' && $user->student) {
+            $classId = $user->student->class_id;
+            $classes = SchoolClass::with('homeroomTeacher')
+                ->withCount(['students', 'teachingAssignments'])
+                ->where('id', $classId)
+                ->orderBy('name')
+                ->get();
+        } else {
+            // For filtering by class in the admin/teacher view
+            $classId = $request->input('class_id');
+            $classes = SchoolClass::with('homeroomTeacher')
+                ->withCount(['students', 'teachingAssignments'])
+                ->orderBy('name')
+                ->get();
+        }
         
         $schedules = [];
         $selectedClass = null;
