@@ -19,6 +19,8 @@ const props = defineProps({
 
 const isModalOpen = ref(false);
 const selectedDay = ref(1);
+const editingScheduleId = ref(null);
+const isEditMode = computed(() => editingScheduleId.value !== null);
 
 const form = useForm({
     day_of_week: 1,
@@ -26,6 +28,29 @@ const form = useForm({
         { teaching_assignment_id: '', start_time: '07:00', end_time: '08:00' }
     ],
 });
+
+const editForm = useForm({
+    day_of_week: 1,
+    teaching_assignment_id: '',
+    start_time: '07:00',
+    end_time: '08:00',
+});
+
+const openEditModal = (schedule) => {
+    editingScheduleId.value = schedule.id;
+    editForm.day_of_week = schedule.day_of_week;
+    editForm.teaching_assignment_id = schedule.teaching_assignment_id;
+    editForm.start_time = schedule.start_time.substring(0, 5);
+    editForm.end_time = schedule.end_time.substring(0, 5);
+    isModalOpen.value = true;
+};
+
+const deleteSchedule = (schedule) => {
+    if (!confirm(`Hapus jadwal "${schedule.teaching_assignment.subject.name}" (${schedule.start_time.substring(0,5)}-${schedule.end_time.substring(0,5)})?`)) return;
+    router.delete(route('schedules.destroy', schedule.id), {
+        preserveScroll: true,
+    });
+};
 
 const days = [
     { id: 1, name: 'Senin' },
@@ -66,12 +91,30 @@ const removeItem = (index) => {
 };
 
 const submit = () => {
-    form.post(route('schedules.store'), {
-        onSuccess: () => {
-            isModalOpen.value = false;
-            form.reset();
-        },
-    });
+    if (isEditMode.value) {
+        editForm.put(route('schedules.update', editingScheduleId.value), {
+            preserveScroll: true,
+            onSuccess: () => {
+                isModalOpen.value = false;
+                editingScheduleId.value = null;
+                editForm.reset();
+            },
+        });
+    } else {
+        form.post(route('schedules.store'), {
+            onSuccess: () => {
+                isModalOpen.value = false;
+                form.reset();
+            },
+        });
+    }
+};
+
+const closeModal = () => {
+    isModalOpen.value = false;
+    editingScheduleId.value = null;
+    form.reset();
+    editForm.reset();
 };
 
 const onClassChange = (e) => {
@@ -273,6 +316,27 @@ const weekHeaders = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MING
                                     <span>👨‍🏫</span>
                                     {{ schedule.teaching_assignment.teacher.name }}
                                 </div>
+
+                                <!-- Edit/Delete row (admin only, on hover) -->
+                                <div
+                                    v-if="$page.props.auth.permissions.manage_classes"
+                                    class="opacity-0 group-hover/card:opacity-100 flex gap-1 mt-1 pt-1 border-t border-slate-200 transition-opacity"
+                                >
+                                    <button
+                                        @click.stop="openEditModal(schedule)"
+                                        class="flex-1 text-[10px] font-bold py-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 border border-blue-200 hover:border-blue-700 transition-colors"
+                                        title="Edit jadwal"
+                                    >
+                                        ✏️ Edit
+                                    </button>
+                                    <button
+                                        @click.stop="deleteSchedule(schedule)"
+                                        class="flex-1 text-[10px] font-bold py-1 bg-red-50 hover:bg-red-600 hover:text-white text-red-700 border border-red-200 hover:border-red-700 transition-colors"
+                                        title="Hapus jadwal"
+                                    >
+                                        🗑️ Hapus
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -286,14 +350,44 @@ const weekHeaders = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MING
         </div>
     </div>
 
-        <!-- Add Modal -->
-        <Modal :show="isModalOpen" @close="isModalOpen = false">
+        <!-- Add/Edit Modal -->
+        <Modal :show="isModalOpen" @close="closeModal">
             <div class="p-6">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">
-                    Tambah Jadwal {{ days.find(d => d.id === selectedDay)?.name }} - {{ selectedClass?.name }}
+                    {{ isEditMode ? `Edit Jadwal — ${selectedClass?.name}` : `Tambah Jadwal ${days.find(d => d.id === selectedDay)?.name} - ${selectedClass?.name}` }}
                 </h2>
-                
-                <form @submit.prevent="submit" class="space-y-4">
+
+                <!-- EDIT FORM (single row) -->
+                <form v-if="isEditMode" @submit.prevent="submit" class="space-y-4">
+                    <FormSelect
+                        label="Hari"
+                        v-model="editForm.day_of_week"
+                        :options="days.map(d => ({ label: d.name, value: d.id }))"
+                        required
+                        :error="editForm.errors.day_of_week"
+                    />
+                    <FormSelect
+                        label="Mapel & Guru"
+                        v-model="editForm.teaching_assignment_id"
+                        :options="assignmentOptions"
+                        placeholder="Pilih Mapel..."
+                        required
+                        :error="editForm.errors.teaching_assignment_id"
+                    />
+                    <div class="grid grid-cols-2 gap-3">
+                        <FormInput label="Mulai" type="time" v-model="editForm.start_time" :error="editForm.errors.start_time" />
+                        <FormInput label="Selesai" type="time" v-model="editForm.end_time" :error="editForm.errors.end_time" />
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3 border-t-2 border-slate-900 pt-4">
+                        <Button variant="secondary" @click="closeModal">Batal</Button>
+                        <Button type="submit" :loading="editForm.processing" class="rounded-none border-2 border-transparent shadow-none">
+                            Simpan Perubahan
+                        </Button>
+                    </div>
+                </form>
+
+                <!-- ADD FORM (multi-item, original) -->
+                <form v-else @submit.prevent="submit" class="space-y-4">
                     <!-- Dynamic Rows -->
                     <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                         <div v-for="(item, index) in form.items" :key="index" class="relative flex gap-3 items-start border-b border-slate-200 pb-4 last:border-0 last:pb-0">
@@ -376,8 +470,8 @@ const weekHeaders = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MING
                     </div>
 
                     <div class="mt-6 flex justify-end gap-3 border-t-2 border-slate-900 pt-4">
-                        <Button variant="secondary" @click="isModalOpen = false">Batal</Button>
-                        <Button 
+                        <Button variant="secondary" @click="closeModal">Batal</Button>
+                        <Button
                             type="submit"
                             :loading="form.processing"
                             :disabled="assignmentOptions.length === 0"
