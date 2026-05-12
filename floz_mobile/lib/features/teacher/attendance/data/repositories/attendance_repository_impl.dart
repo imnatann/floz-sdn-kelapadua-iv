@@ -53,4 +53,47 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       return FailureResult(ServerFailure(e.message));
     }
   }
+
+  @override
+  Future<Result<DailyAttendanceRoster>> fetchDailyRoster(int classId) async {
+    try {
+      final data = await _remote.fetchDailyRoster(classId);
+      return Success(data);
+    } on NetworkException catch (e) {
+      return FailureResult(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return FailureResult(AuthFailure(e.message));
+    } on ForbiddenException catch (e) {
+      return FailureResult(ForbiddenFailure(e.message));
+    } on ValidationException catch (e) {
+      return FailureResult(ValidationFailure(message: e.message, fieldErrors: e.errors));
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message, statusCode: e.statusCode));
+    } on ApiException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    }
+  }
+
+  @override
+  Future<Result<DailyAttendanceRoster>> submitDailyAttendance(
+    int classId,
+    List<Map<String, dynamic>> entries,
+  ) async {
+    try {
+      final data = await _remote.submitDailyAttendance(classId, entries);
+      return Success(data);
+    } on NetworkException catch (e) {
+      return FailureResult(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return FailureResult(AuthFailure(e.message));
+    } on ForbiddenException catch (e) {
+      return FailureResult(ForbiddenFailure(e.message));
+    } on ValidationException catch (e) {
+      return FailureResult(ValidationFailure(message: e.message, fieldErrors: e.errors));
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message, statusCode: e.statusCode));
+    } on ApiException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    }
+  }
 }
