@@ -22,47 +22,31 @@ Screenshots: `/tmp/floz-e2e/role-audit/<role>/*.png` (Admin=18, Wali=19, Guru=mu
 | `9c25854` | Siswa scope: Schedule/Tasks/Exams index limited to own class |
 | `43ab9b2` | `/year-transition`, `/academic-years`, `/audit-logs` wrapped in `role:school_admin` middleware (closes 3 wali + 2 guru leaks) |
 
-## Outstanding (next session)
+## Fixed in follow-up session (2026-05-13)
 
-### 🔴 Critical security/permission leaks
+| Commit | Fix |
+|---|---|
+| `5e17f4d` | Classes/Subjects/Staff/ReportCards: hide Tambah/Edit/Hapus + Generate/Terbitkan for non-admin/non-wali (UI + backend guard on ReportCardController::generate/publish) |
+| `efa8132` | Announcements: hide Buat Baru/Edit/Hapus from siswa |
+| `f3cca80` | Replace `$user->role === 'string'` (always false vs UserRole enum) with `isTeacher()/isStudent()` across 6 controllers; scope class dropdown + report-card rows to teacher's visible classes (homeroom + TA) |
 
-1. **`/classes` shows Tambah/Edit/Hapus to non-admin teachers** (both wali + guru reported)
-   - Fix: Hide buttons in `Pages/Classes/Index.vue` behind `v-if="$page.props.auth.user.role === 'school_admin'"` or `permissions.manage_classes`
-   - Backend `SchoolClassPolicy::create/update/delete` already returns `isSchoolAdmin()` — backend safe, UI noise
+## Outstanding (closed in follow-up — see above)
 
-2. **`/subjects` shows Tambah to non-admin** (both wali + guru)
-   - Fix: Same pattern in `Pages/Subjects/Index.vue`
+~~1. /classes CRUD buttons leak~~ — closed by `5e17f4d`
+~~2. /subjects Tambah leak~~ — closed by `5e17f4d`
+~~3. /report-cards Generate/Terbitkan leak~~ — closed by `5e17f4d` (+ backend guard)
+~~4. /staff CRUD buttons leak~~ — closed by `5e17f4d`
+~~5. Wali kelas dropdown scoping~~ — closed by `f3cca80`
+~~6. Siswa announcement CRUD~~ — closed by `efa8132`
 
-3. **`/report-cards` Generate + Terbitkan (Publish) visible to non-wali teacher** (guru leak — kritis)
-   - Pages/ReportCards/Index.vue + Show.vue
-   - Should be: admin always; teacher only if wali kelas of that class
-   - Add `v-if` checks based on `auth.user.teacher_id === reportCard.student.class.homeroom_teacher_id`
-
-4. **`/staff` (teachers) — need verify if leak exists**
-   - Likely same Tambah/Edit/Hapus visible to non-admin
-   - Fix UI gate per `permissions.manage_teachers`
-
-### 🟠 Scope filtering UI
-
-5. **8 page dropdowns show all classes (1A-6A) for wali kelas** — should default to/limit to wali's class
-   - Pages: Schedules, Attendance, Tasks (when present), Exams, Grades, Report Cards, Analytics Reports
-   - Backend `9c25854` only scoped student role; wali still sees full dropdown
-
-### ⚠️ User-reported items not yet verified
-
-6. **Siswa CRUD pengumuman** (user complaint)
-   - Backend `AnnouncementPolicy::create` returns `isSchoolAdmin() || isTeacher()` — student should be 403
-   - Verify UI in `Pages/Announcements/Index.vue` hides Tambah button for student
-   - Run siswa audit script to confirm
-
-### 🟡 Cosmetic / non-blocking
+### 🟡 Cosmetic / non-blocking (still open)
 
 7. **`/analytics/reports` 4× 404 AJAX** to `/analytics/data/w4..w7` widget endpoints — implement or rename routes
 8. **Admin password change discoverability** — currently in avatar dropdown only
 
-### Tasks/Exams filter dropdowns (mapel + tahun ajaran)
+### Feature requests (not security)
 
-9. Add filter dropdowns to student-facing Tasks/Exams views (user request)
+9. Add mapel + tahun ajaran filter dropdowns to student-facing Tasks/Exams views (user request)
 
 ## Siswa Audit Resume Instructions
 
