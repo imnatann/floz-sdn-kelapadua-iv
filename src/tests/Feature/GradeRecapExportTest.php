@@ -36,7 +36,7 @@ function gradeSetup(): array
 it('it_returns_xlsx_for_school_admin', function () {
     Excel::fake();
 
-    ['sem' => $sem, 'class' => $class, 'subject' => $subject, 'admin' => $admin] = gradeSetup();
+    ['ay' => $ay, 'sem' => $sem, 'class' => $class, 'subject' => $subject, 'admin' => $admin] = gradeSetup();
 
     $response = $this->actingAs($admin)
         ->get(route('analytics.export.grades', [
@@ -47,7 +47,9 @@ it('it_returns_xlsx_for_school_admin', function () {
 
     $response->assertOk();
 
-    $expectedFilename = "Rekap_Nilai_{$class->name}_{$sem->name}_" . now()->format('Ymd') . '.xlsx';
+    $ayName   = str_replace('/', '-', $ay->name);
+    $className = str_replace(' ', '_', $class->name);
+    $expectedFilename = "Rekap_Nilai_{$className}_Sem{$sem->semester_number}_{$ayName}_" . now()->format('Y-m-d') . '.xlsx';
     Excel::assertDownloaded($expectedFilename);
 });
 
@@ -131,19 +133,48 @@ it('it_includes_task_uts_uas_columns_for_active_semester', function () {
     ]);
     ExamScore::factory()->create(['exam_id' => $uas->id, 'student_id' => $student->id, 'score' => 85]);
 
-    $sheet = new \App\Exports\Sheets\ClassGradeSheet($class, $sem, $subject);
+    // Add 2 ulangan_harian exams
+    $uh1 = Exam::factory()->create([
+        'class_id'   => $class->id,
+        'semester_id'=> $sem->id,
+        'subject_id' => $subject->id,
+        'exam_type'  => 'ulangan_harian',
+        'exam_date'  => '2025-01-10',
+    ]);
+    $uh2 = Exam::factory()->create([
+        'class_id'   => $class->id,
+        'semester_id'=> $sem->id,
+        'subject_id' => $subject->id,
+        'exam_type'  => 'ulangan_harian',
+        'exam_date'  => '2025-02-15',
+    ]);
+    ExamScore::factory()->create(['exam_id' => $uh1->id, 'student_id' => $student->id, 'score' => 70]);
+    ExamScore::factory()->create(['exam_id' => $uh2->id, 'student_id' => $student->id, 'score' => 80]);
 
+    // Re-instantiate sheet to pick up UH exams
+    $sheet    = new \App\Exports\Sheets\ClassGradeSheet($class, $sem, $subject);
     $headings = $sheet->headings();
     $rows     = $sheet->collection();
     $row      = $rows->first();
 
-    // Headings must include task columns + UTS + UAS + Nilai Akhir + Predikat
+    // Headings must include task columns + UH columns + UTS + UAS + Nilai Akhir + Predikat
     expect($headings)->toContain('Nilai Tugas 1')
         ->and($headings)->toContain('Nilai Tugas 2')
+        ->and($headings)->toContain('UH 1')
+        ->and($headings)->toContain('UH 2')
         ->and($headings)->toContain('UTS')
         ->and($headings)->toContain('UAS')
         ->and($headings)->toContain('Nilai Akhir')
         ->and($headings)->toContain('Predikat');
+
+    // UH columns must come after task columns and before UTS
+    $tugas2Idx = array_search('Nilai Tugas 2', $headings);
+    $uh1Idx    = array_search('UH 1', $headings);
+    $uh2Idx    = array_search('UH 2', $headings);
+    $utsIdx    = array_search('UTS', $headings);
+    expect($uh1Idx)->toBeGreaterThan($tugas2Idx)
+        ->and($uh2Idx)->toBeGreaterThan($uh1Idx)
+        ->and($utsIdx)->toBeGreaterThan($uh2Idx);
 
     // Find Nilai Akhir column index
     $naIdx = array_search('Nilai Akhir', $headings);
@@ -196,4 +227,68 @@ it('it_renders_predikat_based_on_final_score', function () {
     expect(\App\Exports\Sheets\ClassGradeSheet::predikat(80))->toBe('B');
     expect(\App\Exports\Sheets\ClassGradeSheet::predikat(70))->toBe('C');
     expect(\App\Exports\Sheets\ClassGradeSheet::predikat(50))->toBe('D');
+});
+
+it('it_renders_ulangan_harian_columns_dynamically', function () {
+    [
+        'sem'     => $sem,
+        'class'   => $class,
+        'subject' => $subject,
+        'student' => $student,
+    ] = gradeSetup();
+
+    // 3 UH exams with different dates to test ordering
+    $uh1 = Exam::factory()->create([
+        'class_id'   => $class->id,
+        'semester_id'=> $sem->id,
+        'subject_id' => $subject->id,
+        'exam_type'  => 'ulangan_harian',
+        'exam_date'  => '2025-01-05',
+    ]);
+    $uh2 = Exam::factory()->create([
+        'class_id'   => $class->id,
+        'semester_id'=> $sem->id,
+        'subject_id' => $subject->id,
+        'exam_type'  => 'ulangan_harian',
+        'exam_date'  => '2025-02-10',
+    ]);
+    $uh3 = Exam::factory()->create([
+        'class_id'   => $class->id,
+        'semester_id'=> $sem->id,
+        'subject_id' => $subject->id,
+        'exam_type'  => 'ulangan_harian',
+        'exam_date'  => '2025-03-20',
+    ]);
+    ExamScore::factory()->create(['exam_id' => $uh1->id, 'student_id' => $student->id, 'score' => 60]);
+    ExamScore::factory()->create(['exam_id' => $uh2->id, 'student_id' => $student->id, 'score' => 70]);
+    ExamScore::factory()->create(['exam_id' => $uh3->id, 'student_id' => $student->id, 'score' => 80]);
+
+    $sheet    = new \App\Exports\Sheets\ClassGradeSheet($class, $sem, $subject);
+    $headings = $sheet->headings();
+    $rows     = $sheet->collection();
+    $row      = $rows->first();
+
+    // Exactly 3 UH columns
+    expect($headings)->toContain('UH 1')
+        ->and($headings)->toContain('UH 2')
+        ->and($headings)->toContain('UH 3')
+        ->and($headings)->not->toContain('UH 4');
+
+    // UH columns precede UTS
+    $uh3Idx = array_search('UH 3', $headings);
+    $utsIdx = array_search('UTS', $headings);
+    expect($uh3Idx)->toBeLessThan($utsIdx);
+
+    // Row has UH scores in correct positions
+    $uh1Idx = array_search('UH 1', $headings);
+    $uh2Idx = array_search('UH 2', $headings);
+    expect($row[$uh1Idx])->toBe(60.0)
+        ->and($row[$uh2Idx])->toBe(70.0)
+        ->and($row[$uh3Idx])->toBe(80.0);
+
+    // No UH exams → no UH columns
+    $class2   = \App\Models\SchoolClass::factory()->create(['academic_year_id' => $sem->academic_year_id]);
+    $subject2 = \App\Models\Subject::factory()->create(['status' => 'active']);
+    $sheet2   = new \App\Exports\Sheets\ClassGradeSheet($class2, $sem, $subject2);
+    expect($sheet2->headings())->not->toContain('UH 1');
 });

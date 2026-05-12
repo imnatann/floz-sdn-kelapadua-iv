@@ -170,7 +170,9 @@ class AnalyticsController extends Controller
         $class    = \App\Models\SchoolClass::findOrFail($classId);
         $semester = Semester::findOrFail($semId);
 
-        $filename = "Rekap_Nilai_{$class->name}_{$semester->name}_" . now()->format('Ymd') . '.xlsx';
+        $className = str_replace(' ', '_', $class->name);
+        $ayName    = str_replace('/', '-', $semester->academicYear->name);
+        $filename  = "Rekap_Nilai_{$className}_Sem{$semester->semester_number}_{$ayName}_" . now()->format('Y-m-d') . '.xlsx';
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\GradeRecapExport($classId, $semId, $subjectId, $user),

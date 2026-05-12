@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class ClassGradeSheet implements FromCollection, WithHeadings, WithTitle, WithStyles
 {
     private Collection $tasks;
+    private Collection $ulanganHarianExams;
 
     public function __construct(
         private readonly SchoolClass $class,
@@ -31,6 +32,16 @@ class ClassGradeSheet implements FromCollection, WithHeadings, WithTitle, WithSt
             ->orderBy('created_at')
             ->orderBy('id')
             ->get(['id', 'title']);
+
+        // Load ulangan_harian exams ordered by exam_date ASC, id ASC
+        $this->ulanganHarianExams = DB::table('exams')
+            ->where('class_id', $this->class->id)
+            ->where('semester_id', $this->semester->id)
+            ->where('subject_id', $this->subject->id)
+            ->where('exam_type', 'ulangan_harian')
+            ->orderBy('exam_date')
+            ->orderBy('id')
+            ->get(['id']);
     }
 
     public function title(): string
@@ -46,6 +57,10 @@ class ClassGradeSheet implements FromCollection, WithHeadings, WithTitle, WithSt
 
         foreach ($this->tasks as $i => $task) {
             $headers[] = 'Nilai Tugas ' . ($i + 1);
+        }
+
+        foreach ($this->ulanganHarianExams as $i => $exam) {
+            $headers[] = 'UH ' . ($i + 1);
         }
 
         $headers[] = 'UTS';
@@ -73,6 +88,19 @@ class ClassGradeSheet implements FromCollection, WithHeadings, WithTitle, WithSt
                 ->get(['task_id', 'student_id', 'score'])
                 ->each(function ($row) use (&$taskScoreMap) {
                     $taskScoreMap[$row->student_id][$row->task_id] = $row->score;
+                });
+        }
+
+        // Pre-load ulangan_harian scores (per exam, per student)
+        $uhExamIds = $this->ulanganHarianExams->pluck('id')->all();
+        $uhScoreMap = []; // [student_id][exam_id] = score
+        if (!empty($uhExamIds)) {
+            DB::table('exam_scores')
+                ->whereIn('exam_id', $uhExamIds)
+                ->whereIn('student_id', $students->pluck('id')->all())
+                ->get(['exam_id', 'student_id', 'score'])
+                ->each(function ($row) use (&$uhScoreMap) {
+                    $uhScoreMap[$row->student_id][$row->exam_id] = (float) $row->score;
                 });
         }
 
@@ -108,7 +136,7 @@ class ClassGradeSheet implements FromCollection, WithHeadings, WithTitle, WithSt
                 $uasScoreMap[$row->student_id] = round((float) $row->avg_score, 2);
             });
 
-        return $students->map(function ($student, $idx) use ($taskScoreMap, $utsScoreMap, $uasScoreMap) {
+        return $students->map(function ($student, $idx) use ($taskScoreMap, $uhScoreMap, $utsScoreMap, $uasScoreMap) {
             $row = [$idx + 1, $student->nis, $student->name];
 
             $taskScores = [];
@@ -118,22 +146,38 @@ class ClassGradeSheet implements FromCollection, WithHeadings, WithTitle, WithSt
                 $row[]        = $score;
             }
 
+            $uhScores = [];
+            foreach ($this->ulanganHarianExams as $exam) {
+                $score     = $uhScoreMap[$student->id][$exam->id] ?? null;
+                $uhScores[] = $score;
+                $row[]      = $score;
+            }
+
             $uts = $utsScoreMap[$student->id] ?? null;
             $uas = $uasScoreMap[$student->id] ?? null;
 
             $row[] = $uts;
             $row[] = $uas;
 
-            // Formula mirrors ReportCardService::calculateSubjectGrade for 'final' report type:
             // taskAvg = average of task scores (non-null)
-            // formative = taskAvg (no ulangan_harian in this sheet scope)
-            // final = (formative + uts + uas) / 3
             $nonNullTasks = array_filter($taskScores, fn($s) => $s !== null);
             $taskAvg      = count($nonNullTasks) > 0
                 ? array_sum($nonNullTasks) / count($nonNullTasks)
                 : 0;
 
-            $scores   = array_filter([$taskAvg > 0 ? $taskAvg : null, $uts, $uas], fn($s) => $s !== null);
+            // uhAvg = average of ulangan_harian scores (non-null)
+            $nonNullUh = array_filter($uhScores, fn($s) => $s !== null);
+            $uhAvg     = count($nonNullUh) > 0
+                ? array_sum($nonNullUh) / count($nonNullUh)
+                : 0;
+
+            // formative = avg(taskAvg, uhAvg) for non-zero components
+            $formativeComponents = array_filter([$taskAvg > 0 ? $taskAvg : null, $uhAvg > 0 ? $uhAvg : null], fn($s) => $s !== null);
+            $formative = count($formativeComponents) > 0
+                ? array_sum($formativeComponents) / count($formativeComponents)
+                : 0;
+
+            $scores   = array_filter([$formative > 0 ? $formative : null, $uts, $uas], fn($s) => $s !== null);
             $divisor  = count($scores);
             $final    = $divisor > 0 ? round(array_sum($scores) / $divisor, 2) : 0;
 
