@@ -51,6 +51,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS scheme when request arrives via reverse proxy/tunnel
+        // (ngrok, Cloudflare, etc.) which forwards X-Forwarded-Proto=https.
+        // This makes Vite asset URLs use https:// and avoids browser
+        // mixed-content blocks on the login page.
+        $forwardedProto = request()->headers->get('X-Forwarded-Proto');
+        if ($forwardedProto === 'https' || str_ends_with((string) request()->getHost(), '.ngrok-free.app')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip());
         });

@@ -237,9 +237,8 @@ class StudentController extends Controller
             'reportCards',
             'mutations.fromClass',
             'mutations.toClass',
-            'healthRecord',
-            'counselingNotes.counselor',
-            'siblings.class'
+            // 'healthRecord' + 'counselingNotes.counselor' — relations not yet implemented on Student model
+            'siblings.class',
         ]);
 
         $academicHistory = $student->grades
