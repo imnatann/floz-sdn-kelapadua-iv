@@ -21,13 +21,13 @@ class PdfGeneratorService
             ->orderBy('subject_id')
             ->get();
 
-        $tenant = (object) [
-            'name' => 'SDN Kelapadua IV',
-            'address' => 'Jl. Kelapa Dua Raya',
-            'email' => 'info@sdnkelapadua4.sch.id',
-            'phone' => '021-12345678',
+        $school = (object) [
+            'name'    => config('school.name'),
+            'address' => config('school.address'),
+            'email'   => config('school.email'),
+            'phone'   => config('school.phone'),
         ];
-        $educationLevel = 'sd';
+        $educationLevel = strtolower(config('school.education_level', 'SD'));
 
         $template = "pdf.report-card-{$educationLevel}";
 
@@ -37,7 +37,7 @@ class PdfGeneratorService
             'student'    => $reportCard->student,
             'class'      => $reportCard->schoolClass,
             'semester'   => $reportCard->semester,
-            'tenant'     => $tenant,
+            'school'     => $school,
         ]);
 
         $pdf->setPaper('A4', 'portrait');

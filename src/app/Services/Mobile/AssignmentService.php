@@ -44,6 +44,49 @@ class AssignmentService
             ->all();
     }
 
+    public function submitForStudent(User $user, int $id, array $data): array
+    {
+        $student = $user->student;
+
+        if (! $student || ! $student->class_id) {
+            abort(403, 'Student profile not found.');
+        }
+
+        $assignment = OfflineAssignment::whereHas('classes', fn ($q) => $q->where('class_id', $student->class_id))
+            ->where('status', 'active')
+            ->find($id);
+
+        if (! $assignment) {
+            abort(404, 'Tugas tidak ditemukan.');
+        }
+
+        $existing = OfflineAssignmentSubmission::where('offline_assignment_id', $assignment->id)
+            ->where('student_id', $student->id)
+            ->exists();
+
+        if ($existing) {
+            abort(409, 'Tugas sudah dikumpulkan.');
+        }
+
+        $submittedAt = now();
+        $isLate      = $assignment->due_date && $submittedAt->gt($assignment->due_date);
+
+        $submission = OfflineAssignmentSubmission::create([
+            'offline_assignment_id' => $assignment->id,
+            'student_id'            => $student->id,
+            'submitted_at'          => $submittedAt,
+            'answer_text'           => $data['answer_text'] ?? null,
+            'answer_link'           => $data['answer_link'] ?? null,
+        ]);
+
+        return [
+            'submission_id' => $submission->id,
+            'status'        => 'submitted',
+            'submitted_at'  => $submission->submitted_at->toISOString(),
+            'is_late'       => $isLate,
+        ];
+    }
+
     public function detailForStudent(User $user, int $id): ?array
     {
         $student = $user->student;

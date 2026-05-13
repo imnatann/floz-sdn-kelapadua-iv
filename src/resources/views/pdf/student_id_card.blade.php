@@ -95,7 +95,7 @@
 <body>
     <div class="card">
         <div class="header">
-            <div class="school-name">{{ $student->class?->academicYear?->tenant?->name ?? 'SEKOLAH FLOZ' }}</div>
+            <div class="school-name">{{ config('school.name', 'SDN Kelapadua IV') }}</div>
             <div class="card-title">KARTU PELAJAR</div>
         </div>
         

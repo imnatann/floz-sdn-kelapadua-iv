@@ -71,7 +71,7 @@
         </td>
         <td width="33%"></td>
         <td width="33%">
-            {{ $tenant->address }}, {{ now()->locale('id')->isoFormat('D MMMM Y') }}<br>
+            {{ $school->address }}, {{ now()->locale('id')->isoFormat('D MMMM Y') }}<br>
             Wali Kelas<br><br><br><br>
             <b>{{ $class->homeroomTeacher->name ?? '...........................' }}</b><br>
             NIP. {{ $class->homeroomTeacher->nip ?? '-' }}

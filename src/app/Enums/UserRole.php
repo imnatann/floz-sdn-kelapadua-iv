@@ -21,18 +21,4 @@ enum UserRole: string
         };
     }
 
-    public function isPlatformLevel(): bool
-    {
-        return $this === self::SuperAdmin;
-    }
-
-    public function isTenantLevel(): bool
-    {
-        return in_array($this, [
-            self::SchoolAdmin,
-            self::Teacher,
-            self::Student,
-            self::Parent,
-        ]);
-    }
 }

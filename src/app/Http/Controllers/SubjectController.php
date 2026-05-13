@@ -20,7 +20,7 @@ class SubjectController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return Inertia::render('Tenant/Subjects/Index', [
+        return Inertia::render('Subjects/Index', [
             'subjects' => $subjects,
             'filters'  => $request->only(['search', 'category', 'status']),
         ]);
@@ -28,7 +28,7 @@ class SubjectController extends Controller
 
     public function create()
     {
-        return Inertia::render('Tenant/Subjects/Form');
+        return Inertia::render('Subjects/Form');
     }
 
     public function store(Request $request)
@@ -52,7 +52,7 @@ class SubjectController extends Controller
 
     public function edit(Subject $subject)
     {
-        return Inertia::render('Tenant/Subjects/Form', [
+        return Inertia::render('Subjects/Form', [
             'subject' => $subject,
         ]);
     }

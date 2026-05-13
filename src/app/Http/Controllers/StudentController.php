@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
 class StudentController extends Controller
 {
     #[OA\Post(
-        path: "/tenant/students/import",
+        path: "/students/import",
         tags: ["Students"],
         summary: "Import Students",
         description: "Import students from Excel/CSV file"
@@ -60,7 +60,7 @@ class StudentController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/students/template",
+        path: "/students/template",
         tags: ["Students"],
         summary: "Download Import Template",
         description: "Download CSV template for student import"
@@ -93,7 +93,7 @@ class StudentController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/students",
+        path: "/students",
         tags: ["Students"],
         summary: "List Students",
         description: "Get list of students with filtering"
@@ -106,28 +106,45 @@ class StudentController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('viewAny', Student::class);
 
-        $cacheKey = 'students_' . md5(json_encode($request->only(['search', 'class_id', 'status', 'page'])));
-        
-        $students = cache()->remember($cacheKey, 60, function () use ($request) {
-            return Student::query()
-                ->with('class')
-                ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%")
-                    ->orWhere('nis', 'like', "%{$s}%"))
-                ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
-                ->when($request->status, fn($q, $s) => $q->where('status', $s))
-                ->latest()
-                ->paginate(20)
-                ->withQueryString();
-        });
+        // Resolve academic year filter: explicit param > active AY
+        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
 
-        $classes = cache()->remember('active_classes_list', 3600, function () {
-            return SchoolClass::where('status', 'active')->get(['id', 'name']);
-        });
+        // NOTE: do NOT cache the LengthAwarePaginator — it bakes absolute URLs
+        // (host + scheme) from request()->url() at generation time. Reusing a
+        // cached paginator from one host (e.g. ngrok) on a different origin
+        // (e.g. 127.0.0.1) produces cross-origin pagination links and the
+        // browser blocks the XHR with a CORS preflight redirect error.
+        $students = Student::query()
+            ->with('class.academicYear:id,name,is_active')
+            ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
+                $qq->where('name', 'like', "%{$s}%")
+                   ->orWhere('nis', 'like', "%{$s}%");
+            }))
+            ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
-        return Inertia::render('Tenant/Students/Index', [
-            'students' => $students,
-            'classes'  => $classes,
-            'filters'  => $request->only(['search', 'class_id', 'status']),
+        // Classes filtered to selected AY (so the Kelas dropdown only shows kelas of that AY)
+        $classes = SchoolClass::where('status', 'active')
+            ->when($selectedAyId, fn($q, $ay) => $q->where('academic_year_id', $ay))
+            ->orderBy('grade_level')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+
+        return Inertia::render('Students/Index', [
+            'students'      => $students,
+            'classes'       => $classes,
+            'academicYears' => $academicYears,
+            'filters'       => array_merge(
+                $request->only(['search', 'class_id', 'status']),
+                ['academic_year_id' => $selectedAyId]
+            ),
         ]);
     }
 
@@ -137,13 +154,13 @@ class StudentController extends Controller
 
         $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
 
-        return Inertia::render('Tenant/Students/Create', [
+        return Inertia::render('Students/Create', [
             'classes' => $classes,
         ]);
     }
 
     #[OA\Post(
-        path: "/tenant/students",
+        path: "/students",
         tags: ["Students"],
         summary: "Create Student",
         description: "Create a new student"
@@ -199,7 +216,6 @@ class StudentController extends Controller
         if ($request->create_account) {
             $email = $request->nis . '@siswa.sekolah.id';
             
-            // Check if user with email already exists in TENANT database
             $existingUser = User::where('email', $email)->first();
             
             if (!$existingUser) {
@@ -220,7 +236,7 @@ class StudentController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/students/{student}",
+        path: "/students/{student}",
         tags: ["Students"],
         summary: "Show Student",
         description: "Get student details"
@@ -238,9 +254,8 @@ class StudentController extends Controller
             'reportCards',
             'mutations.fromClass',
             'mutations.toClass',
-            'healthRecord',
-            'counselingNotes.counselor',
-            'siblings.class'
+            // 'healthRecord' + 'counselingNotes.counselor' — relations not yet implemented on Student model
+            'siblings.class',
         ]);
 
         $academicHistory = $student->grades
@@ -254,7 +269,7 @@ class StudentController extends Controller
                 ];
             })->values();
 
-        return Inertia::render('Tenant/Students/Show', [
+        return Inertia::render('Students/Show', [
             'student' => $student,
             'academicHistory' => $academicHistory
         ]);
@@ -277,14 +292,14 @@ class StudentController extends Controller
 
         $classes = SchoolClass::where('status', 'active')->get(['id', 'name']);
 
-        return Inertia::render('Tenant/Students/Edit', [
+        return Inertia::render('Students/Edit', [
             'student' => $student,
             'classes' => $classes,
         ]);
     }
 
     #[OA\Put(
-        path: "/tenant/students/{student}",
+        path: "/students/{student}",
         tags: ["Students"],
         summary: "Update Student",
         description: "Update student details"
@@ -363,7 +378,7 @@ class StudentController extends Controller
     }
 
     #[OA\Delete(
-        path: "/tenant/students/{student}",
+        path: "/students/{student}",
         tags: ["Students"],
         summary: "Delete Student",
         description: "Delete a student"

@@ -12,6 +12,21 @@ class AttendanceRoster {
   });
 }
 
+/// Daily class attendance roster — returned by the homeroom-teacher daily endpoints.
+class DailyAttendanceRoster {
+  final int meetingNumber;
+  final String date;
+  final ClassInfo classInfo;
+  final List<StudentAttendance> students;
+
+  const DailyAttendanceRoster({
+    required this.meetingNumber,
+    required this.date,
+    required this.classInfo,
+    required this.students,
+  });
+}
+
 class MeetingInfo {
   final int id;
   final int meetingNumber;

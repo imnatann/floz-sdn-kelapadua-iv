@@ -23,7 +23,7 @@ class GradeController extends Controller
     ) {}
 
     #[OA\Get(
-        path: "/tenant/grades",
+        path: "/grades",
         tags: ["Grades"],
         summary: "List Grades",
         description: "Get list of grades with filtering"
@@ -36,24 +36,46 @@ class GradeController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('viewAny', Grade::class);
 
-        $classes = SchoolClass::where('status', 'active')->with('academicYear')->get();
+        $user = $request->user();
+        $classesQuery = SchoolClass::where('status', 'active')->with('academicYear')->orderBy('name');
+
+        // Scope teacher: only classes they are homeroom of OR have a TA in
+        if ($user->isTeacher() && $user->teacher) {
+            $teacherId = $user->teacher->id;
+            $taClassIds = \App\Models\TeachingAssignment::where('teacher_id', $teacherId)->pluck('class_id')->all();
+            $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)->pluck('id')->all();
+            $visibleIds = array_values(array_unique(array_merge($taClassIds, $homeroomClassIds)));
+            $classesQuery->whereIn('id', $visibleIds ?: [0]);
+        } elseif ($user->isStudent() && $user->student) {
+            $classesQuery->where('id', $user->student->class_id);
+        }
+
+        $classes = $classesQuery->get();
         $semesters = Semester::where('is_active', true)->with('academicYear')->get();
         $subjects = Subject::active()->get();
 
         $grades = null;
         if ($request->class_id && $request->semester_id) {
-            $cacheKey = 'grades_' . md5(json_encode($request->only(['class_id', 'semester_id', 'subject_id'])));
-            
-            $grades = cache()->remember($cacheKey, 60, function () use ($request) {
+            // Scope grades to own student record if siswa, otherwise full class.
+            $scopeStudentId = ($user->isStudent() && $user->student) ? $user->student->id : null;
+
+            // Cache key MUST include the scope to prevent cross-user cache poisoning.
+            $cacheKey = 'grades_' . md5(json_encode([
+                $request->only(['class_id', 'semester_id', 'subject_id']),
+                'student_scope' => $scopeStudentId,
+            ]));
+
+            $grades = cache()->remember($cacheKey, 60, function () use ($request, $scopeStudentId) {
                 return Grade::with(['student', 'subject', 'teacher'])
                     ->where('class_id', $request->class_id)
                     ->where('semester_id', $request->semester_id)
                     ->when($request->subject_id, fn($q, $s) => $q->where('subject_id', $s))
+                    ->when($scopeStudentId, fn($q, $sid) => $q->where('student_id', $sid))
                     ->get();
             });
         }
 
-        return Inertia::render('Tenant/Grades/Index', [
+        return Inertia::render('Grades/Index', [
             'classes'    => $classes,
             'semesters'  => $semesters,
             'subjects'   => $subjects,
@@ -63,7 +85,7 @@ class GradeController extends Controller
     }
 
     #[OA\Get(
-        path: "/tenant/grades/batch",
+        path: "/grades/batch",
         tags: ["Grades"],
         summary: "Batch Input View",
         description: "Get view for batch grade input"
@@ -89,7 +111,7 @@ class GradeController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        return Inertia::render('Tenant/Grades/BatchInput', [
+        return Inertia::render('Grades/BatchInput', [
             'class'          => $class,
             'semester'       => $semester,
             'subject'        => $subject,
@@ -99,7 +121,7 @@ class GradeController extends Controller
     }
 
     #[OA\Post(
-        path: "/tenant/grades/batch",
+        path: "/grades/batch",
         tags: ["Grades"],
         summary: "Store Batch Grades",
         description: "Store multiple grades at once"
@@ -136,12 +158,29 @@ class GradeController extends Controller
             'semester_id' => 'required|exists:semesters,id',
             'subject_id'  => 'required|exists:subjects,id',
             'grades'      => 'required|array',
-            'grades.*.student_id' => 'required|exists:students,id',
+            'grades.*.student_id'      => 'required|exists:students,id',
+            'grades.*.daily_test_avg'  => 'nullable|numeric|min:0|max:100',
+            'grades.*.mid_test'        => 'nullable|numeric|min:0|max:100',
+            'grades.*.final_test'      => 'nullable|numeric|min:0|max:100',
+            'grades.*.knowledge_score' => 'nullable|numeric|min:0|max:100',
+            'grades.*.skill_score'     => 'nullable|numeric|min:0|max:100',
+            'grades.*.attitude_score'  => 'nullable|string|max:5',
+            'grades.*.notes'           => 'nullable|string|max:255',
         ]);
 
-        $tenant = app('currentTenant');
+        // A3/A4 guard: teacher must have a TA for this class+subject to submit grades.
+        $user = $request->user();
+        if ($user->isTeacher() && $user->teacher) {
+            $hasTA = \Illuminate\Support\Facades\DB::table('teaching_assignments')
+                ->where('teacher_id', $user->teacher->id)
+                ->where('class_id', $validated['class_id'])
+                ->where('subject_id', $validated['subject_id'])
+                ->exists();
+            abort_unless($hasTA, 403, 'Anda tidak mengajar mata pelajaran ini di kelas tersebut.');
+        }
+
         $subject = Subject::findOrFail($validated['subject_id']);
-        $educationLevel = $tenant->education_level->value ?? 'SMA';
+        $educationLevel = config('school.education_level', 'SD');
 
         $studentIdsToUpdate = [];
 
@@ -183,20 +222,22 @@ class GradeController extends Controller
             }
         }
 
-        // Auto-synchronize Report Cards for these students
+        // Auto-synchronize Report Cards for these students (default report type 'final')
         $studentIdsToUpdate = array_unique($studentIdsToUpdate);
         foreach ($studentIdsToUpdate as $studentId) {
             $this->reportCardService->generate(
                 $studentId,
                 $validated['class_id'],
-                $validated['semester_id']
+                $validated['semester_id'],
+                'final'
             );
         }
 
-        // Auto-recalculate class rankings
+        // Auto-recalculate class rankings for the same report type
         $this->reportCardService->calculateRankings(
             $validated['class_id'],
-            $validated['semester_id']
+            $validated['semester_id'],
+            'final'
         );
 
         return redirect()->route('grades.index', [

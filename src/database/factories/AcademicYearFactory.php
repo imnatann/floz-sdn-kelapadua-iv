@@ -11,11 +11,14 @@ class AcademicYearFactory extends Factory
 
     public function definition(): array
     {
+        $startYear = $this->faker->unique()->numberBetween(2020, 2099);
+        $endYear = $startYear + 1;
+
         return [
-            'name' => '2026/2027 - Ganjil',
-            'start_date' => '2026-07-14',
-            'end_date' => '2026-12-19',
-            'is_active' => true,
+            'name'       => "{$startYear}/{$endYear}",
+            'start_date' => "{$startYear}-07-01",
+            'end_date'   => "{$endYear}-06-30",
+            'is_active'  => false,
         ];
     }
 }

@@ -9,8 +9,9 @@ vendor/
 storage/logs/*
 !storage/logs/.gitkeep
 
-# Playwright MCP artifacts (browser cache, screenshots, console logs)
+# Playwright MCP / e2e evidence (browser cache, screenshots tarball)
 .playwright-mcp/
+.planning/e2e-evidence/screenshots.tar.gz
 *.png
 *.jpg
 *.jpeg

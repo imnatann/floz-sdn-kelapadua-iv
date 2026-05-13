@@ -6,6 +6,8 @@ import '../models/attendance_dto.dart';
 abstract class AttendanceRemoteDataSource {
   Future<AttendanceRoster> fetchRoster(int meetingId);
   Future<AttendanceRoster> submitAttendance(int meetingId, List<Map<String, dynamic>> entries);
+  Future<DailyAttendanceRoster> fetchDailyRoster(int classId);
+  Future<DailyAttendanceRoster> submitDailyAttendance(int classId, List<Map<String, dynamic>> entries);
 }
 
 class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
@@ -32,5 +34,25 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
     );
     final body = res.data as Map<String, dynamic>;
     return AttendanceRosterDto.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<DailyAttendanceRoster> fetchDailyRoster(int classId) async {
+    final res = await _client.get(ApiEndpoints.teacherDailyAttendance(classId));
+    final body = res.data as Map<String, dynamic>;
+    return DailyAttendanceRosterDto.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<DailyAttendanceRoster> submitDailyAttendance(
+    int classId,
+    List<Map<String, dynamic>> entries,
+  ) async {
+    final res = await _client.post(
+      ApiEndpoints.teacherDailyAttendance(classId),
+      body: {'entries': entries},
+    );
+    final body = res.data as Map<String, dynamic>;
+    return DailyAttendanceRosterDto.fromJson(body['data'] as Map<String, dynamic>);
   }
 }

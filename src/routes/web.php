@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GradeController;
-use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
@@ -16,6 +16,9 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OfflineAssignmentController;
+use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\YearTransitionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +26,10 @@ use Illuminate\Support\Facades\Route;
 | Web Routes — Floz SDN Kelapadua IV (Single-School System)
 |--------------------------------------------------------------------------
 */
+
+// ─── Health Checks (no auth, no CSRF) ────────────────────────────────
+Route::get('/healthz', [\App\Http\Controllers\HealthController::class, 'check'])
+    ->name('health.check');
 
 // ─── Public / Auth ───────────────────────────────────────────────────
 Route::get('/', [\App\Http\Controllers\WelcomeController::class, 'index'])->name('home');
@@ -40,6 +47,10 @@ Route::controller(LoginController::class)->group(function () {
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profile / Password
+    Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('profile.password');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
     // Notifications
     Route::get('/notifications/data', [NotificationController::class, 'data'])->name('notifications.data');
@@ -66,7 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('teaching-assignments', TeachingAssignmentController::class)->except(['show']);
 
     // Schedules (Jadwal Pelajaran)
-    Route::resource('schedules', ScheduleController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('schedules', ScheduleController::class)->only(['index', 'store', 'update', 'destroy']);
 
     // ─── AKADEMIK ────────────────────────────────────────────────────
 
@@ -101,16 +112,37 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/grades/batch', [GradeController::class, 'batchInput'])->name('grades.batch');
     Route::post('/grades/batch', [GradeController::class, 'storeBatch'])->name('grades.storeBatch');
 
-    // Report Cards (Rapor)
-    Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
-    Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
-    Route::get('/report-cards/{reportCard}', [ReportCardController::class, 'show'])->name('report-cards.show');
-    Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
-    Route::get('/report-cards/{reportCard}/pdf', [ReportCardController::class, 'downloadPdf'])->name('report-cards.pdf');
-
-    // Audit Logs
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-
-    // Announcements (Pengumuman)
+    // Announcements (Pengumuman) — open to all auth'd roles; policy gates write
     Route::resource('announcements', AnnouncementController::class);
+
+    // ─── SCHOOL_ADMIN-ONLY ROUTES ───────────────────────────────────
+    Route::middleware('role:school_admin')->group(function () {
+        // Audit Logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+
+        // Academic Years
+        Route::resource('academic-years', AcademicYearController::class);
+        Route::post('academic-years/{academicYear}/activate', [AcademicYearController::class, 'activate'])
+            ->name('academic-years.activate');
+
+        // Semesters (nested + shallow)
+        Route::resource('academic-years.semesters', SemesterController::class)->shallow();
+        Route::post('semesters/{semester}/activate', [SemesterController::class, 'activate'])
+            ->name('semesters.activate');
+
+        // Year Transition (Kenaikan Kelas)
+        Route::prefix('year-transition')->name('year-transition.')->group(function () {
+            Route::get('/',           [YearTransitionController::class, 'index'])->name('index');
+            Route::post('/preview',   [YearTransitionController::class, 'preview'])->name('preview');
+            Route::post('/execute',   [YearTransitionController::class, 'execute'])->name('execute');
+            Route::get('/logs',       [YearTransitionController::class, 'logs'])->name('logs');
+            Route::get('/logs/{log}', [YearTransitionController::class, 'showLog'])->name('logs.show');
+        });
+    });
+
+    // Analytics: Excel export endpoints only (dashboard + reports UI removed).
+    Route::prefix('analytics')->middleware(['role:school_admin,teacher'])->name('analytics.')->group(function () {
+        Route::get('/export/attendance',  [\App\Http\Controllers\AnalyticsController::class, 'exportAttendance'])->name('export.attendance');
+        Route::get('/export/grades',      [\App\Http\Controllers\AnalyticsController::class, 'exportGrades'])->name('export.grades');
+    });
 });

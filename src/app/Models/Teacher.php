@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\UsesTenantConnection;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Teacher extends Model
 {
-    use HasFactory, UsesTenantConnection, Auditable;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'nip', 'nuptk', 'name', 'gender', 'birth_place', 'birth_date',

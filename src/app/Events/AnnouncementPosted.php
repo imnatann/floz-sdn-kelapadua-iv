@@ -37,10 +37,10 @@ class AnnouncementPosted implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('App.Models.Tenant.User.' . $this->userId),
+            new PrivateChannel('App.Models.User.' . $this->userId),
         ];
     }
-    
+
     public function broadcastAs()
     {
         return 'AnnouncementPosted';
@@ -50,16 +50,16 @@ class AnnouncementPosted implements ShouldBroadcastNow
     {
         return [
             'id' => $this->notificationId,
-            'type' => 'App\\Notifications\\Tenant\\NewAnnouncementNotification', // Match DB type
+            'type' => 'App\\Notifications\\NewAnnouncementNotification',
             'title' => 'Pengumuman Baru',
             'message' => $this->announcement->title,
-            'link' => route('tenant.announcements.show', $this->announcement->id),
+            'link' => route('announcements.show', $this->announcement->id),
             'created_at' => now()->toIso8601String(),
             'read_at' => null,
-            'data' => [ // Redundant but helpful if frontend expects 'data' wrapper
+            'data' => [
                 'title' => 'Pengumuman Baru',
                 'message' => $this->announcement->title,
-                'link' => route('tenant.announcements.show', $this->announcement->id),
+                'link' => route('announcements.show', $this->announcement->id),
                 'type' => 'announcement',
             ]
         ];

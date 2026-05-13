@@ -19,10 +19,10 @@ use OpenApi\Attributes as OA;
 class DashboardController extends Controller
 {
     #[OA\Get(
-        path: "/tenant/dashboard",
-        tags: ["Tenant Dashboard"],
-        summary: "Tenant Dashboard Stats",
-        description: "Get statistics for the tenant dashboard"
+        path: "/dashboard",
+        tags: ["Dashboard"],
+        summary: "Dashboard Stats",
+        description: "Get statistics for the school dashboard"
     )]
     #[OA\Response(
         response: 200,
@@ -72,7 +72,7 @@ class DashboardController extends Controller
             $student = $user->student()->with(['class.homeroomTeacher'])->first();
             
             if (!$student) {
-                return Inertia::render('Tenant/Dashboard/StudentDashboard', [
+                return Inertia::render('Dashboard/StudentDashboard', [
                     'student' => $user,
                     'stats' => [
                         'attendance_percentage' => 0,
@@ -103,7 +103,7 @@ class DashboardController extends Controller
                     ->get();
             }
 
-            return Inertia::render('Tenant/Dashboard/StudentDashboard', [
+            return Inertia::render('Dashboard/StudentDashboard', [
                 'student' => $student,
                 'stats' => $studentStats,
                 'recentAnnouncements' => $recentAnnouncements,
@@ -115,7 +115,7 @@ class DashboardController extends Controller
             $teacher = $user->teacher;
 
             if (!$teacher) {
-                return Inertia::render('Tenant/Dashboard/TeacherDashboard', [
+                return Inertia::render('Dashboard/TeacherDashboard', [
                     'teacher' => $user,
                     'stats' => [
                         'my_classes_count'   => 0,
@@ -145,7 +145,7 @@ class DashboardController extends Controller
                 ->orderBy('start_time')
                 ->get();
 
-            return Inertia::render('Tenant/Dashboard/TeacherDashboard', [
+            return Inertia::render('Dashboard/TeacherDashboard', [
                 'teacher' => $teacher,
                 'stats' => $teacherStats,
                 'recentAnnouncements' => $recentAnnouncements,
@@ -154,7 +154,7 @@ class DashboardController extends Controller
         }
 
         // Admin Dashboard (Default)
-        return Inertia::render('Tenant/Dashboard/AdminDashboard', [
+        return Inertia::render('Dashboard/AdminDashboard', [
             'stats'        => $stats,
             'recentAnnouncements' => $recentAnnouncements,
         ]);

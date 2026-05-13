@@ -109,6 +109,51 @@ services:
       redis:
         condition: service_healthy
 
+  # Laravel Reverb WebSocket Server
+  reverb:
+    build:
+      context: ./docker
+      dockerfile: php/Dockerfile
+    container_name: floz-reverb
+    restart: always
+    working_dir: /var/www/html
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080", "--no-interaction"]
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=${DB_CONNECTION:-pgsql}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REVERB_HOST=${REVERB_HOST:-0.0.0.0}
+      - REVERB_PORT=8080
+      - REVERB_SCHEME=${REVERB_SCHEME:-https}
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - floz-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  # Uptime Kuma — self-hosted monitoring
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: floz-uptime-kuma
+    restart: always
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    networks:
+      - floz-network
+
 networks:
   floz-network:
     driver: bridge
@@ -116,3 +161,4 @@ networks:
 volumes:
   floz-postgres-data:
   floz-redis-data:
+  uptime-kuma-data:

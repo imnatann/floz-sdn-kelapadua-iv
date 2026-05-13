@@ -20,19 +20,32 @@ const props = defineProps({
     },
     viewAllLink: {
         type: String,
-        default: '/tenant/announcements',
+        default: '/announcements',
     },
 });
 
+const stripHtml = (raw) => {
+    if (!raw) return '';
+    return String(raw)
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
 const formattedAnnouncements = computed(() => {
     return props.announcements.map(announcement => {
-        // Strip HTML tags if excerpt is missing, fallback to empty string
-        const cleanContent = announcement.excerpt || announcement.content.replace(/<[^>]*>/g, '');
-        
+        const cleanContent = stripHtml(announcement.excerpt || announcement.content || '');
+
         return {
             ...announcement,
             formattedDate: dayjs(announcement.created_at).fromNow(),
-            cleanContent: cleanContent.length > 100 ? cleanContent.substring(0, 100) + '...' : cleanContent,
+            cleanContent: cleanContent.length > 100 ? cleanContent.substring(0, 100) + '…' : cleanContent,
         };
     });
 });

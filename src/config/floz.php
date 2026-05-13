@@ -77,4 +77,13 @@ return [
         'published' => 'Dipublikasikan',
     ],
 
+    // Analytics thresholds (WARN-2: configurable via env)
+    'analytics' => [
+        'at_risk_attendance_threshold' => (float) env('ANALYTICS_AT_RISK_ATTENDANCE', 0.85),
+        'at_risk_grade_kktp'           => (int)   env('ANALYTICS_AT_RISK_GRADE_KKTP', 70),
+    ],
+
+    // Default KKTP (Kriteria Ketercapaian Tujuan Pembelajaran)
+    'kktp_default' => (int) env('KKTP_DEFAULT', 70),
+
 ];

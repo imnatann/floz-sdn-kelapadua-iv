@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,7 +21,7 @@ class SchoolClassController extends Controller
     {
         $classes = SchoolClass::query()
             ->with(['academicYear', 'homeroomTeacher'])
-            ->withCount('students')
+            ->withCount(['students', 'teachingAssignments'])
             ->when($request->academic_year_id, fn($q, $id) => $q->where('academic_year_id', $id))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
@@ -29,7 +30,7 @@ class SchoolClassController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return Inertia::render('Tenant/Classes/Index', [
+        return Inertia::render('Classes/Index', [
             'classes'       => $classes,
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
             'filters'       => $request->only(['search', 'academic_year_id', 'status']),
@@ -38,7 +39,7 @@ class SchoolClassController extends Controller
 
     public function create()
     {
-        return Inertia::render('Tenant/Classes/Form', [
+        return Inertia::render('Classes/Form', [
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
         ]);
@@ -63,10 +64,17 @@ class SchoolClassController extends Controller
 
     public function edit(SchoolClass $class)
     {
-        return Inertia::render('Tenant/Classes/Form', [
+        $class->load([
+            'teachingAssignments.subject:id,name,code',
+            'teachingAssignments.teacher:id,name,nip',
+            'teachingAssignments.academicYear:id,name,is_active',
+        ]);
+
+        return Inertia::render('Classes/Form', [
             'classData'     => $class,
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
+            'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
         ]);
     }
 

@@ -13,6 +13,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust any reverse proxy / tunnel (ngrok, Cloudflare, etc.) so Laravel
+        // honours X-Forwarded-Proto / X-Forwarded-Host. Without this, paginator
+        // URLs and other generated URLs use http://localhost, which the browser
+        // blocks as mixed content when the page itself was loaded via https://…ngrok-free.app
+        // and Inertia/axios fails with a 'Network Error' on click.
+        $middleware->trustProxies(
+            at: '*',
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
+                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST
+                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT
+                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+                   | \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB,
+        );
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);

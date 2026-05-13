@@ -12,12 +12,15 @@ class SemesterFactory extends Factory
 
     public function definition(): array
     {
+        $start = $this->faker->dateTimeBetween('-1 year', 'now');
+        $end = (clone $start)->modify('+5 months');
+
         return [
             'academic_year_id' => AcademicYear::factory(),
-            'semester_number' => fake()->randomElement([1, 2]),
-            'start_date' => '2026-07-14',
-            'end_date' => '2026-12-19',
-            'is_active' => true,
+            'semester_number'  => $this->faker->randomElement([1, 2]),
+            'start_date'       => $start->format('Y-m-d'),
+            'end_date'         => $end->format('Y-m-d'),
+            'is_active'        => false,
         ];
     }
 }

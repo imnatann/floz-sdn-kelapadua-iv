@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\MobileReportCardController;
 use App\Http\Controllers\Api\V1\MobileStudentCoursesController;
 use App\Http\Controllers\Api\V1\MobileTeacherClassController;
 use App\Http\Controllers\Api\V1\MobileTeacherAttendanceController;
+use App\Http\Controllers\Api\V1\MobileTeacherDailyAttendanceController;
 use App\Http\Controllers\Api\V1\MobileTeacherGradeController;
 use App\Http\Controllers\Api\V1\MobileTeacherRecapController;
 use Illuminate\Support\Facades\Route;
@@ -21,8 +22,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | JSON API endpoints for the FLOZ Mobile App (Flutter).
-| All routes prefixed with /api/v1
-| No tenant identification needed — single school system.
+| All routes prefixed with /api/v1.
 |
 */
 
@@ -44,8 +44,12 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:teacher')->group(function () {
             Route::get('/teacher/teaching-assignments', [MobileTeacherClassController::class, 'index']);
             Route::get('/teacher/teaching-assignments/{id}/meetings', [MobileTeacherClassController::class, 'meetings']);
+            // Legacy per-meeting endpoints (backward compat — kept for existing tests)
             Route::get('/teacher/meetings/{meeting}/attendance', [MobileTeacherAttendanceController::class, 'show']);
             Route::post('/teacher/meetings/{meeting}/attendance', [MobileTeacherAttendanceController::class, 'store']);
+            // Daily class attendance (wali kelas only)
+            Route::get('/teacher/classes/{classId}/attendance/today', [MobileTeacherDailyAttendanceController::class, 'show']);
+            Route::post('/teacher/classes/{classId}/attendance/today', [MobileTeacherDailyAttendanceController::class, 'store']);
             Route::get('/teacher/teaching-assignments/{ta}/grade-roster', [MobileTeacherGradeController::class, 'roster']);
             Route::post('/teacher/teaching-assignments/{ta}/grades', [MobileTeacherGradeController::class, 'store']);
             Route::get('/teacher/teaching-assignments/{ta}/attendance-recap', [MobileTeacherRecapController::class, 'attendanceRecap']);
@@ -68,6 +72,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/student/courses', [MobileStudentCoursesController::class, 'index']);
             Route::get('/student/courses/{ta}/meetings', [MobileStudentCoursesController::class, 'meetings']);
             Route::get('/student/meetings/{meeting}', [MobileStudentCoursesController::class, 'meeting']);
+            Route::post('/student/assignments/{id}/submit', [MobileAssignmentController::class, 'submit']);
         });
 
         // Notifications (shared by student + teacher)

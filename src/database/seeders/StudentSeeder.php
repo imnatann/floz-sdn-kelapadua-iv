@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Tenant\Student;
-use App\Models\Tenant\User;
-use App\Models\Tenant\SchoolClass;
+use App\Models\Student;
+use App\Models\User;
+use App\Models\SchoolClass;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,14 +14,14 @@ class StudentSeeder extends Seeder
      * Seed 10 students with linked User accounts for login.
      * Each student gets a User (role: student) + Student record sharing same email.
      *
-     * Run: php artisan db:seed --class=StudentSeeder --database=tenant
+     * Run: php artisan db:seed --class=StudentSeeder
      */
     public function run(): void
     {
         // Make sure we have classes to assign students to
         $classes = SchoolClass::all();
         if ($classes->isEmpty()) {
-            $this->command->warn('No classes found! Please run TenantDatabaseSeeder first to create classes.');
+            $this->command->warn('No classes found! Please run DatabaseSeeder first to create classes.');
             return;
         }
 

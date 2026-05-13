@@ -1,0 +1,157 @@
+<script setup>
+import AppLayout from '@/Layouts/AppLayout.vue';
+import Card from '@/Components/UI/Card.vue';
+import Button from '@/Components/UI/Button.vue';
+import Badge from '@/Components/UI/Badge.vue';
+import Pagination from '@/Components/UI/Pagination.vue';
+import SearchInput from '@/Components/UI/SearchInput.vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
+import debounce from 'lodash/debounce';
+
+defineOptions({ layout: AppLayout });
+
+const props = defineProps({
+  announcements: Object,
+  filters: Object,
+});
+
+const page = usePage();
+const canManage = computed(() => {
+  const role = page.props.auth?.user?.role;
+  return role === 'school_admin' || role === 'teacher';
+});
+
+const search = ref(props.filters.search || '');
+
+watch(search, debounce((value) => {
+  router.get('/announcements', { search: value }, { preserveState: true, replace: true });
+}, 300));
+
+const deleteAnnouncement = (announcement) => {
+    if (confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')) {
+        router.delete(`/announcements/${announcement.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Toast will be handled by layout
+            }
+        });
+    }
+};
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
+const stripHtml = (raw) => {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const cleanExcerpt = (announcement) => {
+  const raw = announcement.excerpt || announcement.content || '';
+  return stripHtml(raw) || 'Tidak ada ringkasan.';
+};
+</script>
+
+<template>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Pengumuman</h1>
+        <p class="text-sm text-slate-500">Informasi terbaru seputar sekolah dan kegiatan.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <SearchInput v-model="search" placeholder="Cari pengumuman..." class="w-full sm:w-64" />
+        <Button v-if="canManage" href="/announcements/create" class="flex items-center gap-2">
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+           Buat Baru
+        </Button>
+      </div>
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <Link 
+        v-for="announcement in announcements.data" 
+        :key="announcement.id"
+        :href="`/announcements/${announcement.id}`"
+        class="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-orange-200"
+      >
+        <!-- Floating delete button (top-right of card, admin/teacher only) -->
+        <button
+          v-if="canManage"
+          @click.prevent="deleteAnnouncement(announcement)"
+          class="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 text-slate-400 opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-red-50 hover:text-red-600"
+          title="Hapus Pengumuman"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </button>
+
+        <!-- Content -->
+        <div class="flex flex-1 flex-col p-4">
+           <!-- Badges -->
+           <div class="mb-3 flex flex-wrap gap-2">
+             <Badge v-if="announcement.is_pinned" color="amber" size="sm" class="gap-1 pl-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+                Pinned
+             </Badge>
+             <Badge :color="announcement.type === 'alert' ? 'red' : announcement.type === 'event' ? 'blue' : 'slate'" size="sm">
+                {{ announcement.type === 'alert' ? 'Penting' : announcement.type === 'event' ? 'Kegiatan' : 'Info' }}
+             </Badge>
+           </div>
+
+           <h3 class="mb-2 text-lg font-semibold text-slate-800 line-clamp-2 group-hover:text-orange-600 transition-colors">
+             {{ announcement.title }}
+           </h3>
+           
+           <p class="mb-4 text-sm text-slate-500 line-clamp-3 flex-1">
+             {{ cleanExcerpt(announcement) }}
+           </p>
+
+           <!-- Footer -->
+           <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400">
+             <div class="flex items-center gap-2">
+                <div class="h-6 w-6 rounded-full bg-slate-200 overflow-hidden">
+                    <img v-if="announcement.author?.avatar_url" :src="announcement.author.avatar_url" />
+                     <div v-else class="flex h-full w-full items-center justify-center bg-slate-300 text-[8px] font-bold text-white">
+                        {{ announcement.author?.name?.charAt(0) }}
+                     </div>
+                </div>
+                <span class="truncate max-w-[80px]">{{ announcement.author?.name }}</span>
+             </div>
+             <span>{{ formatDate(announcement.created_at) }}</span>
+           </div>
+        </div>
+      </Link>
+    </div>
+
+    <!-- Empty State -->
+    <div v-if="announcements.data.length === 0" class="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 py-12 text-center">
+        <div class="mb-3 rounded-full bg-white p-3 shadow-sm">
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <h3 class="text-lg font-medium text-slate-900">Belum ada pengumuman</h3>
+        <p class="text-sm text-slate-500">Buat pengumuman pertama untuk memberitahu warga sekolah.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="announcements.data.length > 0" class="mt-6 flex justify-center">
+      <Pagination :links="announcements.links" />
+    </div>
+  </div>
+</template>

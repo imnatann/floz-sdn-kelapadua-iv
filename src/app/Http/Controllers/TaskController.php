@@ -16,48 +16,121 @@ use Carbon\Carbon;
 class TaskController extends Controller
 {
     /**
+     * Assert the authenticated user may manage tasks for the given class+subject.
+     * - Admin: always allowed.
+     * - Teacher: must have a TeachingAssignment for (teacher_id, class_id, subject_id).
+     * - Others (student, etc.): 403.
+     */
+    private function authorizeManage(Request $request, int $classId, int $subjectId): void
+    {
+        $user = $request->user();
+
+        if ($user->isSchoolAdmin()) {
+            return;
+        }
+
+        if ($user->isTeacher() && $user->teacher) {
+            $hasTA = DB::table('teaching_assignments')
+                ->where('teacher_id', $user->teacher->id)
+                ->where('class_id', $classId)
+                ->where('subject_id', $subjectId)
+                ->exists();
+
+            abort_unless($hasTA, 403, 'Anda tidak mengajar mata pelajaran ini di kelas tersebut.');
+            return;
+        }
+
+        abort(403, 'Unauthorized');
+    }
+
+    /**
+     * Assert the authenticated user may manage an existing task (storeScores / destroy).
+     */
+    private function authorizeTaskOwnership(Request $request, Task $task): void
+    {
+        $this->authorizeManage($request, $task->class_id, $task->subject_id);
+    }
+    /**
      * Display a listing of classes to choose from.
      */
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = SchoolClass::where('status', 'active');
-        
-        if ($user->role === 'teacher' && $user->teacher) {
+        $query = SchoolClass::where('status', 'active')->with('academicYear:id,name,is_active');
+
+        if ($user->isStudent() && $user->student) {
+            // Students only see their own class
+            $query->where('id', $user->student->class_id);
+        } elseif ($user->isTeacher() && $user->teacher) {
             $teacherId = $user->teacher->id;
             $classIds = DB::table('teaching_assignments')
                 ->where('teacher_id', $teacherId)
                 ->pluck('class_id')
                 ->toArray();
-                
+
             $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)
                 ->pluck('id')
                 ->toArray();
-                
+
             $allClassIds = array_unique(array_merge($classIds, $homeroomClassIds));
             $query->whereIn('id', $allClassIds);
         }
-        
-        $classes = $query->withCount('students')->orderBy('name')->get();
 
-        return Inertia::render('Tenant/Tasks/Index', [
-            'classes' => $classes,
+        // Filter by academic year: explicit query param, else default to active AY
+        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+        if ($selectedAyId) {
+            $query->where('academic_year_id', $selectedAyId);
+        }
+
+        $classes = $query->withCount('students')->orderBy('grade_level')->orderBy('name')->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+
+        return Inertia::render('Tasks/Index', [
+            'classes'       => $classes,
+            'academicYears' => $academicYears,
+            'filters'       => ['academic_year_id' => $selectedAyId],
         ]);
     }
 
     /**
      * Display tasks for a specific class.
      */
-    public function classIndex(SchoolClass $class)
+    public function classIndex(SchoolClass $class, Request $request)
     {
-        $activeSemester = Semester::where('is_active', true)->first();
-        
-        if (!$activeSemester) {
-            return redirect()->back()->with('error', 'Tidak ada semester aktif.');
+        $user = $request->user();
+        if ($user->isStudent() && $user->student && $user->student->class_id !== $class->id) {
+            abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
         }
 
-        $tasks = Task::where('class_id', $class->id)
-            ->where('semester_id', $activeSemester->id)
+        // Semester dropdown: all semesters belonging to the class's academic year (not just those with tasks).
+        // This lets admin pick any semester within this AY even before any task is created.
+        $semesters = Semester::with('academicYear')
+            ->where('academic_year_id', $class->academic_year_id)
+            ->orderBy('semester_number')
+            ->get();
+
+        // Default selected semester: query param → active semester within this AY → first semester of this AY
+        $activeSemesterInAy = Semester::where('is_active', true)
+            ->where('academic_year_id', $class->academic_year_id)
+            ->first();
+        $selectedSemesterId = $request->integer('semester_id')
+            ?: ($activeSemesterInAy?->id ?? $semesters->first()?->id);
+
+        if (!$selectedSemesterId) {
+            return Inertia::render('Tasks/ClassIndex', [
+                'schoolClass'   => $class,
+                'tasks'         => [],
+                'subjects'      => [],
+                'semesters'     => $semesters,
+                'filters'       => ['subject_id' => null, 'semester_id' => null],
+                'studentsCount' => $class->students()->count(),
+            ]);
+        }
+
+        $tasksQuery = Task::where('class_id', $class->id)
+            ->where('semester_id', $selectedSemesterId)
+            ->when($request->subject_id, fn ($q, $s) => $q->where('subject_id', $s))
             ->with(['subject', 'teacher'])
             ->withCount([
                 'scores',
@@ -65,13 +138,36 @@ class TaskController extends Controller
                 'scores as terlambat_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_TERLAMBAT),
                 'scores as tidak_kumpul_count' => fn ($q) => $q->where('submission_status', TaskScore::STATUS_TIDAK_KUMPUL),
             ])
-            ->orderByDesc('task_date')
-            ->get();
-            
-        return Inertia::render('Tenant/Tasks/ClassIndex', [
-            'schoolClass' => $class,
-            'tasks' => $tasks,
-            'studentsCount' => $class->students()->count()
+            ->orderByDesc('task_date');
+
+        $tasks = $tasksQuery->get();
+
+        // Subjects available for filter dropdown: distinct subjects that have tasks in this class (across all semesters)
+        $subjects = Subject::whereIn('id', Task::where('class_id', $class->id)->distinct()->pluck('subject_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Subjects available for Excel export: all subjects taught in this class (via teaching assignments).
+        // This is broader than $subjects above — admin can export a mapel even before any task exists.
+        $exportableSubjects = Subject::whereIn(
+                'id',
+                DB::table('teaching_assignments')->where('class_id', $class->id)->pluck('subject_id')->unique()
+            )
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return Inertia::render('Tasks/ClassIndex', [
+            'schoolClass'        => $class,
+            'tasks'              => $tasks,
+            'subjects'           => $subjects,
+            'exportableSubjects' => $exportableSubjects,
+            'semesters'          => $semesters,
+            'filters'            => [
+                'subject_id'  => $request->integer('subject_id') ?: null,
+                'semester_id' => $selectedSemesterId,
+            ],
+            'studentsCount'      => $class->students()->count(),
         ]);
     }
 
@@ -85,7 +181,7 @@ class TaskController extends Controller
         // Get subjects taught by this teacher in this class
         $subjectsQuery = Subject::where('status', 'active');
         
-        if ($user->role === 'teacher' && $user->teacher) {
+        if ($user->isTeacher() && $user->teacher) {
             $isHomeroom = $class->homeroom_teacher_id === $user->teacher->id;
             if (!$isHomeroom) {
                 // If not homeroom, only show subjects they teach
@@ -100,7 +196,7 @@ class TaskController extends Controller
         
         $subjects = $subjectsQuery->orderBy('name')->get();
 
-        return Inertia::render('Tenant/Tasks/Create', [
+        return Inertia::render('Tasks/Create', [
             'schoolClass' => $class,
             'subjects' => $subjects,
             'todayDate' => Carbon::today()->format('Y-m-d')
@@ -115,6 +211,7 @@ class TaskController extends Controller
         $validated = $request->validate([
             'class_id' => 'required|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
+            'semester_id' => 'nullable|exists:semesters,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'task_date' => 'required|date',
@@ -122,9 +219,19 @@ class TaskController extends Controller
             'max_score' => 'required|numeric|min:1|max:1000',
         ]);
 
-        $activeSemester = Semester::where('is_active', true)->first();
-        if (!$activeSemester) {
-            return redirect()->back()->with('error', 'Tidak ada semester aktif.');
+        // A4/A5 guard: only admin or teacher with TA for this class+subject may create tasks.
+        $this->authorizeManage($request, $validated['class_id'], $validated['subject_id']);
+
+        // Pick a semester belonging to the target class's AY — explicit > active-in-AY > first-in-AY.
+        $class = SchoolClass::findOrFail($validated['class_id']);
+        $semester = isset($validated['semester_id'])
+            ? Semester::where('id', $validated['semester_id'])->where('academic_year_id', $class->academic_year_id)->first()
+            : null;
+        $semester ??= Semester::where('is_active', true)->where('academic_year_id', $class->academic_year_id)->first();
+        $semester ??= Semester::where('academic_year_id', $class->academic_year_id)->orderBy('semester_number')->first();
+
+        if (!$semester) {
+            return redirect()->back()->with('error', 'Belum ada semester yang dibuat untuk tahun ajaran kelas ini. Buat semester dulu di menu Tahun Ajaran.');
         }
 
         $teacherId = $request->user()->teacher ? $request->user()->teacher->id : null;
@@ -132,7 +239,7 @@ class TaskController extends Controller
         $task = Task::create([
             'class_id' => $validated['class_id'],
             'subject_id' => $validated['subject_id'],
-            'semester_id' => $activeSemester->id,
+            'semester_id' => $semester->id,
             'teacher_id' => $teacherId,
             'title' => $validated['title'],
             'description' => $validated['description'],
@@ -147,25 +254,38 @@ class TaskController extends Controller
 
     /**
      * Display the specified task and student scores.
-     * This is the main interface for inputting grades.
+     * This is the main interface for inputting grades (teacher/admin) or
+     * viewing own score (student).
      */
-    public function show(Task $task)
+    public function show(Task $task, Request $request)
     {
+        $user = $request->user();
         $task->load(['schoolClass', 'subject', 'semester', 'teacher']);
-        
-        $students = Student::where('class_id', $task->class_id)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-            
-        $scores = TaskScore::where('task_id', $task->id)
-            ->get()
-            ->keyBy('student_id');
 
-        return Inertia::render('Tenant/Tasks/Show', [
-            'task' => $task,
+        $studentsQuery = Student::where('class_id', $task->class_id)
+            ->where('status', 'active')
+            ->orderBy('name');
+
+        if ($user->isStudent() && $user->student) {
+            // Siswa: must belong to this task's class; only see their own row.
+            if ($user->student->class_id !== $task->class_id) {
+                abort(403, 'Anda hanya dapat melihat tugas dari kelas Anda sendiri.');
+            }
+            $studentsQuery->where('id', $user->student->id);
+        }
+
+        $students = $studentsQuery->get();
+
+        $scoresQuery = TaskScore::where('task_id', $task->id);
+        if ($user->isStudent() && $user->student) {
+            $scoresQuery->where('student_id', $user->student->id);
+        }
+        $scores = $scoresQuery->get()->keyBy('student_id');
+
+        return Inertia::render('Tasks/Show', [
+            'task'     => $task,
             'students' => $students,
-            'scores' => $scores,
+            'scores'   => $scores,
         ]);
     }
 
@@ -174,6 +294,9 @@ class TaskController extends Controller
      */
     public function storeScores(Request $request, Task $task)
     {
+        // A4/A5 guard: only admin or the teacher who owns this task's TA may input scores.
+        $this->authorizeTaskOwnership($request, $task);
+
         $validated = $request->validate([
             'scores' => 'required|array',
             'scores.*.student_id' => 'required|exists:students,id',
@@ -222,6 +345,9 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
+        // A4/A5 guard: only admin or the teacher with TA for this task may delete it.
+        $this->authorizeTaskOwnership(request(), $task);
+
         $classId = $task->class_id;
         $task->delete();
         
