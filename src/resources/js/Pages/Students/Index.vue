@@ -14,19 +14,28 @@ defineOptions({ layout: AppLayout });
 const props = defineProps({
   students: Object,
   classes: Array,
+  academicYears: { type: Array, default: () => [] },
   filters: Object,
 });
 
 const search = ref(props.filters.search || '');
 const classId = ref(props.filters.class_id || '');
 const status = ref(props.filters.status || '');
+const academicYearId = ref(props.filters.academic_year_id || '');
 
 let debounceTimer;
-watch([search, classId, status], () => {
+watch([search, classId, status, academicYearId], (newVals, oldVals) => {
+  // If AY changed, reset class_id (kelas list will refresh server-side to that AY's classes only)
+  if (newVals[3] !== oldVals[3]) {
+    classId.value = '';
+  }
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     router.get('/students', {
-      search: search.value, class_id: classId.value, status: status.value,
+      search:            search.value,
+      class_id:          classId.value,
+      status:            status.value,
+      academic_year_id:  academicYearId.value || undefined,
     }, { preserveState: true, replace: true });
   }, 300);
 });
@@ -72,6 +81,11 @@ const deleteStudent = (student) => {
     <div class="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div class="w-64">
         <SearchInput v-model="search" placeholder="Cari nama atau NIS..." />
+      </div>
+      <div class="w-56">
+        <FormSelect v-model="academicYearId" label="Tahun Ajaran">
+          <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}</option>
+        </FormSelect>
       </div>
       <div class="w-40">
         <FormSelect v-model="classId" label="Kelas">

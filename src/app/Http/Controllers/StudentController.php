@@ -106,28 +106,47 @@ class StudentController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('viewAny', Student::class);
 
-        $cacheKey = 'students_' . md5(json_encode($request->only(['search', 'class_id', 'status', 'page'])));
-        
-        $students = cache()->remember($cacheKey, 60, function () use ($request) {
+        // Resolve academic year filter: explicit param > active AY
+        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+
+        $cacheKey = 'students_' . md5(json_encode([
+            $request->only(['search', 'class_id', 'status', 'page']),
+            'ay' => $selectedAyId,
+        ]));
+
+        $students = cache()->remember($cacheKey, 60, function () use ($request, $selectedAyId) {
             return Student::query()
-                ->with('class')
-                ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%")
-                    ->orWhere('nis', 'like', "%{$s}%"))
+                ->with('class.academicYear:id,name,is_active')
+                ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
+                    $qq->where('name', 'like', "%{$s}%")
+                       ->orWhere('nis', 'like', "%{$s}%");
+                }))
                 ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
                 ->when($request->status, fn($q, $s) => $q->where('status', $s))
+                ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
                 ->latest()
                 ->paginate(20)
                 ->withQueryString();
         });
 
-        $classes = cache()->remember('active_classes_list', 3600, function () {
-            return SchoolClass::where('status', 'active')->get(['id', 'name']);
-        });
+        // Classes filtered to selected AY (so the Kelas dropdown only shows kelas of that AY)
+        $classes = SchoolClass::where('status', 'active')
+            ->when($selectedAyId, fn($q, $ay) => $q->where('academic_year_id', $ay))
+            ->orderBy('grade_level')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
 
         return Inertia::render('Students/Index', [
-            'students' => $students,
-            'classes'  => $classes,
-            'filters'  => $request->only(['search', 'class_id', 'status']),
+            'students'      => $students,
+            'classes'       => $classes,
+            'academicYears' => $academicYears,
+            'filters'       => array_merge(
+                $request->only(['search', 'class_id', 'status']),
+                ['academic_year_id' => $selectedAyId]
+            ),
         ]);
     }
 
