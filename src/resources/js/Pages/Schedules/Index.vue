@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, useForm, router, Link, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Modal from '@/Components/UI/Modal.vue';
 import FormInput from '@/Components/UI/FormInput.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
@@ -13,12 +13,23 @@ const props = defineProps({
   classes: Array,
   schedules: [Array, Object], // Grouped by day_of_week
   teachingAssignments: Array,
+  academicYears: { type: Array, default: () => [] },
   filters: Object,
   selectedClass: Object,
 });
 
 const page = usePage();
 const canManage = computed(() => !!page.props.auth?.permissions?.manage_classes);
+
+const academicYearId = ref(props.filters?.academic_year_id ?? '');
+
+watch(academicYearId, () => {
+  router.get(
+    '/schedules',
+    { academic_year_id: academicYearId.value || undefined },
+    { preserveState: true, preserveScroll: true, replace: true }
+  );
+});
 
 const isModalOpen = ref(false);
 const selectedDay = ref(1);
@@ -162,9 +173,20 @@ const weekHeaders = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ming
   <div class="space-y-6">
     <!-- ─── Class Selection View ────────────────────────────────────── -->
     <div v-if="!selectedClass" class="space-y-6">
-      <div>
-        <h2 class="text-xl font-bold text-slate-800">Jadwal Pelajaran</h2>
-        <p class="mt-0.5 text-sm text-slate-400">Pilih kelas untuk mengelola jadwal pelajaran.</p>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Jadwal Pelajaran</h2>
+          <p class="mt-0.5 text-sm text-slate-400">Pilih kelas untuk mengelola jadwal pelajaran.</p>
+        </div>
+        <div class="w-full sm:w-72">
+          <FormSelect v-model="academicYearId" label="Tahun Ajaran">
+            <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}</option>
+          </FormSelect>
+        </div>
+      </div>
+
+      <div v-if="classes.length === 0" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-12 text-center">
+        <p class="text-sm text-slate-500">Tidak ada kelas untuk tahun ajaran yang dipilih.</p>
       </div>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

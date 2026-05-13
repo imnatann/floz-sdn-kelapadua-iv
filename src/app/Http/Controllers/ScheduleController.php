@@ -16,10 +16,14 @@ class ScheduleController extends Controller
     {
         $user = $request->user();
 
+        // Resolve academic year filter — explicit param > active AY > null
+        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+
         // Students are always scoped to their own class
         if ($user->isStudent() && $user->student) {
             $classId = $user->student->class_id;
-            $classes = SchoolClass::with('homeroomTeacher')
+            $classes = SchoolClass::with(['homeroomTeacher', 'academicYear:id,name,is_active'])
                 ->withCount(['students', 'teachingAssignments'])
                 ->where('id', $classId)
                 ->orderBy('name')
@@ -27,8 +31,9 @@ class ScheduleController extends Controller
         } else {
             // For filtering by class in the admin/teacher view
             $classId = $request->input('class_id');
-            $classesQuery = SchoolClass::with('homeroomTeacher')
+            $classesQuery = SchoolClass::with(['homeroomTeacher', 'academicYear:id,name,is_active'])
                 ->withCount(['students', 'teachingAssignments'])
+                ->orderBy('grade_level')
                 ->orderBy('name');
 
             // Scope teacher: only classes they are homeroom of OR have a TA in
@@ -40,8 +45,15 @@ class ScheduleController extends Controller
                 $classesQuery->whereIn('id', $visibleIds ?: [0]);
             }
 
+            // Apply AY filter when no specific class is selected (the picker view)
+            if (!$classId && $selectedAyId) {
+                $classesQuery->where('academic_year_id', $selectedAyId);
+            }
+
             $classes = $classesQuery->get();
         }
+
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
         
         $schedules = [];
         $selectedClass = null;
@@ -66,11 +78,12 @@ class ScheduleController extends Controller
             : [];
 
         return Inertia::render('Schedules/Index', [
-            'classes' => $classes,
-            'schedules' => $schedules,
+            'classes'             => $classes,
+            'schedules'           => $schedules,
             'teachingAssignments' => $teachingAssignments,
-            'filters' => ['class_id' => $classId],
-            'selectedClass' => $selectedClass,
+            'academicYears'       => $academicYears,
+            'filters'             => ['class_id' => $classId, 'academic_year_id' => $selectedAyId],
+            'selectedClass'       => $selectedClass,
         ]);
     }
 
