@@ -7,6 +7,7 @@ use App\Http\Requests\YearTransition\PreviewRequest;
 use App\Models\YearTransitionLog;
 use App\Services\YearTransitionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -47,7 +48,7 @@ class YearTransitionController extends Controller
         return response()->json(array_merge($plan, ['plan_hash' => $planHash]));
     }
 
-    public function execute(ExecuteRequest $request): JsonResponse
+    public function execute(ExecuteRequest $request): RedirectResponse
     {
         // W-04: Verify plan_hash against cached snapshot before executing
         $sourceAyId = $request->integer('source_academic_year_id');
@@ -58,15 +59,15 @@ class YearTransitionController extends Controller
         $cachedHash = Cache::get($cacheKey);
 
         if ($cachedHash === null) {
-            return response()->json([
+            return back()->withErrors([
                 'message' => 'Pratinjau telah kedaluwarsa. Silakan muat ulang dan tinjau kembali.',
-            ], 409);
+            ]);
         }
 
         if (!hash_equals($cachedHash, $submittedHash)) {
-            return response()->json([
+            return back()->withErrors([
                 'message' => 'Data telah berubah sejak Anda meninjau pratinjau. Silakan muat ulang dan tinjau kembali.',
-            ], 409);
+            ]);
         }
 
         try {
@@ -77,25 +78,19 @@ class YearTransitionController extends Controller
                 $request->user(),
             );
 
-            return response()->json([
-                'log_id'  => $log->id,
-                'summary' => [
-                    'promoted'  => $log->promoted_count,
-                    'graduated' => $log->graduated_count,
-                    'retained'  => $log->retained_count,
-                    'excluded'  => $log->excluded_count,
-                ],
-            ]);
+            $summary = sprintf(
+                'Transisi berhasil. Naik kelas: %d, Lulus: %d, Tinggal kelas: %d, Dikecualikan: %d.',
+                $log->promoted_count,
+                $log->graduated_count,
+                $log->retained_count,
+                $log->excluded_count,
+            );
+
+            return redirect()
+                ->route('year-transition.logs.show', $log)
+                ->with('success', $summary);
         } catch (\RuntimeException $e) {
-            // BLOCK-1/BLOCK-5: Double-execute or lock conflict returns 409
-            $isIdempotencyConflict = str_contains($e->getMessage(), 'sudah memiliki kelas')
-                || str_contains($e->getMessage(), 'sedang berjalan');
-
-            if ($isIdempotencyConflict) {
-                return response()->json(['message' => $e->getMessage()], 409);
-            }
-
-            return response()->json(['message' => $e->getMessage()], 500);
+            return back()->withErrors(['message' => $e->getMessage()]);
         }
     }
 

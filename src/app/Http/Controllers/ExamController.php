@@ -56,7 +56,7 @@ class ExamController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = SchoolClass::where('status', 'active');
+        $query = SchoolClass::where('status', 'active')->with('academicYear:id,name,is_active');
 
         if ($user->isStudent() && $user->student) {
             // Students only see their own class
@@ -76,10 +76,20 @@ class ExamController extends Controller
             $query->whereIn('id', $allClassIds);
         }
 
-        $classes = $query->withCount('students')->orderBy('name')->get();
+        // Filter by academic year: explicit query param, else default to active AY
+        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+        if ($selectedAyId) {
+            $query->where('academic_year_id', $selectedAyId);
+        }
+
+        $classes = $query->withCount('students')->orderBy('grade_level')->orderBy('name')->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
 
         return Inertia::render('Exams/Index', [
-            'classes' => $classes,
+            'classes'       => $classes,
+            'academicYears' => $academicYears,
+            'filters'       => ['academic_year_id' => $selectedAyId],
         ]);
     }
 

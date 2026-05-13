@@ -17,9 +17,9 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
-        $query = SchoolClass::where('status', 'active');
-        
+
+        $query = SchoolClass::where('status', 'active')->with('academicYear:id,name,is_active');
+
         if ($user->isTeacher() && $user->teacher) {
             // Get classes where the teacher is either homeroom or teaches a subject
             $teacherId = $user->teacher->id;
@@ -27,21 +27,31 @@ class AttendanceController extends Controller
                 ->where('teacher_id', $teacherId)
                 ->pluck('class_id')
                 ->toArray();
-                
+
             $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)
                 ->pluck('id')
                 ->toArray();
-                
+
             $allClassIds = array_unique(array_merge($classIds, $homeroomClassIds));
             $query->whereIn('id', $allClassIds);
+        } elseif ($user->isStudent() && $user->student) {
+            $query->where('id', $user->student->class_id);
         }
-        
-        $classes = $query->withCount('students')
-                         ->orderBy('name')
-                         ->get();
+
+        // Filter by academic year: explicit query param, else default to active AY
+        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+        if ($selectedAyId) {
+            $query->where('academic_year_id', $selectedAyId);
+        }
+
+        $classes = $query->withCount('students')->orderBy('grade_level')->orderBy('name')->get();
+        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
 
         return Inertia::render('Attendance/Index', [
-            'classes' => $classes,
+            'classes'       => $classes,
+            'academicYears' => $academicYears,
+            'filters'       => ['academic_year_id' => $selectedAyId],
         ]);
     }
 

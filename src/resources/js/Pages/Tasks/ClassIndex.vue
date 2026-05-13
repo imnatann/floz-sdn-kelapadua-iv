@@ -18,7 +18,9 @@ const props = defineProps({
 });
 
 const page = usePage();
-const isStudent = computed(() => page.props.auth?.user?.role === 'student');
+const userRole = computed(() => page.props.auth?.user?.role);
+const isStudent = computed(() => userRole.value === 'student');
+const isAdmin = computed(() => userRole.value === 'school_admin');
 const canManage = computed(() => !isStudent.value);
 
 const subjectId = ref(props.filters?.subject_id ?? '');
@@ -92,7 +94,7 @@ const formatDate = (raw) => {
           <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
         </FormSelect>
       </div>
-      <div class="w-full sm:w-72">
+      <div v-if="isAdmin" class="w-full sm:w-72">
         <FormSelect v-model="semesterId" label="Semester">
           <option v-for="sem in semesters" :key="sem.id" :value="sem.id">
             Sem. {{ sem.semester_number }} — {{ sem.academic_year?.name }}{{ sem.is_active ? ' (Aktif)' : '' }}
