@@ -103,14 +103,19 @@ class TaskController extends Controller
             abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
         }
 
-        // Resolve semester filter: explicit `semester_id` → active semester → most recent semester with tasks in class
+        // Semester dropdown: all semesters belonging to the class's academic year (not just those with tasks).
+        // This lets admin pick any semester within this AY even before any task is created.
         $semesters = Semester::with('academicYear')
-            ->whereIn('id', Task::where('class_id', $class->id)->distinct()->pluck('semester_id'))
-            ->orderByDesc('start_date')
+            ->where('academic_year_id', $class->academic_year_id)
+            ->orderBy('semester_number')
             ->get();
-        $activeSemester = Semester::where('is_active', true)->first();
+
+        // Default selected semester: query param → active semester within this AY → first semester of this AY
+        $activeSemesterInAy = Semester::where('is_active', true)
+            ->where('academic_year_id', $class->academic_year_id)
+            ->first();
         $selectedSemesterId = $request->integer('semester_id')
-            ?: ($activeSemester?->id ?? $semesters->first()?->id);
+            ?: ($activeSemesterInAy?->id ?? $semesters->first()?->id);
 
         if (!$selectedSemesterId) {
             return Inertia::render('Tasks/ClassIndex', [
@@ -195,6 +200,7 @@ class TaskController extends Controller
         $validated = $request->validate([
             'class_id' => 'required|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
+            'semester_id' => 'nullable|exists:semesters,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'task_date' => 'required|date',
@@ -205,9 +211,16 @@ class TaskController extends Controller
         // A4/A5 guard: only admin or teacher with TA for this class+subject may create tasks.
         $this->authorizeManage($request, $validated['class_id'], $validated['subject_id']);
 
-        $activeSemester = Semester::where('is_active', true)->first();
-        if (!$activeSemester) {
-            return redirect()->back()->with('error', 'Tidak ada semester aktif.');
+        // Pick a semester belonging to the target class's AY — explicit > active-in-AY > first-in-AY.
+        $class = SchoolClass::findOrFail($validated['class_id']);
+        $semester = isset($validated['semester_id'])
+            ? Semester::where('id', $validated['semester_id'])->where('academic_year_id', $class->academic_year_id)->first()
+            : null;
+        $semester ??= Semester::where('is_active', true)->where('academic_year_id', $class->academic_year_id)->first();
+        $semester ??= Semester::where('academic_year_id', $class->academic_year_id)->orderBy('semester_number')->first();
+
+        if (!$semester) {
+            return redirect()->back()->with('error', 'Belum ada semester yang dibuat untuk tahun ajaran kelas ini. Buat semester dulu di menu Tahun Ajaran.');
         }
 
         $teacherId = $request->user()->teacher ? $request->user()->teacher->id : null;
@@ -215,7 +228,7 @@ class TaskController extends Controller
         $task = Task::create([
             'class_id' => $validated['class_id'],
             'subject_id' => $validated['subject_id'],
-            'semester_id' => $activeSemester->id,
+            'semester_id' => $semester->id,
             'teacher_id' => $teacherId,
             'title' => $validated['title'],
             'description' => $validated['description'],

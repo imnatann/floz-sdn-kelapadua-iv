@@ -103,13 +103,17 @@ class ExamController extends Controller
             abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
         }
 
+        // Semester dropdown: all semesters belonging to the class's academic year (not just those with exams).
         $semesters = Semester::with('academicYear')
-            ->whereIn('id', Exam::where('class_id', $class->id)->distinct()->pluck('semester_id'))
-            ->orderByDesc('start_date')
+            ->where('academic_year_id', $class->academic_year_id)
+            ->orderBy('semester_number')
             ->get();
-        $activeSemester = Semester::where('is_active', true)->first();
+
+        $activeSemesterInAy = Semester::where('is_active', true)
+            ->where('academic_year_id', $class->academic_year_id)
+            ->first();
         $selectedSemesterId = $request->integer('semester_id')
-            ?: ($activeSemester?->id ?? $semesters->first()?->id);
+            ?: ($activeSemesterInAy?->id ?? $semesters->first()?->id);
 
         if (!$selectedSemesterId) {
             return Inertia::render('Exams/ClassIndex', [
@@ -192,6 +196,7 @@ class ExamController extends Controller
         $validated = $request->validate([
             'class_id' => 'required|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
+            'semester_id' => 'nullable|exists:semesters,id',
             'title' => 'required|string|max:255',
             'exam_type' => 'required|in:ulangan_harian,uts,uas',
             'exam_date' => 'required|date',
@@ -201,9 +206,16 @@ class ExamController extends Controller
         // A4/A5 guard: only admin or teacher with TA for this class+subject may create exams.
         $this->authorizeManage($request, $validated['class_id'], $validated['subject_id']);
 
-        $activeSemester = Semester::where('is_active', true)->first();
-        if (!$activeSemester) {
-            return redirect()->back()->with('error', 'Tidak ada semester aktif.');
+        // Pick a semester belonging to the target class's AY — explicit > active-in-AY > first-in-AY.
+        $class = SchoolClass::findOrFail($validated['class_id']);
+        $semester = isset($validated['semester_id'])
+            ? Semester::where('id', $validated['semester_id'])->where('academic_year_id', $class->academic_year_id)->first()
+            : null;
+        $semester ??= Semester::where('is_active', true)->where('academic_year_id', $class->academic_year_id)->first();
+        $semester ??= Semester::where('academic_year_id', $class->academic_year_id)->orderBy('semester_number')->first();
+
+        if (!$semester) {
+            return redirect()->back()->with('error', 'Belum ada semester yang dibuat untuk tahun ajaran kelas ini. Buat semester dulu di menu Tahun Ajaran.');
         }
 
         $teacherId = $request->user()->teacher ? $request->user()->teacher->id : null;
@@ -211,7 +223,7 @@ class ExamController extends Controller
         $exam = Exam::create([
             'class_id' => $validated['class_id'],
             'subject_id' => $validated['subject_id'],
-            'semester_id' => $activeSemester->id,
+            'semester_id' => $semester->id,
             'teacher_id' => $teacherId,
             'title' => $validated['title'],
             'exam_type' => $validated['exam_type'],
