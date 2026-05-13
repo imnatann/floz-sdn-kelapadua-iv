@@ -220,25 +220,38 @@ class TaskController extends Controller
 
     /**
      * Display the specified task and student scores.
-     * This is the main interface for inputting grades.
+     * This is the main interface for inputting grades (teacher/admin) or
+     * viewing own score (student).
      */
-    public function show(Task $task)
+    public function show(Task $task, Request $request)
     {
+        $user = $request->user();
         $task->load(['schoolClass', 'subject', 'semester', 'teacher']);
-        
-        $students = Student::where('class_id', $task->class_id)
+
+        $studentsQuery = Student::where('class_id', $task->class_id)
             ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-            
-        $scores = TaskScore::where('task_id', $task->id)
-            ->get()
-            ->keyBy('student_id');
+            ->orderBy('name');
+
+        if ($user->isStudent() && $user->student) {
+            // Siswa: must belong to this task's class; only see their own row.
+            if ($user->student->class_id !== $task->class_id) {
+                abort(403, 'Anda hanya dapat melihat tugas dari kelas Anda sendiri.');
+            }
+            $studentsQuery->where('id', $user->student->id);
+        }
+
+        $students = $studentsQuery->get();
+
+        $scoresQuery = TaskScore::where('task_id', $task->id);
+        if ($user->isStudent() && $user->student) {
+            $scoresQuery->where('student_id', $user->student->id);
+        }
+        $scores = $scoresQuery->get()->keyBy('student_id');
 
         return Inertia::render('Tasks/Show', [
-            'task' => $task,
+            'task'     => $task,
             'students' => $students,
-            'scores' => $scores,
+            'scores'   => $scores,
         ]);
     }
 

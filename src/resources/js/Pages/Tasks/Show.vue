@@ -1,5 +1,6 @@
 <script setup>
-import { useForm, Link, router } from '@inertiajs/vue3';
+import { useForm, Link, router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
@@ -11,6 +12,10 @@ const props = defineProps({
   students: Array,
   scores: Object,
 });
+
+const page = usePage();
+const isStudent = computed(() => page.props.auth?.user?.role === 'student');
+const canManage = computed(() => !isStudent.value);
 
 const formatDate = (raw) => {
     if (!raw) return '-';
@@ -69,9 +74,9 @@ const destroy = () => {
             <span class="text-slate-300">/</span>
             <span class="text-sm font-medium text-slate-900">{{ task.title }}</span>
         </div>
-        <h2 class="text-xl font-bold text-slate-800">Input Nilai Tugas</h2>
+        <h2 class="text-xl font-bold text-slate-800">{{ canManage ? 'Input Nilai Tugas' : 'Detail Nilai Tugas' }}</h2>
       </div>
-      <div class="flex gap-2">
+      <div v-if="canManage" class="flex gap-2">
          <Button variant="danger" outline @click="destroy">
             Hapus Tugas
          </Button>
@@ -116,7 +121,7 @@ const destroy = () => {
                         <td class="px-5 py-4 font-mono text-slate-500 text-center">{{ index + 1 }}</td>
                         <td class="px-5 py-4 font-medium text-slate-900">{{ student.name }}</td>
                         <td class="px-5 py-4">
-                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium" role="group">
+                            <div v-if="canManage" class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-medium" role="group">
                                 <button
                                     v-for="opt in STATUS_OPTIONS"
                                     :key="opt.value"
@@ -130,9 +135,16 @@ const destroy = () => {
                                     {{ opt.label }}
                                 </button>
                             </div>
+                            <span v-else class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold"
+                                :class="form.scores[index].submission_status === 'kumpul' ? 'bg-emerald-50 text-emerald-700' :
+                                        form.scores[index].submission_status === 'terlambat' ? 'bg-amber-50 text-amber-700' :
+                                        'bg-rose-50 text-rose-700'">
+                                {{ STATUS_OPTIONS.find(o => o.value === form.scores[index].submission_status)?.label || '—' }}
+                            </span>
                         </td>
                         <td class="px-5 py-4">
                             <input
+                                v-if="canManage"
                                 type="number"
                                 v-model="form.scores[index].score"
                                 :disabled="form.scores[index].submission_status === 'tidak_kumpul'"
@@ -146,9 +158,13 @@ const destroy = () => {
                                 step="0.01"
                                 :placeholder="form.scores[index].submission_status === 'tidak_kumpul' ? '—' : '0'"
                             >
+                            <span v-else class="block text-right font-mono font-semibold text-slate-800">
+                                {{ form.scores[index].score ?? '—' }}
+                            </span>
                         </td>
                         <td class="px-5 py-4">
-                            <input type="text" v-model="form.scores[index].notes" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 sm:text-xs sm:leading-6" placeholder="Bagus...">
+                            <input v-if="canManage" type="text" v-model="form.scores[index].notes" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 sm:text-xs sm:leading-6" placeholder="Bagus...">
+                            <span v-else class="block text-xs text-slate-600">{{ form.scores[index].notes || '—' }}</span>
                         </td>
                     </tr>
                 </tbody>
@@ -159,7 +175,7 @@ const destroy = () => {
             <p class="text-slate-500">Tidak ada siswa di kelas ini.</p>
         </div>
         
-        <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end" v-if="students.length > 0">
+        <div v-if="canManage && students.length > 0" class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
              <Button :disabled="form.processing" @click="submit">
                 Simpan Nilai
              </Button>

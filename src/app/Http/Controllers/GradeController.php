@@ -56,13 +56,21 @@ class GradeController extends Controller
 
         $grades = null;
         if ($request->class_id && $request->semester_id) {
-            $cacheKey = 'grades_' . md5(json_encode($request->only(['class_id', 'semester_id', 'subject_id'])));
-            
-            $grades = cache()->remember($cacheKey, 60, function () use ($request) {
+            // Scope grades to own student record if siswa, otherwise full class.
+            $scopeStudentId = ($user->isStudent() && $user->student) ? $user->student->id : null;
+
+            // Cache key MUST include the scope to prevent cross-user cache poisoning.
+            $cacheKey = 'grades_' . md5(json_encode([
+                $request->only(['class_id', 'semester_id', 'subject_id']),
+                'student_scope' => $scopeStudentId,
+            ]));
+
+            $grades = cache()->remember($cacheKey, 60, function () use ($request, $scopeStudentId) {
                 return Grade::with(['student', 'subject', 'teacher'])
                     ->where('class_id', $request->class_id)
                     ->where('semester_id', $request->semester_id)
                     ->when($request->subject_id, fn($q, $s) => $q->where('subject_id', $s))
+                    ->when($scopeStudentId, fn($q, $sid) => $q->where('student_id', $sid))
                     ->get();
             });
         }

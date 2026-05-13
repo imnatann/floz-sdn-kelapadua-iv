@@ -1,5 +1,6 @@
 <script setup>
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
@@ -13,6 +14,10 @@ const props = defineProps({
     attendances: Object,
     activeSemester: Object,
 });
+
+const page = usePage();
+const isStudent = computed(() => page.props.auth?.user?.role === 'student');
+const canManage = computed(() => !isStudent.value);
 
 const getAttendanceStatus = (studentId, meetingNumber) => {
     if (!props.attendances[studentId]) return null;
@@ -64,7 +69,7 @@ const getStudentSummary = (studentId) => {
         <h2 class="text-xl font-bold text-slate-800">Rekap Absensi: {{ schoolClass.name }}</h2>
         <p class="mt-0.5 text-sm text-slate-400">Semester Aktif: {{ activeSemester?.semester_number || '-' }} - {{ activeSemester?.academic_year?.name || 'Sekarang' }}</p>
       </div>
-      <div>
+      <div v-if="canManage">
          <Link :href="route('attendance.create', schoolClass.id)">
              <Button>
                 Absen Pertemuan Baru
@@ -82,7 +87,7 @@ const getStudentSummary = (studentId) => {
                         <th class="px-4 py-3 sticky left-[3rem] bg-slate-50 z-10 border-r border-slate-200">Nama Siswa</th>
                         
                         <th v-for="meeting in meetings" :key="meeting.meeting_number" class="px-3 py-3 text-center border-r border-slate-100 min-w-[3rem]">
-                            <div class="flex flex-col items-center group relative cursor-pointer" @click="router.get(route('attendance.edit', {class: schoolClass.id, meeting: meeting.meeting_number}))">
+                            <div class="flex flex-col items-center group relative" :class="canManage ? 'cursor-pointer' : ''" @click="canManage && router.get(route('attendance.edit', {class: schoolClass.id, meeting: meeting.meeting_number}))">
                                 <span class="font-bold text-slate-700 group-hover:text-orange-600 transition-colors">P{{ meeting.meeting_number }}</span>
                                 <span class="text-[10px] font-normal text-slate-400 mt-1">{{ meeting.date }}</span>
                                 <!-- Tooltip -->

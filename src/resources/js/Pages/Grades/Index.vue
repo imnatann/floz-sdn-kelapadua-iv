@@ -1,6 +1,6 @@
 <script setup>
-import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
@@ -15,6 +15,10 @@ const props = defineProps({
   grades: { type: Array, default: null },
   filters: Object,
 });
+
+const page = usePage();
+const isStudent = computed(() => page.props.auth?.user?.role === 'student');
+const canManage = computed(() => !isStudent.value);
 
 const classId = ref(props.filters?.class_id || '');
 const semesterId = ref(props.filters?.semester_id || '');
@@ -33,6 +37,15 @@ const openBatchInput = () => {
   });
 };
 
+const downloadExcel = () => {
+  if (!classId.value || !semesterId.value) return;
+  const params = new URLSearchParams();
+  params.append('class_id', classId.value);
+  params.append('semester_id', semesterId.value);
+  if (subjectId.value) params.append('subject_id', subjectId.value);
+  window.location.href = `/analytics/export/grades?${params.toString()}`;
+};
+
 const predicateColor = (p) => p === 'A' ? 'emerald' : p === 'B' ? 'blue' : p === 'C' ? 'amber' : 'rose';
 </script>
 
@@ -43,16 +56,30 @@ const predicateColor = (p) => p === 'A' ? 'emerald' : p === 'B' ? 'blue' : p ===
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-xl font-bold text-slate-800">Nilai Siswa</h2>
-        <p class="mt-0.5 text-sm text-slate-400">Lihat dan input nilai siswa per kelas</p>
+        <p class="mt-0.5 text-sm text-slate-400">{{ canManage ? 'Lihat dan input nilai siswa per kelas' : 'Lihat nilai Anda per kelas dan mata pelajaran' }}</p>
       </div>
-      <Button
-        @click="openBatchInput"
-        :disabled="!classId || !semesterId || !subjectId"
-        size="sm"
-      >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-        Input Nilai
-      </Button>
+      <div class="flex flex-wrap gap-2">
+        <Button
+          v-if="canManage"
+          variant="outline"
+          @click="downloadExcel"
+          :disabled="!classId || !semesterId"
+          size="sm"
+          title="Unduh rekap nilai dalam format Excel — per kelas, per semester, per mapel (atau semua mapel)"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Unduh Excel
+        </Button>
+        <Button
+          v-if="canManage"
+          @click="openBatchInput"
+          :disabled="!classId || !semesterId || !subjectId"
+          size="sm"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Input Nilai
+        </Button>
+      </div>
     </div>
 
     <!-- Filters -->

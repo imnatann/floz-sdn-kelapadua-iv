@@ -215,25 +215,37 @@ class ExamController extends Controller
 
     /**
      * Display the specified exam and student scores.
-     * This is the main interface for inputting grades.
+     * This is the main interface for inputting grades (teacher/admin) or
+     * viewing own score (student).
      */
-    public function show(Exam $exam)
+    public function show(Exam $exam, Request $request)
     {
+        $user = $request->user();
         $exam->load(['schoolClass', 'subject', 'semester', 'teacher']);
-        
-        $students = Student::where('class_id', $exam->class_id)
+
+        $studentsQuery = Student::where('class_id', $exam->class_id)
             ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-            
-        $scores = ExamScore::where('exam_id', $exam->id)
-            ->get()
-            ->keyBy('student_id');
+            ->orderBy('name');
+
+        if ($user->isStudent() && $user->student) {
+            if ($user->student->class_id !== $exam->class_id) {
+                abort(403, 'Anda hanya dapat melihat ujian dari kelas Anda sendiri.');
+            }
+            $studentsQuery->where('id', $user->student->id);
+        }
+
+        $students = $studentsQuery->get();
+
+        $scoresQuery = ExamScore::where('exam_id', $exam->id);
+        if ($user->isStudent() && $user->student) {
+            $scoresQuery->where('student_id', $user->student->id);
+        }
+        $scores = $scoresQuery->get()->keyBy('student_id');
 
         return Inertia::render('Exams/Show', [
-            'exam' => $exam,
+            'exam'     => $exam,
             'students' => $students,
-            'scores' => $scores,
+            'scores'   => $scores,
         ]);
     }
 

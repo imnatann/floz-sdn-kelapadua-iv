@@ -47,11 +47,17 @@ class AttendanceController extends Controller
 
     public function show(SchoolClass $class)
     {
+        $user = request()->user();
         $class->load('students');
         $activeSemester = Semester::where('is_active', true)->first();
-        
+
         if (!$activeSemester) {
             return redirect()->back()->with('error', 'Tidak ada semester aktif. Harap atur semester aktif terlebih dahulu.');
+        }
+
+        // Siswa: must be in this class
+        if ($user->isStudent() && $user->student && $user->student->class_id !== $class->id) {
+            abort(403, 'Anda hanya dapat melihat absensi kelas Anda sendiri.');
         }
 
         // Get all unique meetings for this class and semester
@@ -64,15 +70,21 @@ class AttendanceController extends Controller
             ->orderBy('meeting_number')
             ->get();
 
-        // Get all attendance records
-        $attendances = Attendance::where('class_id', $class->id)
-            ->where('semester_id', $activeSemester->id)
-            ->get()
-            ->groupBy('student_id');
+        // Scope attendance + student list: siswa only sees own row
+        $attendancesQuery = Attendance::where('class_id', $class->id)
+            ->where('semester_id', $activeSemester->id);
+        $studentsQuery = $class->students()->orderBy('name');
+
+        if ($user->isStudent() && $user->student) {
+            $attendancesQuery->where('student_id', $user->student->id);
+            $studentsQuery->where('id', $user->student->id);
+        }
+
+        $attendances = $attendancesQuery->get()->groupBy('student_id');
 
         return Inertia::render('Attendance/Show', [
             'schoolClass' => $class,
-            'students' => $class->students()->orderBy('name')->get(),
+            'students' => $studentsQuery->get(),
             'meetings' => $meetings,
             'attendances' => $attendances,
             'activeSemester' => $activeSemester
