@@ -37,6 +37,15 @@ const applyFilters = () => {
 
 watch([subjectId, semesterId], applyFilters);
 
+const downloadExcel = () => {
+    if (!semesterId.value) return;
+    const params = new URLSearchParams();
+    params.append('class_id', props.schoolClass.id);
+    params.append('semester_id', semesterId.value);
+    if (subjectId.value) params.append('subject_id', subjectId.value);
+    window.location.href = `/analytics/export/grades?${params.toString()}`;
+};
+
 const formatDate = (raw) => {
     if (!raw) return '-';
     const d = new Date(raw);
@@ -57,7 +66,16 @@ const formatDate = (raw) => {
         </div>
         <h2 class="text-xl font-bold text-slate-800">Daftar Tugas Kelas {{ schoolClass.name }}</h2>
       </div>
-      <div v-if="canManage">
+      <div v-if="canManage" class="flex flex-wrap gap-2">
+         <Button
+            variant="outline"
+            @click="downloadExcel"
+            :disabled="!semesterId"
+            title="Unduh rekap nilai Excel — per mapel (atau semua mapel) untuk kelas dan semester yang dipilih"
+         >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Unduh Excel
+         </Button>
          <Link :href="route('tasks.create', schoolClass.id)">
              <Button>
                 Buat Tugas Baru
