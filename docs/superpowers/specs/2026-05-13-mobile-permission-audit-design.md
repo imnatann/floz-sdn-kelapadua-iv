@@ -18,7 +18,7 @@ The web app recently completed a full role-based permission audit (sessions S163
 - `lib/features/auth/domain/user_model.dart:44-46` checks `role == 'student'` / `'teacher'` / `'parent'`, but the backend `UserRole` enum stores Indonesian values (`siswa`, `guru`, `wali_kelas`, `admin`, `orang_tua`). If the backend returns the enum value verbatim, every mobile role getter is false → cascading auth failures.
 - `User` model has no `isWaliKelas` / `isAdmin` getters at all.
 - `RoleGuard.guard` does a literal `Set<String>` check, so it inherits the same string-mismatch risk.
-- Existing integration tests (`student_flow_test.dart`, `teacher_flow_test.dart`) use `student@floz.test` / `teacher@floz.test` accounts that do not match the current DB seed; the wali kelas case is essentially `student@floz.test` … (placeholder removed).
+- Existing integration tests (`student_flow_test.dart`, `teacher_flow_test.dart`) use `student@floz.test` / `teacher@floz.test` accounts that do not match the current DB seed. Wali kelas and admin paths are not covered by the existing suite at all.
 - Hardcoded API base URL (`lib/core/constants/api_constants.dart:5`) cannot be overridden per environment without a code change.
 
 These are hypotheses to verify; the audit confirms them as findings.
@@ -161,15 +161,15 @@ Environment overrides:
 | 1 | siswa    | Deep-link `/teacher`                                        | Redirected to `/student` or `/login`                                 |
 | 2 | wali 1A  | Deep-link `/student`                                        | Redirected to `/teacher` or `/login`                                 |
 | 3 | siswa    | API GET `/student/grades` payload                           | Every row's `student_id` == self.id                                  |
-| 4 | wali 1A  | API GET `/teacher/classes/<2A_id>/attendance/roster`        | 403 or empty (mariam should not see Hendra's class)                  |
-| 5 | wali 1A  | API POST grade to a teaching_assignment_id not owned by her | 403                                                                  |
+| 4 | wali 1A  | API GET `/teacher/classes/<2A_id>/attendance/roster`        | 403 or empty. `<2A_id>` discovered by logging in as Hendra (wali 2A) first, listing her classes, and capturing the class_id |
+| 5 | wali 1A  | API POST grade to a teaching_assignment_id owned by Hendra  | 403. Foreign teaching_assignment_id discovered the same way (login as Hendra → list teaching assignments)                    |
 | 6 | siswa    | API POST `/student/grades` (or equivalent write)            | 403 (mirrors web audit finding A5)                                   |
 | 7 | wali 1A  | API hit admin-only endpoint with wali token                 | 403                                                                  |
 
 ### 6.4 `student_flow_test.dart` (existing — update)
 
 - Credentials → `24001@siswa.sekolah.id` / `password`
-- Add one negative assertion: the "Tugas" tab does NOT show a grade-input button.
+- Add one negative assertion on the "Nilai" tab: no grade-input UI is rendered (siswa is read-only). The exact widget key checked is decided when the test is written; the assertion exists either way.
 
 ### 6.5 `teacher_flow_test.dart` (existing — update)
 
