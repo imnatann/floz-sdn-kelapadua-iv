@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
@@ -72,19 +71,11 @@ class AnnouncementController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string', // Rich text HTML
             'excerpt' => 'nullable|string|max:500',
-            'cover_image' => 'nullable|image|max:2048', // Allow file upload
-            'cover_image_url' => 'nullable|string', // Fallback for direct URL
             'target_audience' => 'required|in:all,teachers,students',
             'type' => 'required|in:info,event,alert',
             'is_pinned' => 'boolean',
             'is_published' => 'boolean',
         ]);
-
-        // Handle Image Upload
-        if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store('announcements', 'public');
-            $validated['cover_image_url'] = Storage::url($path);
-        }
 
         // Auto-generate Excerpt if empty
         if (empty($validated['excerpt'])) {
@@ -160,25 +151,11 @@ class AnnouncementController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:500',
-            'cover_image' => 'nullable|image|max:2048',
-            'cover_image_url' => 'nullable|string',
             'target_audience' => 'required|in:all,teachers,students',
             'type' => 'required|in:info,event,alert',
             'is_pinned' => 'boolean',
             'is_published' => 'boolean',
         ]);
-
-        // Handle Image Upload
-        if ($request->hasFile('cover_image')) {
-            // Delete old image if exists and is local
-            if ($announcement->cover_image_url && Str::startsWith($announcement->cover_image_url, '/storage/')) {
-                 $oldPath = str_replace('/storage/', '', $announcement->cover_image_url);
-                 Storage::disk('public')->delete($oldPath);
-            }
-
-            $path = $request->file('cover_image')->store('announcements', 'public');
-            $validated['cover_image_url'] = Storage::url($path);
-        }
 
         // Auto-generate Excerpt if empty
         if (empty($validated['excerpt'])) {
@@ -193,15 +170,8 @@ class AnnouncementController extends Controller
 
     public function destroy(Announcement $announcement)
     {
-        // Delete cover image if exists and is local
-        if ($announcement->cover_image_url && Str::startsWith($announcement->cover_image_url, '/storage/')) {
-             $path = str_replace('/storage/', '', $announcement->cover_image_url);
-             Storage::disk('public')->delete($path);
-        }
-
         $announcement->delete();
-        
-        // Redirect to index if we are on the show page, or back if we are on index
+
         return redirect()->route('announcements.index')
             ->with('success', 'Pengumuman berhasil dihapus.');
     }

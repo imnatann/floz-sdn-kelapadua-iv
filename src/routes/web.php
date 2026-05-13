@@ -5,7 +5,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GradeController;
-use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
@@ -112,13 +111,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/grades', [GradeController::class, 'index'])->name('grades.index');
     Route::get('/grades/batch', [GradeController::class, 'batchInput'])->name('grades.batch');
     Route::post('/grades/batch', [GradeController::class, 'storeBatch'])->name('grades.storeBatch');
-
-    // Report Cards (Rapor)
-    Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
-    Route::post('/report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
-    Route::get('/report-cards/{reportCard}', [ReportCardController::class, 'show'])->name('report-cards.show');
-    Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
-    Route::get('/report-cards/{reportCard}/pdf', [ReportCardController::class, 'downloadPdf'])->name('report-cards.pdf');
 
     // Announcements (Pengumuman) — open to all auth'd roles; policy gates write
     Route::resource('announcements', AnnouncementController::class);

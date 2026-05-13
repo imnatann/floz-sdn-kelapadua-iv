@@ -92,28 +92,15 @@ const cleanExcerpt = (announcement) => {
         :href="`/announcements/${announcement.id}`"
         class="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-orange-200"
       >
-        <!-- Cover Image -->
-        <div class="aspect-video w-full overflow-hidden bg-slate-100 relative group-hover:opacity-90 transition-opacity">
-           <img 
-             v-if="announcement.cover_image_url" 
-             :src="announcement.cover_image_url" 
-             class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-             alt="Cover"
-           />
-           <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 text-slate-300">
-             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-           </div>
-           
-           <!-- Delete Button (Visible on Hover) -->
-           <button
-             v-if="canManage"
-             @click.prevent="deleteAnnouncement(announcement)"
-             class="absolute top-2 right-2 p-2 bg-white/90 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm z-10"
-             title="Hapus Pengumuman"
-           >
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-           </button>
-        </div>
+        <!-- Floating delete button (top-right of card, admin/teacher only) -->
+        <button
+          v-if="canManage"
+          @click.prevent="deleteAnnouncement(announcement)"
+          class="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/90 text-slate-400 opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-red-50 hover:text-red-600"
+          title="Hapus Pengumuman"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </button>
 
         <!-- Content -->
         <div class="flex flex-1 flex-col p-4">

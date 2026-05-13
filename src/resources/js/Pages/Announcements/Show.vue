@@ -56,9 +56,6 @@ const formatDate = (dateString) => {
 
     <article class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 overflow-hidden">
         <!-- Cover Image -->
-        <div v-if="announcement.cover_image_url" class="aspect-[21/9] w-full bg-slate-100">
-            <img :src="announcement.cover_image_url" class="h-full w-full object-cover" alt="Cover" />
-        </div>
 
         <div class="p-8 sm:p-12">
             <!-- Header -->

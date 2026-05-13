@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import Button from '@/Components/UI/Button.vue';
 import TiptapEditor from '@/Components/Editor/TiptapEditor.vue';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import dayjs from 'dayjs';
 
 defineOptions({ layout: AppLayout });
@@ -19,35 +19,17 @@ const form = useForm({
   title: props.announcement?.title || '',
   content: props.announcement?.content || '',
   excerpt: props.announcement?.excerpt || '',
-  cover_image: null,
-  cover_image_url: props.announcement?.cover_image_url || '',
   target_audience: props.announcement?.target_audience || 'all',
   type: props.announcement?.type || 'info',
   is_pinned: props.announcement?.is_pinned || false,
   is_published: props.announcement?.is_published !== undefined ? props.announcement.is_published : true,
 });
 
-const previewImage = ref(props.announcement?.cover_image_url || null);
-const showCoverUpload = ref(false);
-
-const handleImageUpload = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    form.cover_image = file;
-    previewImage.value = URL.createObjectURL(file);
-    showCoverUpload.value = false;
-  }
-};
-
 const submit = () => {
   if (props.announcement) {
-    // Laravel requires PUT/PATCH for resource update; Inertia + multipart needs
-    // method spoofing via a _method field in the form body, not in visit options.
-    form
-      .transform((data) => ({ ...data, _method: 'put' }))
-      .post(`/announcements/${props.announcement.id}`, { forceFormData: true });
+    form.put(`/announcements/${props.announcement.id}`);
   } else {
-    form.post('/announcements', { forceFormData: true });
+    form.post('/announcements');
   }
 };
 
@@ -81,36 +63,6 @@ const audienceLabel = computed(() => {
             {{ form.processing ? 'Saving...' : (announcement ? 'Update' : 'Publish') }}
           </Button>
        </div>
-    </div>
-
-    <!-- Cover Image -->
-    <div class="group relative mb-8 rounded-xl bg-slate-50 overflow-hidden transition-all hover:bg-slate-100" :class="previewImage ? 'h-64' : 'h-12 hover:h-16'">
-        <img v-if="previewImage" :src="previewImage" class="h-full w-full object-cover" />
-        
-        <!-- Add Cover Button (Visible when empty or hover) -->
-        <div v-if="!previewImage" class="absolute inset-x-0 top-0 bottom-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" @click="showCoverUpload = !showCoverUpload">
-             <span class="flex items-center gap-2 text-sm font-medium text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                Add Cover
-             </span>
-        </div>
-
-        <!-- Change Cover Button (Visible on hover when image exists) -->
-        <div v-if="previewImage" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button @click="showCoverUpload = !showCoverUpload" class="bg-white/80 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded shadow-sm hover:bg-white text-slate-700">Change Cover</button>
-            <button @click="form.cover_image = null; previewImage = null" class="ml-2 bg-white/80 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded shadow-sm hover:bg-white text-red-600">Remove</button>
-        </div>
-
-        <!-- File Input (Hidden logic handled by custom UI) -->
-        <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleImageUpload" />
-    </div>
-
-    <!-- Cover Upload Area (Conditional) -->
-    <div v-if="showCoverUpload" class="mb-8 p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl text-center">
-         <label class="cursor-pointer">
-             <span class="text-sm font-medium text-slate-500 hover:text-orange-600 transition-colors">Click to upload image</span>
-             <input type="file" class="hidden" accept="image/*" @change="handleImageUpload" />
-         </label>
     </div>
 
     <!-- Document Title -->

@@ -16,7 +16,6 @@ class Announcement extends Model
         'title',
         'content',
         'excerpt',
-        'cover_image_url',
         'target_audience', // enum: all, teachers, students
         'is_pinned',
         'type',
