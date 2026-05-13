@@ -61,37 +61,4 @@ it('view returns false for student', function () {
     expect($policy->view($student))->toBeFalse();
 });
 
-// ── viewWidget() ──────────────────────────────────────────────────────────────
-
-it('viewWidget returns false for teacher requesting classes-missing-attendance', function () {
-    $teacher = Teacher::factory()->create();
-    $user    = User::where('email', $teacher->email)->firstOrFail();
-    $policy  = new AnalyticsPolicy;
-
-    expect($policy->viewWidget($user, 'classes-missing-attendance'))->toBeFalse();
-});
-
-it('viewWidget returns false for teacher requesting teacher-workload', function () {
-    $teacher = Teacher::factory()->create();
-    $user    = User::where('email', $teacher->email)->firstOrFail();
-    $policy  = new AnalyticsPolicy;
-
-    expect($policy->viewWidget($user, 'teacher-workload'))->toBeFalse();
-});
-
-it('viewWidget returns true for teacher requesting at-risk-students', function () {
-    $teacher = Teacher::factory()->create();
-    $user    = User::where('email', $teacher->email)->firstOrFail();
-    $policy  = new AnalyticsPolicy;
-
-    expect($policy->viewWidget($user, 'at-risk-students'))->toBeTrue();
-});
-
-it('viewWidget returns true for admin requesting any widget', function () {
-    $admin  = User::factory()->create(['role' => 'school_admin']);
-    $policy = new AnalyticsPolicy;
-
-    expect($policy->viewWidget($admin, 'teacher-workload'))->toBeTrue();
-    expect($policy->viewWidget($admin, 'classes-missing-attendance'))->toBeTrue();
-    expect($policy->viewWidget($admin, 'at-risk-students'))->toBeTrue();
-});
+// viewWidget() removed along with the analytics dashboard/reports UI.

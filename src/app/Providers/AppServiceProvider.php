@@ -87,12 +87,9 @@ class AppServiceProvider extends ServiceProvider
             return $user->isSchoolAdmin() || $user->isSuperAdmin();
         });
 
-        // Analytics policy — registered for model-less authorization via Gate::define
-        // view-analytics: used by controller $this->authorize('view-analytics')
+        // view-analytics: used by AnalyticsController exports ($this->authorize('view-analytics')).
+        // Kept after the dashboard/reports UI removal so export URLs stay gated.
         Gate::define('view-analytics', fn (User $user) => (new AnalyticsPolicy)->view($user));
-
-        // viewWidget gate: controller uses Gate::allows('viewWidget', $widget)
-        Gate::define('viewWidget', fn (User $user, string $widget) => (new AnalyticsPolicy)->viewWidget($user, $widget));
 
         try { $queryLoggingEnabled = \Illuminate\Support\Facades\Cache::get('query_logging_enabled'); } catch (\Throwable) { $queryLoggingEnabled = false; }
         if ($queryLoggingEnabled) {

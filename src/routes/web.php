@@ -148,11 +148,8 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    // Analytics Dashboard (school_admin + teacher — policy enforces per-user scope)
+    // Analytics: Excel export endpoints only (dashboard + reports UI removed).
     Route::prefix('analytics')->middleware(['role:school_admin,teacher'])->name('analytics.')->group(function () {
-        Route::get('/',                   [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
-        Route::get('/reports',            [\App\Http\Controllers\AnalyticsController::class, 'reports'])->name('reports');
-        Route::get('/data/{widget}',      [\App\Http\Controllers\AnalyticsController::class, 'data'])->name('data');
         Route::get('/export/attendance',  [\App\Http\Controllers\AnalyticsController::class, 'exportAttendance'])->name('export.attendance');
         Route::get('/export/grades',      [\App\Http\Controllers\AnalyticsController::class, 'exportGrades'])->name('export.grades');
     });

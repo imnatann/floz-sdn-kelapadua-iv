@@ -6,11 +6,17 @@ use App\Models\SchoolClass;
 use App\Models\TeachingAssignment;
 use App\Models\User;
 
+/**
+ * Backs the `view-analytics` Gate used by AnalyticsController exports
+ * (exportAttendance, exportGrades). The dashboard/reports UI that consumed
+ * the widget-level rules was removed — that's why this class is reduced
+ * to the single view() check.
+ */
 class AnalyticsPolicy
 {
     /**
-     * Any user with at least 1 owned class scope can view analytics.
-     * Admin always allowed. Non-teacher always denied.
+     * Admin always allowed. Teachers allowed if they own at least one class
+     * scope (homeroom or teaching assignment). Other roles denied.
      */
     public function view(User $user): bool
     {
@@ -32,22 +38,5 @@ class AnalyticsPolicy
         $hasTA       = TeachingAssignment::where('teacher_id', $teacher->id)->exists();
 
         return $hasHomeroom || $hasTA;
-    }
-
-    /**
-     * Widget-level gate — admin-only widgets: classesMissingAttendance, teacherWorkload.
-     *
-     * @param  User    $user
-     * @param  string  $widget  Widget key (kebab-case, matches route param)
-     */
-    public function viewWidget(User $user, string $widget): bool
-    {
-        $adminOnly = ['classes-missing-attendance', 'teacher-workload'];
-
-        if (in_array($widget, $adminOnly, true)) {
-            return $user->isSchoolAdmin();
-        }
-
-        return true; // other widgets gated only by view()
     }
 }

@@ -41,12 +41,13 @@ const handleImageUpload = (event) => {
 
 const submit = () => {
   if (props.announcement) {
-    form.post(`/announcements/${props.announcement.id}`, {
-        _method: 'put',
-        forceFormData: true,
-    });
+    // Laravel requires PUT/PATCH for resource update; Inertia + multipart needs
+    // method spoofing via a _method field in the form body, not in visit options.
+    form
+      .transform((data) => ({ ...data, _method: 'put' }))
+      .post(`/announcements/${props.announcement.id}`, { forceFormData: true });
   } else {
-    form.post('/announcements');
+    form.post('/announcements', { forceFormData: true });
   }
 };
 
