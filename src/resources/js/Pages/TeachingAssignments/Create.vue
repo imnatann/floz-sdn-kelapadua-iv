@@ -1,5 +1,6 @@
 <script setup>
 import { useForm, Head, Link } from '@inertiajs/vue3';
+import { computed, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
@@ -18,6 +19,16 @@ const form = useForm({
   class_id: '',
   subject_id: '',
   teacher_id: '',
+});
+
+const filteredClasses = computed(() => {
+  if (!form.academic_year_id) return [];
+  return props.classes.filter(c => Number(c.academic_year_id) === Number(form.academic_year_id));
+});
+
+watch(() => form.academic_year_id, () => {
+  // Reset class selection when AY changes so admin can't carry over a class from another AY
+  form.class_id = '';
 });
 
 const submit = () => {
@@ -67,8 +78,11 @@ const submit = () => {
           <div>
             <FormSelect label="Kelas" v-model="form.class_id" :required="true" :error="form.errors.class_id">
               <option value="">— Pilih Kelas —</option>
-              <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+              <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
             </FormSelect>
+            <p v-if="form.academic_year_id && filteredClasses.length === 0" class="mt-1 text-xs text-amber-600">
+              Belum ada kelas untuk tahun ajaran ini.
+            </p>
           </div>
 
           <div>

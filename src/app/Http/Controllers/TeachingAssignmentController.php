@@ -35,7 +35,7 @@ class TeachingAssignmentController extends Controller
             'assignments'   => $assignments,
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
             'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
-            'classes'       => SchoolClass::where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'classes'       => SchoolClass::where('status', 'active')->orderBy('grade_level')->orderBy('name')->get(['id', 'name', 'academic_year_id']),
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
             'filters'       => $request->only(['teacher_id', 'subject_id', 'class_id', 'academic_year_id']),
         ]);
@@ -46,7 +46,7 @@ class TeachingAssignmentController extends Controller
         return Inertia::render('TeachingAssignments/Create', [
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
             'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
-            'classes'       => SchoolClass::where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'classes'       => SchoolClass::where('status', 'active')->orderBy('grade_level')->orderBy('name')->get(['id', 'name', 'academic_year_id']),
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
         ]);
     }
@@ -57,7 +57,7 @@ class TeachingAssignmentController extends Controller
             'assignment'    => $teachingAssignment->load(['teacher', 'subject', 'schoolClass', 'academicYear']),
             'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
             'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
-            'classes'       => SchoolClass::where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'classes'       => SchoolClass::where('status', 'active')->orderBy('grade_level')->orderBy('name')->get(['id', 'name', 'academic_year_id']),
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
         ]);
     }
