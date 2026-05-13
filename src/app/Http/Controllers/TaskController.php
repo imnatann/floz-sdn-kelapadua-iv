@@ -147,16 +147,27 @@ class TaskController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        // Subjects available for Excel export: all subjects taught in this class (via teaching assignments).
+        // This is broader than $subjects above — admin can export a mapel even before any task exists.
+        $exportableSubjects = Subject::whereIn(
+                'id',
+                DB::table('teaching_assignments')->where('class_id', $class->id)->pluck('subject_id')->unique()
+            )
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Tasks/ClassIndex', [
-            'schoolClass'   => $class,
-            'tasks'         => $tasks,
-            'subjects'      => $subjects,
-            'semesters'     => $semesters,
-            'filters'       => [
+            'schoolClass'        => $class,
+            'tasks'              => $tasks,
+            'subjects'           => $subjects,
+            'exportableSubjects' => $exportableSubjects,
+            'semesters'          => $semesters,
+            'filters'            => [
                 'subject_id'  => $request->integer('subject_id') ?: null,
                 'semester_id' => $selectedSemesterId,
             ],
-            'studentsCount' => $class->students()->count(),
+            'studentsCount'      => $class->students()->count(),
         ]);
     }
 

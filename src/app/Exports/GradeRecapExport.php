@@ -12,10 +12,16 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class GradeRecapExport implements WithMultipleSheets
 {
+    /**
+     * @param int     $classId
+     * @param int     $semesterId
+     * @param int[]   $subjectIds  Empty array means "all subjects taught in this class"
+     * @param ?User   $scope
+     */
     public function __construct(
         private readonly int $classId,
         private readonly int $semesterId,
-        private readonly ?int $subjectId = null,
+        private readonly array $subjectIds = [],
         private readonly ?User $scope = null,
     ) {}
 
@@ -24,14 +30,20 @@ class GradeRecapExport implements WithMultipleSheets
         $class    = SchoolClass::findOrFail($this->classId);
         $semester = Semester::findOrFail($this->semesterId);
 
-        if ($this->subjectId !== null) {
-            $subjects = Subject::where('id', $this->subjectId)->where('status', 'active')->get();
+        if (! empty($this->subjectIds)) {
+            $subjects = Subject::whereIn('id', $this->subjectIds)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
         } else {
             // All subjects taught in this class (via teaching assignments)
             $subjectIds = TeachingAssignment::where('class_id', $this->classId)
                 ->pluck('subject_id')
                 ->unique();
-            $subjects = Subject::whereIn('id', $subjectIds)->where('status', 'active')->orderBy('name')->get();
+            $subjects = Subject::whereIn('id', $subjectIds)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
         }
 
         return $subjects->map(fn ($subject) =>

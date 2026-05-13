@@ -117,15 +117,24 @@ class AnalyticsController extends Controller
         $this->authorize('view-analytics');
 
         $request->validate([
-            'class_id'   => 'required|integer|exists:classes,id',
-            'semester_id'=> 'required|integer|exists:semesters,id',
-            'subject_id' => 'nullable|integer|exists:subjects,id',
+            'class_id'      => 'required|integer|exists:classes,id',
+            'semester_id'   => 'required|integer|exists:semesters,id',
+            'subject_id'    => 'nullable|integer|exists:subjects,id',
+            'subject_ids'   => 'nullable|array',
+            'subject_ids.*' => 'integer|exists:subjects,id',
         ]);
 
-        $user      = Auth::user();
-        $classId   = (int) $request->class_id;
-        $semId     = (int) $request->semester_id;
-        $subjectId = $request->subject_id ? (int) $request->subject_id : null;
+        $user    = Auth::user();
+        $classId = (int) $request->class_id;
+        $semId   = (int) $request->semester_id;
+
+        // Normalize subject filter: subject_ids[] array > subject_id single > empty (= all)
+        $subjectIds = [];
+        if (is_array($request->subject_ids) && count($request->subject_ids) > 0) {
+            $subjectIds = array_values(array_unique(array_map('intval', $request->subject_ids)));
+        } elseif ($request->subject_id) {
+            $subjectIds = [(int) $request->subject_id];
+        }
 
         // Authorization: non-admin teachers may only export subjects they teach in that class
         if (! $user->isSchoolAdmin()) {
@@ -134,35 +143,29 @@ class AnalyticsController extends Controller
                 abort(403, 'Akses ditolak.');
             }
 
-            if ($subjectId !== null) {
-                // Teacher must teach this subject in this class
-                $hasAssignment = TeachingAssignment::where('teacher_id', $teacher->id)
-                    ->where('class_id', $classId)
-                    ->where('subject_id', $subjectId)
-                    ->exists();
+            $isHomeroom = \App\Models\SchoolClass::where('id', $classId)
+                ->where('homeroom_teacher_id', $teacher->id)
+                ->exists();
 
-                if (! $hasAssignment) {
-                    // Homeroom teacher may export all subjects for their class
-                    $isHomeroom = \App\Models\SchoolClass::where('id', $classId)
-                        ->where('homeroom_teacher_id', $teacher->id)
-                        ->exists();
+            $taughtSubjectIds = TeachingAssignment::where('teacher_id', $teacher->id)
+                ->where('class_id', $classId)
+                ->pluck('subject_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
 
-                    if (! $isHomeroom) {
-                        abort(403, 'Anda tidak mengajar mata pelajaran ini di kelas ini.');
+            if (! $isHomeroom && empty($taughtSubjectIds)) {
+                abort(403, 'Anda tidak memiliki akses ke kelas ini.');
+            }
+
+            if (! $isHomeroom) {
+                if (empty($subjectIds)) {
+                    // Default to only the subjects this teacher teaches
+                    $subjectIds = $taughtSubjectIds;
+                } else {
+                    $unauthorized = array_diff($subjectIds, $taughtSubjectIds);
+                    if (! empty($unauthorized)) {
+                        abort(403, 'Anda tidak mengajar salah satu mata pelajaran yang dipilih di kelas ini.');
                     }
-                }
-            } else {
-                // Exporting all subjects: must be homeroom or have at least one assignment in class
-                $isHomeroom = \App\Models\SchoolClass::where('id', $classId)
-                    ->where('homeroom_teacher_id', $teacher->id)
-                    ->exists();
-
-                $hasAnyAssignment = TeachingAssignment::where('teacher_id', $teacher->id)
-                    ->where('class_id', $classId)
-                    ->exists();
-
-                if (! $isHomeroom && ! $hasAnyAssignment) {
-                    abort(403, 'Anda tidak memiliki akses ke kelas ini.');
                 }
             }
         }
@@ -175,7 +178,7 @@ class AnalyticsController extends Controller
         $filename  = "Rekap_Nilai_{$className}_Sem{$semester->semester_number}_{$ayName}_" . now()->format('Y-m-d') . '.xlsx';
 
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\GradeRecapExport($classId, $semId, $subjectId, $user),
+            new \App\Exports\GradeRecapExport($classId, $semId, $subjectIds, $user),
             $filename
         );
     }

@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
 import FormSelect from '@/Components/UI/FormSelect.vue';
+import Modal from '@/Components/UI/Modal.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -12,6 +13,7 @@ const props = defineProps({
     schoolClass: Object,
     tasks: Array,
     subjects: { type: Array, default: () => [] },
+    exportableSubjects: { type: Array, default: () => [] },
     semesters: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
     studentsCount: Number,
@@ -39,13 +41,33 @@ const applyFilters = () => {
 
 watch([subjectId, semesterId], applyFilters);
 
-const downloadExcel = () => {
+// Excel export modal — admin picks which mapel(s) to include
+const showExportModal = ref(false);
+const exportSelectedIds = ref([]);
+
+const openExportModal = () => {
     if (!semesterId.value) return;
+    // Default: all exportable subjects checked
+    exportSelectedIds.value = props.exportableSubjects.map(s => s.id);
+    showExportModal.value = true;
+};
+
+const toggleSelectAll = () => {
+    if (exportSelectedIds.value.length === props.exportableSubjects.length) {
+        exportSelectedIds.value = [];
+    } else {
+        exportSelectedIds.value = props.exportableSubjects.map(s => s.id);
+    }
+};
+
+const confirmExport = () => {
+    if (!semesterId.value || exportSelectedIds.value.length === 0) return;
     const params = new URLSearchParams();
     params.append('class_id', props.schoolClass.id);
     params.append('semester_id', semesterId.value);
-    if (subjectId.value) params.append('subject_id', subjectId.value);
+    exportSelectedIds.value.forEach(id => params.append('subject_ids[]', id));
     window.location.href = `/analytics/export/grades?${params.toString()}`;
+    showExportModal.value = false;
 };
 
 const formatDate = (raw) => {
@@ -71,9 +93,9 @@ const formatDate = (raw) => {
       <div v-if="canManage" class="flex flex-wrap gap-2">
          <Button
             variant="outline"
-            @click="downloadExcel"
-            :disabled="!semesterId"
-            title="Unduh rekap nilai Excel — per mapel (atau semua mapel) untuk kelas dan semester yang dipilih"
+            @click="openExportModal"
+            :disabled="!semesterId || exportableSubjects.length === 0"
+            :title="exportableSubjects.length === 0 ? 'Belum ada mapel di kelas ini — atur Penugasan Guru dulu' : 'Pilih mapel mana yang akan diunduh sebagai Excel'"
          >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Unduh Excel
@@ -164,5 +186,51 @@ const formatDate = (raw) => {
             <p class="text-slate-500">Belum ada tugas yang cocok dengan filter ini.</p>
         </div>
     </Card>
+
+    <!-- Excel Export Modal: pick subjects via checkboxes -->
+    <Modal :show="showExportModal" @close="showExportModal = false">
+      <div class="p-6">
+        <div class="mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Unduh Rekap Nilai Excel</h2>
+          <p class="mt-0.5 text-sm text-slate-500">Pilih mata pelajaran yang akan dimasukkan. Setiap mapel jadi 1 sheet.</p>
+        </div>
+
+        <div class="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+          <span class="text-xs font-medium text-slate-500">{{ exportSelectedIds.length }} / {{ exportableSubjects.length }} mapel dipilih</span>
+          <button
+            type="button"
+            @click="toggleSelectAll"
+            class="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline"
+          >
+            {{ exportSelectedIds.length === exportableSubjects.length ? 'Hapus Semua' : 'Pilih Semua' }}
+          </button>
+        </div>
+
+        <div class="max-h-[50vh] space-y-1 overflow-y-auto pr-1">
+          <label
+            v-for="s in exportableSubjects"
+            :key="s.id"
+            class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-slate-50"
+          >
+            <input
+              type="checkbox"
+              :value="s.id"
+              v-model="exportSelectedIds"
+              class="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+            />
+            <span class="text-sm text-slate-700">{{ s.name }}</span>
+          </label>
+          <p v-if="exportableSubjects.length === 0" class="py-8 text-center text-sm text-slate-400">Belum ada mapel di kelas ini.</p>
+        </div>
+
+        <div class="mt-5 flex justify-end gap-3 border-t border-slate-100 pt-4">
+          <Button variant="outline" @click="showExportModal = false">Batal</Button>
+          <Button @click="confirmExport" :disabled="exportSelectedIds.length === 0">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Unduh {{ exportSelectedIds.length || '' }} Sheet
+          </Button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>

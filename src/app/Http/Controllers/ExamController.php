@@ -143,16 +143,25 @@ class ExamController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $exportableSubjects = Subject::whereIn(
+                'id',
+                DB::table('teaching_assignments')->where('class_id', $class->id)->pluck('subject_id')->unique()
+            )
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('Exams/ClassIndex', [
-            'schoolClass'   => $class,
-            'exams'         => $exams,
-            'subjects'      => $subjects,
-            'semesters'     => $semesters,
-            'filters'       => [
+            'schoolClass'        => $class,
+            'exams'              => $exams,
+            'subjects'           => $subjects,
+            'exportableSubjects' => $exportableSubjects,
+            'semesters'          => $semesters,
+            'filters'            => [
                 'subject_id'  => $request->integer('subject_id') ?: null,
                 'semester_id' => $selectedSemesterId,
             ],
-            'studentsCount' => $class->students()->count(),
+            'studentsCount'      => $class->students()->count(),
         ]);
     }
 
