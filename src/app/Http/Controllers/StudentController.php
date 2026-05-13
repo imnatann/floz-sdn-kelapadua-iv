@@ -110,25 +110,23 @@ class StudentController extends Controller
         $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
         $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
 
-        $cacheKey = 'students_' . md5(json_encode([
-            $request->only(['search', 'class_id', 'status', 'page']),
-            'ay' => $selectedAyId,
-        ]));
-
-        $students = cache()->remember($cacheKey, 60, function () use ($request, $selectedAyId) {
-            return Student::query()
-                ->with('class.academicYear:id,name,is_active')
-                ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
-                    $qq->where('name', 'like', "%{$s}%")
-                       ->orWhere('nis', 'like', "%{$s}%");
-                }))
-                ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
-                ->when($request->status, fn($q, $s) => $q->where('status', $s))
-                ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
-                ->latest()
-                ->paginate(20)
-                ->withQueryString();
-        });
+        // NOTE: do NOT cache the LengthAwarePaginator — it bakes absolute URLs
+        // (host + scheme) from request()->url() at generation time. Reusing a
+        // cached paginator from one host (e.g. ngrok) on a different origin
+        // (e.g. 127.0.0.1) produces cross-origin pagination links and the
+        // browser blocks the XHR with a CORS preflight redirect error.
+        $students = Student::query()
+            ->with('class.academicYear:id,name,is_active')
+            ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
+                $qq->where('name', 'like', "%{$s}%")
+                   ->orWhere('nis', 'like', "%{$s}%");
+            }))
+            ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         // Classes filtered to selected AY (so the Kelas dropdown only shows kelas of that AY)
         $classes = SchoolClass::where('status', 'active')
