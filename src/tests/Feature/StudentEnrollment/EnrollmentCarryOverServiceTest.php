@@ -49,3 +49,29 @@ it('preview returns empty result when no previous semester exists', function () 
     expect($preview['source_semester_id'])->toBeNull();
     expect($preview['carry_over'])->toBe([]);
 });
+
+it('execute creates enrollment rows for carry-over students and is idempotent', function () {
+    [, $sem1, $sem2, $class] = makeAyWithTwoSemesters();
+    $stay = Student::create(['nis' => '1', 'name' => 'Stay', 'class_id' => $class->id, 'status' => 'active']);
+    StudentClassEnrollment::create(['student_id' => $stay->id, 'semester_id' => $sem1->id, 'class_id' => $class->id, 'status' => 'active']);
+
+    $svc = app(EnrollmentCarryOverService::class);
+    $result = $svc->execute($sem2->id);
+    expect($result['carried'])->toBe(1);
+
+    // Idempotent — second run is a no-op
+    $result2 = $svc->execute($sem2->id);
+    expect($result2['carried'])->toBe(0);
+
+    expect(StudentClassEnrollment::where('semester_id', $sem2->id)->count())->toBe(1);
+});
+
+it('execute returns zero when no previous semester exists', function () {
+    $ay = AcademicYear::create(['name' => '2025/2026', 'is_active' => true, 'start_date' => '2025-07-01', 'end_date' => '2026-06-30']);
+    $sem1 = Semester::create(['academic_year_id' => $ay->id, 'semester_number' => 1, 'is_active' => false, 'start_date' => '2025-07-01', 'end_date' => '2025-12-31']);
+
+    $svc = app(EnrollmentCarryOverService::class);
+    $result = $svc->execute($sem1->id);
+    expect($result['carried'])->toBe(0);
+    expect($result['source_semester_id'])->toBeNull();
+});
