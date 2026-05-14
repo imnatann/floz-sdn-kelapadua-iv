@@ -107,3 +107,28 @@ it('does not write a mutation if class_id is unchanged on update', function () {
 
     expect(\App\Models\StudentMutation::count())->toBe(0);
 });
+
+it('filters students by enrollment semester showing historical roster including non-active', function () {
+    [, $semGanjil, $classA] = makeAyWithActiveSem();
+    $admin = makeAdmin();
+
+    $this->actingAs($admin)->post('/students', ['nis' => '101', 'name' => 'Stayed', 'class_id' => $classA->id]);
+    $this->actingAs($admin)->post('/students', ['nis' => '102', 'name' => 'Pindah', 'class_id' => $classA->id]);
+
+    $pindah = Student::where('nis', '102')->first();
+
+    StudentClassEnrollment::where('student_id', $pindah->id)
+        ->where('semester_id', $semGanjil->id)
+        ->update(['status' => 'transferred_out', 'exit_date' => '2025-10-15']);
+
+    $response = $this->actingAs($admin)->get("/students?semester_id={$semGanjil->id}");
+    $response->assertOk();
+    $data = $response->viewData('page')['props']['students']['data'];
+
+    $names = collect($data)->pluck('name')->toArray();
+    expect($names)->toContain('Stayed');
+    expect($names)->toContain('Pindah');
+
+    $pindahRow = collect($data)->firstWhere('name', 'Pindah');
+    expect($pindahRow['enrollment_status'])->toBe('transferred_out');
+});

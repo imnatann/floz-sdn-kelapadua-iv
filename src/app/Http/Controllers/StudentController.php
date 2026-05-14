@@ -112,23 +112,44 @@ class StudentController extends Controller
         $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
         $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
 
+        $semesterId = $request->integer('semester_id') ?: null;
+
         // NOTE: do NOT cache the LengthAwarePaginator — it bakes absolute URLs
         // (host + scheme) from request()->url() at generation time. Reusing a
         // cached paginator from one host (e.g. ngrok) on a different origin
         // (e.g. 127.0.0.1) produces cross-origin pagination links and the
         // browser blocks the XHR with a CORS preflight redirect error.
-        $students = Student::query()
-            ->with('class.academicYear:id,name,is_active')
-            ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
-                $qq->where('name', 'like', "%{$s}%")
-                   ->orWhere('nis', 'like', "%{$s}%");
-            }))
-            ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
-            ->when($request->status, fn($q, $s) => $q->where('status', $s))
-            ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
+        if ($semesterId) {
+            // Historical roster: join enrollments, return all statuses
+            $students = Student::query()
+                ->select('students.*')
+                ->selectRaw('sce.class_id as enrollment_class_id, sce.status as enrollment_status, sce.exit_date as enrollment_exit_date')
+                ->join('student_class_enrollments as sce', 'sce.student_id', '=', 'students.id')
+                ->where('sce.semester_id', $semesterId)
+                ->with(['class.academicYear:id,name,is_active'])
+                ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
+                    $qq->where('students.name', 'like', "%{$s}%")
+                       ->orWhere('students.nis', 'like', "%{$s}%");
+                }))
+                ->when($request->class_id, fn($q, $c) => $q->where('sce.class_id', $c))
+                ->orderByDesc('students.id')
+                ->paginate(20)
+                ->withQueryString();
+        } else {
+            // Current view (existing behavior, unchanged)
+            $students = Student::query()
+                ->with('class.academicYear:id,name,is_active')
+                ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
+                    $qq->where('name', 'like', "%{$s}%")
+                       ->orWhere('nis', 'like', "%{$s}%");
+                }))
+                ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
+                ->when($request->status, fn($q, $s) => $q->where('status', $s))
+                ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
+                ->latest()
+                ->paginate(20)
+                ->withQueryString();
+        }
 
         // Classes filtered to selected AY (so the Kelas dropdown only shows kelas of that AY)
         $classes = SchoolClass::where('status', 'active')
@@ -139,13 +160,18 @@ class StudentController extends Controller
 
         $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
 
+        $semesters = $selectedAyId
+            ? \App\Models\Semester::where('academic_year_id', $selectedAyId)->orderBy('semester_number')->get(['id', 'semester_number', 'is_active'])
+            : collect();
+
         return Inertia::render('Students/Index', [
             'students'      => $students,
             'classes'       => $classes,
             'academicYears' => $academicYears,
+            'semesters'     => $semesters,
             'filters'       => array_merge(
                 $request->only(['search', 'class_id', 'status']),
-                ['academic_year_id' => $selectedAyId]
+                ['academic_year_id' => $selectedAyId, 'semester_id' => $semesterId]
             ),
         ]);
     }
