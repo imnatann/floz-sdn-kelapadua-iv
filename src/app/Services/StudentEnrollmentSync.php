@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentClassEnrollment;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Single-responsibility helper that keeps student_class_enrollments rows
