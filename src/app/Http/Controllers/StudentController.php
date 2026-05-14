@@ -14,6 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Services\StudentEnrollmentSync;
 
 
 class StudentController extends Controller
@@ -211,6 +212,9 @@ class StudentController extends Controller
         ]);
 
         $student = Student::create($validated);
+
+        // Phase 1 — temporal tracking: write enrollment for active semester
+        app(StudentEnrollmentSync::class)->syncCurrent($student, $student->class_id);
 
         // Create User Account if requested
         if ($request->create_account) {
