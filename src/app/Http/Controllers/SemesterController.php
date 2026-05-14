@@ -83,8 +83,8 @@ class SemesterController extends Controller
         $this->authorize('activate', $semester);
 
         $result = DB::transaction(function () use ($semester) {
-            Semester::where('academic_year_id', $semester->academic_year_id)
-                ->update(['is_active' => false]);
+            // Single active semester globally (Phase 2 Bug D)
+            Semester::where('is_active', true)->update(['is_active' => false]);
             $semester->update(['is_active' => true]);
 
             return app(EnrollmentCarryOverService::class)->execute($semester->id);
