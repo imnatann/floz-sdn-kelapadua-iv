@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSemesterRequest;
 use App\Http\Requests\UpdateSemesterRequest;
 use App\Models\AcademicYear;
 use App\Models\Semester;
+use App\Services\EnrollmentCarryOverService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -81,13 +82,23 @@ class SemesterController extends Controller
     {
         $this->authorize('activate', $semester);
 
-        DB::transaction(function () use ($semester) {
+        $result = DB::transaction(function () use ($semester) {
             Semester::where('academic_year_id', $semester->academic_year_id)
                 ->update(['is_active' => false]);
             $semester->update(['is_active' => true]);
+
+            return app(EnrollmentCarryOverService::class)->execute($semester->id);
         });
 
+        $msg = "Semester {$semester->semester_number} sekarang aktif.";
+        if ($result['carried'] > 0) {
+            $msg .= " {$result['carried']} siswa di-carry-over dari semester sebelumnya.";
+        }
+        if ($result['skipped'] > 0) {
+            $msg .= " {$result['skipped']} siswa di-skip (sudah keluar/lulus).";
+        }
+
         return redirect()->route('academic-years.semesters.index', $semester->academic_year_id)
-            ->with('success', "Semester {$semester->semester_number} sekarang aktif.");
+            ->with('success', $msg);
     }
 }
