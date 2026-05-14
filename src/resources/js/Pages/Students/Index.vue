@@ -15,6 +15,7 @@ const props = defineProps({
   students: Object,
   classes: Array,
   academicYears: { type: Array, default: () => [] },
+  semesters: { type: Array, default: () => [] },
   filters: Object,
 });
 
@@ -22,12 +23,14 @@ const search = ref(props.filters.search || '');
 const classId = ref(props.filters.class_id || '');
 const status = ref(props.filters.status || '');
 const academicYearId = ref(props.filters.academic_year_id || '');
+const semesterId = ref(props.filters.semester_id || '');
 
 let debounceTimer;
-watch([search, classId, status, academicYearId], (newVals, oldVals) => {
-  // If AY changed, reset class_id (kelas list will refresh server-side to that AY's classes only)
+watch([search, classId, status, academicYearId, semesterId], (newVals, oldVals) => {
+  // If AY changed, reset class_id and semester_id
   if (newVals[3] !== oldVals[3]) {
     classId.value = '';
+    semesterId.value = '';
   }
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
@@ -36,13 +39,30 @@ watch([search, classId, status, academicYearId], (newVals, oldVals) => {
       class_id:          classId.value,
       status:            status.value,
       academic_year_id:  academicYearId.value || undefined,
+      semester_id:       semesterId.value || undefined,
     }, { preserveState: true, replace: true });
   }, 300);
 });
 
 const genderLabel = (g) => g === 'male' ? 'L' : g === 'female' ? 'P' : '—';
-const statusColor = (s) => s === 'active' ? 'emerald' : s === 'graduated' ? 'blue' : 'amber';
-const statusLabel = (s) => ({ active: 'Aktif', graduated: 'Lulus', transferred: 'Pindah', dropout: 'Keluar' }[s] || s);
+const statusColor = (s) => {
+  if (s === 'active') return 'emerald';
+  if (s === 'graduated') return 'blue';
+  if (['transferred', 'transferred_out', 'dropped_out', 'dropout'].includes(s)) return 'amber';
+  if (['promoted_out', 'retained_out'].includes(s)) return 'slate';
+  return 'slate';
+};
+
+const statusLabel = (s) => ({
+  active: 'Aktif',
+  graduated: 'Lulus',
+  transferred: 'Pindah',
+  transferred_out: 'Pindah',
+  dropout: 'Keluar',
+  dropped_out: 'Keluar',
+  promoted_out: 'Naik kelas',
+  retained_out: 'Tinggal kelas',
+}[s] || s);
 
 const showImportModal = ref(false);
 const permissions = usePage().props.auth.permissions;
@@ -85,6 +105,14 @@ const deleteStudent = (student) => {
       <div class="w-56">
         <FormSelect v-model="academicYearId" label="Tahun Ajaran">
           <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">{{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}</option>
+        </FormSelect>
+      </div>
+      <div class="w-44">
+        <FormSelect v-model="semesterId" label="Semester">
+          <option value="">Semua</option>
+          <option v-for="s in semesters" :key="s.id" :value="s.id">
+            Semester {{ s.semester_number }}{{ s.is_active ? ' (Aktif)' : '' }}
+          </option>
         </FormSelect>
       </div>
       <div class="w-40">
@@ -135,7 +163,12 @@ const deleteStudent = (student) => {
               <td class="px-4 py-3 text-slate-500">{{ student.class?.name || '—' }}</td>
               <td class="px-4 py-3 text-slate-500">{{ genderLabel(student.gender) }}</td>
               <td class="px-4 py-3">
-                <Badge :color="statusColor(student.status)" size="sm">{{ statusLabel(student.status) }}</Badge>
+                <Badge :color="statusColor(student.enrollment_status || student.status)">
+                  {{ statusLabel(student.enrollment_status || student.status) }}
+                </Badge>
+                <span v-if="student.enrollment_exit_date" class="ml-1 text-[10px] text-slate-400">
+                  ({{ new Date(student.enrollment_exit_date).toLocaleDateString('id-ID') }})
+                </span>
               </td>
               <td class="px-4 py-3 text-right">
                 <div class="flex items-center justify-end gap-1">
