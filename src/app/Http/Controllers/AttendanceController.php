@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Semester;
+use App\Models\StudentClassEnrollment;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -83,11 +84,16 @@ class AttendanceController extends Controller
         // Scope attendance + student list: siswa only sees own row
         $attendancesQuery = Attendance::where('class_id', $class->id)
             ->where('semester_id', $activeSemester->id);
-        $studentsQuery = $class->students()->orderBy('name');
+        $studentsQuery = Student::query()
+            ->select('students.*')
+            ->join('student_class_enrollments as sce', 'sce.student_id', '=', 'students.id')
+            ->where('sce.class_id', $class->id)
+            ->where('sce.semester_id', $activeSemester->id)
+            ->orderBy('students.name');
 
         if ($user->isStudent() && $user->student) {
             $attendancesQuery->where('student_id', $user->student->id);
-            $studentsQuery->where('id', $user->student->id);
+            $studentsQuery->where('students.id', $user->student->id);
         }
 
         $attendances = $attendancesQuery->get()->groupBy('student_id');
@@ -149,7 +155,13 @@ class AttendanceController extends Controller
 
         return Inertia::render('Attendance/Create', [
             'schoolClass' => $class,
-            'students' => $class->students()->orderBy('name')->get(),
+            'students' => Student::query()
+                ->select('students.*')
+                ->join('student_class_enrollments as sce', 'sce.student_id', '=', 'students.id')
+                ->where('sce.class_id', $class->id)
+                ->where('sce.semester_id', $activeSemester->id)
+                ->orderBy('students.name')
+                ->get(),
             'nextMeetingNumber' => $nextMeetingNumber,
             'todayDate' => Carbon::today()->format('Y-m-d'),
             'existingMeetings' => $existingMeetings
@@ -231,7 +243,13 @@ class AttendanceController extends Controller
 
         return Inertia::render('Attendance/Edit', [
             'schoolClass' => $class,
-            'students' => $class->students()->orderBy('name')->get(),
+            'students' => Student::query()
+                ->select('students.*')
+                ->join('student_class_enrollments as sce', 'sce.student_id', '=', 'students.id')
+                ->where('sce.class_id', $class->id)
+                ->where('sce.semester_id', $activeSemester->id)
+                ->orderBy('students.name')
+                ->get(),
             'meetingNumber' => $meeting,
             'meetingDate' => $meetingDate,
             'existingAttendances' => $attendances
