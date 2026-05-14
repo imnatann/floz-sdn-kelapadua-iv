@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('offline_assignment_id')->constrained('offline_assignments')->cascadeOnDelete();
             $table->text('question_text');
             $table->string('question_type')->default('multiple_choice'); // multiple_choice, essay, true_false
-            $table->jsonb('options')->nullable(); // For MC: ["Option A", "Option B", "Option C", "Option D"]
+            $table->json('options')->nullable(); // For MC: ["Option A", "Option B", "Option C", "Option D"]
             $table->text('correct_answer')->nullable(); // Answer key (null for essay)
             $table->decimal('points', 5, 2)->default(0);
             $table->integer('sort_order')->default(0);
