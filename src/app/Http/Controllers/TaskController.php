@@ -124,7 +124,7 @@ class TaskController extends Controller
                 'subjects'      => [],
                 'semesters'     => $semesters,
                 'filters'       => ['subject_id' => null, 'semester_id' => null],
-                'studentsCount' => $class->students()->count(),
+                'studentsCount' => 0,
             ]);
         }
 
@@ -167,7 +167,9 @@ class TaskController extends Controller
                 'subject_id'  => $request->integer('subject_id') ?: null,
                 'semester_id' => $selectedSemesterId,
             ],
-            'studentsCount'      => $class->students()->count(),
+            'studentsCount'      => \App\Models\StudentClassEnrollment::where('class_id', $class->id)
+                ->where('semester_id', $selectedSemesterId)
+                ->count(),
         ]);
     }
 
@@ -262,16 +264,23 @@ class TaskController extends Controller
         $user = $request->user();
         $task->load(['schoolClass', 'subject', 'semester', 'teacher']);
 
-        $studentsQuery = Student::where('class_id', $task->class_id)
-            ->where('status', 'active')
-            ->orderBy('name');
+        $studentsQuery = \App\Models\Student::query()
+            ->select('students.*')
+            ->join('student_class_enrollments as sce', 'sce.student_id', '=', 'students.id')
+            ->where('sce.class_id', $task->class_id)
+            ->where('sce.semester_id', $task->semester_id)
+            ->orderBy('students.name');
 
         if ($user->isStudent() && $user->student) {
-            // Siswa: must belong to this task's class; only see their own row.
-            if ($user->student->class_id !== $task->class_id) {
+            // Siswa: must have an enrollment in this task's class+semester; only see their own row.
+            $enrolled = \App\Models\StudentClassEnrollment::where('student_id', $user->student->id)
+                ->where('class_id', $task->class_id)
+                ->where('semester_id', $task->semester_id)
+                ->exists();
+            if (!$enrolled) {
                 abort(403, 'Anda hanya dapat melihat tugas dari kelas Anda sendiri.');
             }
-            $studentsQuery->where('id', $user->student->id);
+            $studentsQuery->where('students.id', $user->student->id);
         }
 
         $students = $studentsQuery->get();
