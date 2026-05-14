@@ -285,6 +285,8 @@ class StudentController extends Controller
             'reportCards',
             'mutations.fromClass',
             'mutations.toClass',
+            'enrollments.semester.academicYear',
+            'enrollments.schoolClass',
             // 'healthRecord' + 'counselingNotes.counselor' — relations not yet implemented on Student model
             'siblings.class',
         ]);
