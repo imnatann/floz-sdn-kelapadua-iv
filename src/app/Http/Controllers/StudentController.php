@@ -114,6 +114,14 @@ class StudentController extends Controller
 
         $semesterId = $request->integer('semester_id') ?: null;
 
+        // Bug A: when AY is selected without explicit semester, default to the
+        // most-recently-numbered semester of that AY (so historical roster shows).
+        if (! $semesterId && $selectedAyId) {
+            $semesterId = \App\Models\Semester::where('academic_year_id', $selectedAyId)
+                ->orderByDesc('semester_number')
+                ->value('id');
+        }
+
         // NOTE: do NOT cache the LengthAwarePaginator — it bakes absolute URLs
         // (host + scheme) from request()->url() at generation time. Reusing a
         // cached paginator from one host (e.g. ngrok) on a different origin
