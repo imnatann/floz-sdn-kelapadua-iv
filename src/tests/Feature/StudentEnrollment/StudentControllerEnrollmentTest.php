@@ -52,3 +52,58 @@ it('does not create an enrollment when student has no class_id', function () {
 
     expect(StudentClassEnrollment::count())->toBe(0);
 });
+
+it('overwrites enrollment + records mutation when admin changes class_id mid-semester', function () {
+    [$ay, $sem, $classA] = makeAyWithActiveSem();
+    $classB = SchoolClass::create(['name' => '1B', 'grade_level' => 1, 'academic_year_id' => $ay->id, 'status' => 'active']);
+    $admin = makeAdmin();
+
+    $this->actingAs($admin)->post('/students', [
+        'nis'      => '003',
+        'name'     => 'Andi',
+        'class_id' => $classA->id,
+    ])->assertRedirect();
+
+    $student = Student::where('nis', '003')->first();
+
+    $this->actingAs($admin)->put("/students/{$student->id}", [
+        'nis'      => '003',
+        'name'     => 'Andi',
+        'class_id' => $classB->id,
+        'status'   => 'active',
+    ])->assertRedirect();
+
+    $enrollment = StudentClassEnrollment::where('student_id', $student->id)
+        ->where('semester_id', $sem->id)
+        ->first();
+    expect($enrollment->class_id)->toBe($classB->id);
+    expect($enrollment->status)->toBe('active');
+
+    $mutation = \App\Models\StudentMutation::where('student_id', $student->id)->first();
+    expect($mutation)->not->toBeNull();
+    expect($mutation->from_class_id)->toBe($classA->id);
+    expect($mutation->to_class_id)->toBe($classB->id);
+    expect($mutation->type)->toBe('transfer_in');
+});
+
+it('does not write a mutation if class_id is unchanged on update', function () {
+    [, , $classA] = makeAyWithActiveSem();
+    $admin = makeAdmin();
+
+    $this->actingAs($admin)->post('/students', [
+        'nis'      => '004',
+        'name'     => 'Layen',
+        'class_id' => $classA->id,
+    ])->assertRedirect();
+
+    $student = Student::where('nis', '004')->first();
+
+    $this->actingAs($admin)->put("/students/{$student->id}", [
+        'nis'      => '004',
+        'name'     => 'Layen Updated',
+        'class_id' => $classA->id,
+        'status'   => 'active',
+    ])->assertRedirect();
+
+    expect(\App\Models\StudentMutation::count())->toBe(0);
+});

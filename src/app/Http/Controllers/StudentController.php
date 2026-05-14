@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Services\StudentEnrollmentSync;
+use App\Models\StudentMutation;
 
 
 class StudentController extends Controller
@@ -345,7 +346,21 @@ class StudentController extends Controller
             'update_account' => 'nullable|boolean',
         ]);
 
+        $oldClassId = $student->class_id;
         $student->update($validated);
+
+        // Phase 1 — temporal tracking: log mutation + sync enrollment if class changed mid-semester
+        if (array_key_exists('class_id', $validated) && (int) $validated['class_id'] !== (int) $oldClassId) {
+            StudentMutation::create([
+                'student_id'    => $student->id,
+                'type'          => 'transfer_in',
+                'from_class_id' => $oldClassId,
+                'to_class_id'   => $student->class_id,
+                'date'          => now()->toDateString(),
+                'reason'        => 'Pindah kelas (mid-semester admin edit)',
+            ]);
+            app(StudentEnrollmentSync::class)->syncCurrent($student, $student->class_id);
+        }
 
         // Handle Account Updates / Reset
         if ($request->update_account) {
