@@ -129,6 +129,8 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('academic-years.semesters', SemesterController::class)->shallow();
         Route::post('semesters/{semester}/activate', [SemesterController::class, 'activate'])
             ->name('semesters.activate');
+        Route::get('semesters/{semester}/carry-over-preview', [SemesterController::class, 'carryOverPreview'])
+            ->name('semesters.carry-over-preview');
 
         // Year Transition (Kenaikan Kelas)
         Route::prefix('year-transition')->name('year-transition.')->group(function () {

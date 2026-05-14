@@ -101,4 +101,12 @@ class SemesterController extends Controller
         return redirect()->route('academic-years.semesters.index', $semester->academic_year_id)
             ->with('success', $msg);
     }
+
+    public function carryOverPreview(Semester $semester)
+    {
+        $this->authorize('activate', $semester);
+        return response()->json(
+            app(EnrollmentCarryOverService::class)->preview($semester->id)
+        );
+    }
 }

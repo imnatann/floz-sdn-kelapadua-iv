@@ -1,9 +1,10 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
+import CarryOverConfirmModal from './CarryOverConfirmModal.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -16,9 +17,13 @@ const page = usePage();
 const canManage = computed(() => page.props.auth?.permissions?.manage_academic_years);
 const flash = computed(() => page.props.flash || {});
 
-function activate(id) {
-    router.post(route('semesters.activate', id));
-}
+const showModal = ref(false);
+const targetSemester = ref(null);
+
+const openActivateModal = (semester) => {
+    targetSemester.value = semester;
+    showModal.value = true;
+};
 
 function destroy(sem) {
     if (confirm(`Hapus Semester ${sem.semester_number}? Pastikan tidak ada nilai atau rapor yang terkait.`)) {
@@ -95,7 +100,7 @@ function destroy(sem) {
                                     v-if="!sem.is_active"
                                     size="sm"
                                     variant="outline"
-                                    @click="activate(sem.id)"
+                                    @click="openActivateModal(sem)"
                                 >
                                     Aktifkan
                                 </Button>
@@ -122,4 +127,6 @@ function destroy(sem) {
             </Link>
         </div>
     </div>
+
+    <CarryOverConfirmModal :show="showModal" :semester="targetSemester" @close="showModal = false" />
 </template>
