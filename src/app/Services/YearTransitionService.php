@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\AcademicYear;
 use App\Models\SchoolClass;
+use App\Models\Semester;
 use App\Models\Student;
+use App\Models\StudentClassEnrollment;
 use App\Models\StudentMutation;
 use App\Models\User;
 use App\Models\YearTransitionLog;
@@ -125,6 +127,8 @@ class YearTransitionService
                 'to_class_name'    => $toClassName,
                 'reason'           => $reason,
                 'warnings'         => $warnings,
+                'source_ay_id'     => $sourceAyId,
+                'target_ay_id'     => $targetAyId,
             ];
 
             $summary[match ($action) {
@@ -303,6 +307,13 @@ class YearTransitionService
             'date'          => now()->toDateString(),
             'reason'        => $mutation['reason'],
         ]);
+        $this->writeTransitionEnrollment(
+            studentId: $student->id,
+            sourceAcademicYearId: $mutation['source_ay_id'] ?? null,
+            targetAcademicYearId: $mutation['target_ay_id'] ?? null,
+            targetClassId: $newClass->id,
+            sourceStatus: StudentClassEnrollment::STATUS_PROMOTED_OUT,
+        );
     }
 
     private function applyGraduation(Student $student, array $mutation): void
@@ -318,6 +329,13 @@ class YearTransitionService
             'date'          => now()->toDateString(),
             'reason'        => $mutation['reason'],
         ]);
+        $this->writeTransitionEnrollment(
+            studentId: $student->id,
+            sourceAcademicYearId: $mutation['source_ay_id'] ?? null,
+            targetAcademicYearId: null,
+            targetClassId: null,
+            sourceStatus: StudentClassEnrollment::STATUS_GRADUATED,
+        );
     }
 
     private function applyRetention(Student $student, array $mutation, array $classMap): void
@@ -362,6 +380,13 @@ class YearTransitionService
             'date'          => now()->toDateString(),
             'reason'        => $mutation['reason'],
         ]);
+        $this->writeTransitionEnrollment(
+            studentId: $student->id,
+            sourceAcademicYearId: $mutation['source_ay_id'] ?? null,
+            targetAcademicYearId: $mutation['target_ay_id'] ?? null,
+            targetClassId: $newClass->id,
+            sourceStatus: StudentClassEnrollment::STATUS_RETAINED_OUT,
+        );
     }
 
     private function applyExit(Student $student, array $mutation): void
@@ -378,6 +403,53 @@ class YearTransitionService
             'date'          => now()->toDateString(),
             'reason'        => $mutation['reason'],
         ]);
+        $exitStatus = $mutation['action'] === 'dropout'
+            ? StudentClassEnrollment::STATUS_DROPPED_OUT
+            : StudentClassEnrollment::STATUS_TRANSFERRED_OUT;
+        $this->writeTransitionEnrollment(
+            studentId: $student->id,
+            sourceAcademicYearId: $mutation['source_ay_id'] ?? null,
+            targetAcademicYearId: null,
+            targetClassId: null,
+            sourceStatus: $exitStatus,
+        );
+    }
+
+    /**
+     * After year transition mutation is applied, close the source-AY terminal-semester
+     * enrollment and (if applicable) open a new enrollment in target AY Sem Ganjil.
+     */
+    private function writeTransitionEnrollment(
+        int $studentId,
+        ?int $sourceAcademicYearId,
+        ?int $targetAcademicYearId,
+        ?int $targetClassId,
+        string $sourceStatus,
+    ): void {
+        $sync = app(StudentEnrollmentSync::class);
+
+        if ($sourceAcademicYearId) {
+            $sync->closeLatestEnrollmentInAcademicYear(
+                $studentId,
+                $sourceAcademicYearId,
+                $sourceStatus,
+                'Year transition',
+            );
+        }
+
+        if ($targetAcademicYearId && $targetClassId) {
+            $targetSem1 = Semester::where('academic_year_id', $targetAcademicYearId)
+                ->where('semester_number', 1)
+                ->first();
+            if ($targetSem1) {
+                $sync->writeEnrollment(
+                    studentId: $studentId,
+                    semesterId: $targetSem1->id,
+                    classId: $targetClassId,
+                    status: StudentClassEnrollment::STATUS_ACTIVE,
+                );
+            }
+        }
     }
 
     /**
