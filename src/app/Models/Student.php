@@ -25,6 +25,7 @@ class Student extends Model
 
     protected $casts = [
         'birth_date' => 'date',
+        'class_id'   => 'integer',
     ];
 
     public function class(): BelongsTo
@@ -52,6 +53,10 @@ class Student extends Model
         return $this->hasMany(StudentMutation::class)->orderBy('date', 'desc');
     }
 
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class);
+    }
 
     public function siblings(): HasMany
     {

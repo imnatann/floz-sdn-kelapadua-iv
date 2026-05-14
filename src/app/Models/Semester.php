@@ -35,6 +35,11 @@ class Semester extends Model
         return $this->hasMany(ReportCard::class);
     }
 
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class);
+    }
+
     public function label(): string
     {
         return "Semester {$this->semester_number} - {$this->academicYear->name}";

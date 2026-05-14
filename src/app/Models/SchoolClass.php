@@ -42,6 +42,11 @@ class SchoolClass extends Model
         return $this->hasMany(Student::class, 'class_id');
     }
 
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class, 'class_id');
+    }
+
     public function grades(): HasMany
     {
         return $this->hasMany(Grade::class, 'class_id');
