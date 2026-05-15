@@ -65,15 +65,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('students', StudentController::class);
 
     // Phase 3: Temporal/Historical Tracking
-    // TODO: Phase 3 Task 2 — StudentTimelineController will be created
-    // Route::get('students/{student}/timeline/{semester}', [\App\Http\Controllers\StudentTimelineController::class, 'show'])
-    //     ->name('students.timeline');
-    // TODO: Phase 3 Task 4 — StudentExitController will be created
-    // Route::post('students/{student}/exit', [\App\Http\Controllers\StudentExitController::class, 'store'])
-    //     ->name('students.exit');
-    // TODO: Phase 3 Task 6 — importHistorical method will be added to StudentController
-    // Route::post('students/import-historical', [\App\Http\Controllers\StudentController::class, 'importHistorical'])
-    //     ->name('students.import-historical');
+    Route::get('students/{student}/timeline/{semester}', [\App\Http\Controllers\StudentTimelineController::class, 'show'])
+        ->name('students.timeline');
+    Route::post('students/{student}/exit', [\App\Http\Controllers\StudentExitController::class, 'store'])
+        ->name('students.exit');
+    Route::post('students/import-historical', [\App\Http\Controllers\StudentController::class, 'importHistorical'])
+        ->name('students.import-historical');
 
     // Staff (Teachers)
     Route::resource('staff', TeacherController::class)->parameters(['staff' => 'staff']);
