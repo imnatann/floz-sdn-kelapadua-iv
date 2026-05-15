@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\SchoolClass;
 use App\Imports\StudentsImport;
+use App\Imports\HistoricalEnrollmentsImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -59,6 +60,24 @@ class StudentController extends Controller
         } catch (\Exception $e) {
             return back()->withErrors(['file' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
+    }
+
+    public function importHistorical(Request $request)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('create', Student::class);
+
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv',
+        ]);
+
+        $import = new HistoricalEnrollmentsImport();
+        Excel::import($import, $request->file('file'));
+
+        if (! empty($import->errors)) {
+            return back()->withErrors(['file' => implode('<br>', $import->errors)]);
+        }
+
+        return back()->with('success', "Import berhasil: {$import->imported} enrollment.");
     }
 
     #[OA\Get(
