@@ -1,6 +1,7 @@
 <script setup>
 import { Link, Head, router, usePage } from '@inertiajs/vue3';
 import ImportModal from './ImportModal.vue';
+import HistoricalImportModal from './HistoricalImportModal.vue';
 import { ref, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
@@ -65,6 +66,7 @@ const statusLabel = (s) => ({
 }[s] || s);
 
 const showImportModal = ref(false);
+const showHistoricalImport = ref(false);
 const permissions = usePage().props.auth.permissions;
 
 const deleteStudent = (student) => {
@@ -86,6 +88,10 @@ const deleteStudent = (student) => {
         <p class="mt-0.5 text-sm text-slate-400">Kelola data siswa sekolah</p>
       </div>
       <div class="flex gap-2">
+        <Button v-if="permissions.manage_students" variant="secondary" size="sm" @click="showHistoricalImport = true">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Import Riwayat
+        </Button>
         <Button v-if="permissions.manage_students" variant="secondary" size="sm" @click="showImportModal = true">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           Import Excel
@@ -198,4 +204,5 @@ const deleteStudent = (student) => {
       <Pagination :links="students.links" />
     </div>
   </div>
+  <HistoricalImportModal :show="showHistoricalImport" @close="showHistoricalImport = false" />
 </template>
