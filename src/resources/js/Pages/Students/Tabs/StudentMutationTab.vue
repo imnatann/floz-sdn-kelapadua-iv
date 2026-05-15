@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import Badge from '@/Components/UI/Badge.vue';
 import Card from '@/Components/UI/Card.vue';
 
@@ -62,15 +63,21 @@ const typeColor = (t) => ({
             <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-400">Tahun / Semester</th>
             <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-400">Kelas</th>
             <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-400">Status</th>
+            <th class="px-4 py-2 text-right text-xs font-semibold uppercase text-slate-400">Aksi</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="e in sortedEnrollments" :key="e.id" class="border-b border-slate-100">
+          <tr v-for="e in sortedEnrollments" :key="e.id" class="border-b border-slate-100 hover:bg-slate-50">
             <td class="px-4 py-2">{{ e.semester?.academic_year?.name }} — Sem {{ e.semester?.semester_number }}</td>
             <td class="px-4 py-2">{{ e.school_class?.name || '—' }}</td>
             <td class="px-4 py-2">
               <span class="text-xs font-medium">{{ enrollmentStatusLabel(e.status) }}</span>
               <span v-if="e.exit_date" class="ml-1 text-[10px] text-slate-400">({{ new Date(e.exit_date).toLocaleDateString('id-ID') }})</span>
+            </td>
+            <td class="px-4 py-2 text-right">
+              <Link :href="`/students/${student.id}/timeline/${e.semester_id}`" class="text-xs font-medium text-orange-600 hover:underline">
+                Lihat detail
+              </Link>
             </td>
           </tr>
         </tbody>
