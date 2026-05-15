@@ -8,6 +8,7 @@ import StudentProfileTab from './Tabs/StudentProfileTab.vue';
 import StudentAcademicTab from './Tabs/StudentAcademicTab.vue';
 import StudentMutationTab from './Tabs/StudentMutationTab.vue';
 import StudentCounselingTab from './Tabs/StudentCounselingTab.vue';
+import ExitConfirmModal from './ExitConfirmModal.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -24,6 +25,7 @@ const tabs = [
 ];
 
 const activeTab = ref('profile');
+const showExitModal = ref(false);
 
 const statusColor = (s) => s === 'active' ? 'emerald' : s === 'graduated' ? 'blue' : 'amber';
 const statusLabel = (s) => ({ active: 'Aktif', graduated: 'Lulus', transferred: 'Pindah', dropout: 'Keluar' }[s] || s);
@@ -55,6 +57,10 @@ const permissions = usePage().props.auth.permissions;
         </div>
       </div>
       <div class="flex gap-2">
+        <Button v-if="permissions.manage_students && student.status === 'active'" variant="outline" size="sm" @click="showExitModal = true" class="text-red-600 border-red-200 hover:bg-red-50">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Tandai Keluar
+        </Button>
         <Button v-if="permissions.manage_students" :href="`/students/${student.id}/edit`" variant="outline" size="sm">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           Edit Siswa
@@ -110,4 +116,5 @@ const permissions = usePage().props.auth.permissions;
       <component :is="tabs.find(t => t.id === activeTab).component" :student="student" :academic-history="academicHistory" />
     </div>
   </div>
+  <ExitConfirmModal :show="showExitModal" :student="student" @close="showExitModal = false" />
 </template>
