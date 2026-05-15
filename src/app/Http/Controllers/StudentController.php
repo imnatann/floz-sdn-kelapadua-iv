@@ -133,21 +133,8 @@ class StudentController extends Controller
 
         $semesterId = $request->integer('semester_id') ?: null;
 
-        // Bug A: when AY is selected without explicit semester, default to the
-        // most-recently-numbered semester of that AY (so historical roster shows).
-        if (! $semesterId && $selectedAyId) {
-            $semesterId = \App\Models\Semester::where('academic_year_id', $selectedAyId)
-                ->orderByDesc('semester_number')
-                ->value('id');
-        }
-
-        // NOTE: do NOT cache the LengthAwarePaginator — it bakes absolute URLs
-        // (host + scheme) from request()->url() at generation time. Reusing a
-        // cached paginator from one host (e.g. ngrok) on a different origin
-        // (e.g. 127.0.0.1) produces cross-origin pagination links and the
-        // browser blocks the XHR with a CORS preflight redirect error.
         if ($semesterId) {
-            // Historical roster: join enrollments, return all statuses
+            // Specific semester selected — show enrollments for that semester
             $students = Student::query()
                 ->select('students.*')
                 ->selectRaw('sce.class_id as enrollment_class_id, sce.status as enrollment_status, sce.exit_date as enrollment_exit_date')
@@ -162,8 +149,39 @@ class StudentController extends Controller
                 ->orderByDesc('students.id')
                 ->paginate(20)
                 ->withQueryString();
+        } elseif ($selectedAyId) {
+            // AY selected, semester = "Semua" — show students who had any enrollment
+            // in any semester of that AY. Pick each student's latest enrollment
+            // (max semester_number) for the displayed status/class.
+            $latestSceSub = \Illuminate\Support\Facades\DB::table('student_class_enrollments as sce')
+                ->select('sce.student_id', \Illuminate\Support\Facades\DB::raw('MAX(sem.semester_number) as max_sem_num'))
+                ->join('semesters as sem', 'sem.id', '=', 'sce.semester_id')
+                ->where('sem.academic_year_id', $selectedAyId)
+                ->groupBy('sce.student_id');
+
+            $students = Student::query()
+                ->select('students.*')
+                ->selectRaw('sce.class_id as enrollment_class_id, sce.status as enrollment_status, sce.exit_date as enrollment_exit_date')
+                ->joinSub($latestSceSub, 'latest', 'latest.student_id', '=', 'students.id')
+                ->join('semesters as sem', function ($j) use ($selectedAyId) {
+                    $j->on('sem.semester_number', '=', 'latest.max_sem_num')
+                        ->where('sem.academic_year_id', $selectedAyId);
+                })
+                ->join('student_class_enrollments as sce', function ($j) {
+                    $j->on('sce.student_id', '=', 'students.id')
+                        ->on('sce.semester_id', '=', 'sem.id');
+                })
+                ->with(['class.academicYear:id,name,is_active'])
+                ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
+                    $qq->where('students.name', 'like', "%{$s}%")
+                       ->orWhere('students.nis', 'like', "%{$s}%");
+                }))
+                ->when($request->class_id, fn($q, $c) => $q->where('sce.class_id', $c))
+                ->orderByDesc('students.id')
+                ->paginate(20)
+                ->withQueryString();
         } else {
-            // Current view (existing behavior, unchanged)
+            // No AY, no semester — legacy current view
             $students = Student::query()
                 ->with('class.academicYear:id,name,is_active')
                 ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
@@ -172,7 +190,6 @@ class StudentController extends Controller
                 }))
                 ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
                 ->when($request->status, fn($q, $s) => $q->where('status', $s))
-                ->when($selectedAyId, fn($q, $ay) => $q->whereHas('class', fn($cq) => $cq->where('academic_year_id', $ay)))
                 ->latest()
                 ->paginate(20)
                 ->withQueryString();
