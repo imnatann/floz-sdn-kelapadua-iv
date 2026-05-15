@@ -72,39 +72,71 @@ class EnrollmentCarryOverService
 
     /**
      * Atomically carry over active enrollments from the previous semester
-     * into `$targetSemesterId`. Idempotent: existing rows are not duplicated.
+     * into `$targetSemesterId`. Idempotent.
+     *
+     * @param  array<int,string>  $overrides  Optional map student_id => status. Students with non-active override
+     *                                        get their source enrollment closed with that status, no target row.
      *
      * @return array{carried:int, skipped:int, source_semester_id:?int, target_semester_id:int}
      */
-    public function execute(int $targetSemesterId): array
+    public function execute(int $targetSemesterId, array $overrides = []): array
     {
-        return DB::transaction(function () use ($targetSemesterId) {
+        return DB::transaction(function () use ($targetSemesterId, $overrides) {
             $plan = $this->preview($targetSemesterId);
 
-            if ($plan['source_semester_id'] === null || empty($plan['carry_over'])) {
+            if ($plan['source_semester_id'] === null) {
                 return [
                     'carried'            => 0,
                     'skipped'            => count($plan['skipped']),
-                    'source_semester_id' => $plan['source_semester_id'],
+                    'source_semester_id' => null,
                     'target_semester_id' => $targetSemesterId,
                 ];
             }
 
+            $studentStatusMap = [
+                'transferred_out' => 'transferred',
+                'dropped_out'     => 'dropout',
+                'graduated'       => 'graduated',
+                'retained_out'    => 'active',
+            ];
+
             $now = now();
-            $rows = [];
+            $rowsToCarry = [];
+            $exits = [];
+
             foreach ($plan['carry_over'] as $entry) {
-                $rows[] = [
-                    'student_id'  => $entry['student_id'],
-                    'semester_id' => $targetSemesterId,
-                    'class_id'    => $entry['class_id'],
-                    'status'      => StudentClassEnrollment::STATUS_ACTIVE,
-                    'created_at'  => $now,
-                    'updated_at'  => $now,
-                ];
+                $override = $overrides[$entry['student_id']] ?? StudentClassEnrollment::STATUS_ACTIVE;
+                if ($override === StudentClassEnrollment::STATUS_ACTIVE) {
+                    $rowsToCarry[] = [
+                        'student_id'  => $entry['student_id'],
+                        'semester_id' => $targetSemesterId,
+                        'class_id'    => $entry['class_id'],
+                        'status'      => StudentClassEnrollment::STATUS_ACTIVE,
+                        'created_at'  => $now,
+                        'updated_at'  => $now,
+                    ];
+                } else {
+                    $exits[$entry['student_id']] = $override;
+                }
+            }
+
+            foreach ($exits as $studentId => $exitStatus) {
+                StudentClassEnrollment::where('student_id', $studentId)
+                    ->where('semester_id', $plan['source_semester_id'])
+                    ->update([
+                        'status'      => $exitStatus,
+                        'exit_date'   => $now->toDateString(),
+                        'exit_reason' => 'Set during semester transition',
+                    ]);
+                if (isset($studentStatusMap[$exitStatus]) && $studentStatusMap[$exitStatus] !== 'active') {
+                    \App\Models\Student::where('id', $studentId)->update(['status' => $studentStatusMap[$exitStatus]]);
+                }
             }
 
             $before = StudentClassEnrollment::where('semester_id', $targetSemesterId)->count();
-            DB::table('student_class_enrollments')->insertOrIgnore($rows);
+            if (! empty($rowsToCarry)) {
+                DB::table('student_class_enrollments')->insertOrIgnore($rowsToCarry);
+            }
             $after = StudentClassEnrollment::where('semester_id', $targetSemesterId)->count();
 
             return [

@@ -87,7 +87,10 @@ class SemesterController extends Controller
             Semester::where('is_active', true)->update(['is_active' => false]);
             $semester->update(['is_active' => true]);
 
-            return app(EnrollmentCarryOverService::class)->execute($semester->id);
+            $overrides = collect(request()->input('overrides', []))
+                ->mapWithKeys(fn ($v, $k) => [(int) $k => (string) $v])
+                ->toArray();
+            return app(EnrollmentCarryOverService::class)->execute($semester->id, $overrides);
         });
 
         $msg = "Semester {$semester->semester_number} sekarang aktif.";
