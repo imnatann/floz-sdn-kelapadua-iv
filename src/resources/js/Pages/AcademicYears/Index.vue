@@ -16,8 +16,11 @@ const page = usePage();
 const canManage = computed(() => page.props.auth?.permissions?.manage_academic_years);
 const flash = computed(() => page.props.flash || {});
 
-function activate(id) {
-    router.post(route('academic-years.activate', id), {}, {
+const hasActiveAy = computed(() => props.academicYears?.data?.some(ay => ay.is_active));
+
+function activateBootstrap(ay) {
+    if (!confirm(`Tandai ${ay.name} sebagai TA aktif inisial? Setelah ada TA aktif, perubahan harus via Kenaikan Kelas.`)) return;
+    router.post(route('academic-years.activate', ay.id), {}, {
         preserveScroll: false,
         replace: false,
     });
@@ -94,14 +97,23 @@ function destroy(id) {
                         </td>
                         <td class="px-4 py-3">
                             <div v-if="canManage" class="flex items-center gap-2 flex-wrap">
-                                <Button
-                                    v-if="!ay.is_active"
-                                    size="sm"
-                                    variant="outline"
-                                    @click="activate(ay.id)"
+                                <span v-if="ay.is_active" class="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                    Aktif
+                                </span>
+                                <Link
+                                    v-else-if="hasActiveAy"
+                                    :href="`/year-transition/create?target_academic_year_id=${ay.id}`"
+                                    class="inline-flex items-center rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
                                 >
-                                    Aktifkan
-                                </Button>
+                                    Mulai Kenaikan Kelas
+                                </Link>
+                                <button
+                                    v-else
+                                    @click="activateBootstrap(ay)"
+                                    class="inline-flex items-center rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                                >
+                                    Tandai Aktif (Inisial)
+                                </button>
                                 <Link :href="route('academic-years.edit', ay.id)">
                                     <Button size="sm" variant="ghost">Edit</Button>
                                 </Link>
