@@ -180,6 +180,15 @@ class YearTransitionService
         array $overrides,
         User $admin
     ): YearTransitionLog {
+        // PREREQ: Source AY Sem 2 must be active (naik kelas only at end of school year)
+        $sourceSem2 = \App\Models\Semester::where('academic_year_id', $sourceAyId)
+            ->where('semester_number', 2)
+            ->where('is_active', true)
+            ->first();
+        if (! $sourceSem2) {
+            throw new \RuntimeException('Kenaikan kelas hanya bisa dieksekusi saat Sem 2 dari tahun ajaran sumber sedang aktif.');
+        }
+
         // BLOCK-5: Acquire advisory lock to prevent concurrent execution
         $lockKey = "year_transition_{$sourceAyId}_{$targetAyId}";
         $lock    = Cache::lock($lockKey, 120);
