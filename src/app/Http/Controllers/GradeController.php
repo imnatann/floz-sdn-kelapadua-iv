@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Grade;
 use App\Models\SchoolClass;
 use App\Models\Semester;
-use App\Models\Student;
+use App\Models\StudentClassEnrollment;
 use App\Models\Subject;
+use App\Models\TeachingAssignment;
 use App\Services\GradeCalculationService;
 use App\Services\ReportCardService;
 use App\Notifications\GradePostedNotification;
@@ -37,50 +39,149 @@ class GradeController extends Controller
         \Illuminate\Support\Facades\Gate::authorize('viewAny', Grade::class);
 
         $user = $request->user();
-        $classesQuery = SchoolClass::where('status', 'active')->with('academicYear')->orderBy('name');
+        $activeAy = AcademicYear::where('is_active', true)->first();
+        $requestedAyId = $request->integer('academic_year_id') ?: null;
+        $selectedAyId = $requestedAyId ?: $activeAy?->id;
+
+        $academicYears = AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+        $student = ($user->isStudent() && $user->student) ? $user->student : null;
+
+        if ($student) {
+            $academicYears = AcademicYear::query()
+                ->where(function ($query) use ($student) {
+                    $query->whereHas('semesters.enrollments', fn ($q) => $q->where('student_id', $student->id))
+                        ->orWhereHas('semesters.grades', fn ($q) => $q->where('student_id', $student->id))
+                        ->orWhereHas('classes.students', fn ($q) => $q->where('students.id', $student->id));
+                })
+                ->orderByDesc('start_date')
+                ->get(['id', 'name', 'is_active']);
+
+            if ($academicYears->isEmpty() && $activeAy) {
+                $academicYears = AcademicYear::whereKey($activeAy->id)->get(['id', 'name', 'is_active']);
+            }
+
+            $selectedAyId = $requestedAyId
+                ?: (($activeAy && $academicYears->contains('id', $activeAy->id))
+                    ? $activeAy->id
+                    : $academicYears->first()?->id);
+        }
+
+        $classesQuery = SchoolClass::query()
+            ->with('academicYear')
+            ->orderBy('grade_level')
+            ->orderBy('name');
 
         // Scope teacher: only classes they are homeroom of OR have a TA in
         if ($user->isTeacher() && $user->teacher) {
             $teacherId = $user->teacher->id;
-            $taClassIds = \App\Models\TeachingAssignment::where('teacher_id', $teacherId)->pluck('class_id')->all();
+            $taClassIds = TeachingAssignment::where('teacher_id', $teacherId)->pluck('class_id')->all();
             $homeroomClassIds = SchoolClass::where('homeroom_teacher_id', $teacherId)->pluck('id')->all();
             $visibleIds = array_values(array_unique(array_merge($taClassIds, $homeroomClassIds)));
-            $classesQuery->whereIn('id', $visibleIds ?: [0]);
-        } elseif ($user->isStudent() && $user->student) {
-            $classesQuery->where('id', $user->student->class_id);
+            $classesQuery->where('status', 'active')
+                ->when($selectedAyId, fn ($q, $ay) => $q->where('academic_year_id', $ay))
+                ->whereIn('id', $visibleIds ?: [0]);
+        } elseif ($student) {
+            $student->loadMissing('class');
+
+            $enrollmentClassIds = StudentClassEnrollment::query()
+                ->where('student_id', $student->id)
+                ->whereHas('semester', fn ($q) => $q->when($selectedAyId, fn ($qq, $ay) => $qq->where('academic_year_id', $ay)))
+                ->pluck('class_id');
+
+            $gradeClassIds = Grade::query()
+                ->where('student_id', $student->id)
+                ->whereHas('semester', fn ($q) => $q->when($selectedAyId, fn ($qq, $ay) => $qq->where('academic_year_id', $ay)))
+                ->pluck('class_id');
+
+            $currentClassId = $student->class && (! $selectedAyId || (int) $student->class->academic_year_id === (int) $selectedAyId)
+                ? [$student->class_id]
+                : [];
+
+            $visibleClassIds = $enrollmentClassIds
+                ->merge($gradeClassIds)
+                ->merge($currentClassId)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $classesQuery->whereIn('id', $visibleClassIds->all() ?: [0]);
+        } else {
+            $classesQuery->where('status', 'active')
+                ->when($selectedAyId, fn ($q, $ay) => $q->where('academic_year_id', $ay));
         }
 
         $classes = $classesQuery->get();
-        $semesters = Semester::where('is_active', true)->with('academicYear')->get();
+
+        if ($student) {
+            $visibleSemesterIds = StudentClassEnrollment::query()
+                ->where('student_id', $student->id)
+                ->pluck('semester_id')
+                ->merge(Grade::where('student_id', $student->id)->pluck('semester_id'))
+                ->filter()
+                ->unique()
+                ->values();
+
+            $semesters = Semester::query()
+                ->whereIn('id', $visibleSemesterIds->all() ?: [0])
+                ->when($selectedAyId, fn ($q, $ay) => $q->where('academic_year_id', $ay))
+                ->with('academicYear')
+                ->orderBy('semester_number')
+                ->get();
+        } else {
+            $semesters = Semester::query()
+                ->when($selectedAyId, fn ($q, $ay) => $q->where('academic_year_id', $ay))
+                ->with('academicYear')
+                ->orderBy('semester_number')
+                ->get();
+        }
+
         $subjects = Subject::active()->get();
 
         $grades = null;
-        if ($request->class_id && $request->semester_id) {
+        $classId = $request->integer('class_id') ?: null;
+        $semesterId = $request->integer('semester_id') ?: null;
+        $subjectId = $request->integer('subject_id') ?: null;
+
+        if ($student) {
+            abort_if($classId && ! $classes->contains('id', $classId), 403, 'Kelas ini tidak ada di riwayat siswa.');
+            abort_if($semesterId && ! $semesters->contains('id', $semesterId), 403, 'Semester ini tidak ada di riwayat siswa.');
+        }
+
+        if ($classId && $semesterId) {
             // Scope grades to own student record if siswa, otherwise full class.
-            $scopeStudentId = ($user->isStudent() && $user->student) ? $user->student->id : null;
+            $scopeStudentId = $student?->id;
 
             // Cache key MUST include the scope to prevent cross-user cache poisoning.
             $cacheKey = 'grades_' . md5(json_encode([
-                $request->only(['class_id', 'semester_id', 'subject_id']),
+                [
+                    'academic_year_id' => $selectedAyId,
+                    'class_id' => $classId,
+                    'semester_id' => $semesterId,
+                    'subject_id' => $subjectId,
+                ],
                 'student_scope' => $scopeStudentId,
             ]));
 
-            $grades = cache()->remember($cacheKey, 60, function () use ($request, $scopeStudentId) {
-                return Grade::with(['student', 'subject', 'teacher'])
-                    ->where('class_id', $request->class_id)
-                    ->where('semester_id', $request->semester_id)
-                    ->when($request->subject_id, fn($q, $s) => $q->where('subject_id', $s))
+            $grades = cache()->remember($cacheKey, 60, function () use ($classId, $semesterId, $subjectId, $scopeStudentId) {
+                return Grade::with(['student', 'subject', 'teacher', 'semester.academicYear', 'schoolClass.academicYear'])
+                    ->where('class_id', $classId)
+                    ->where('semester_id', $semesterId)
+                    ->when($subjectId, fn($q, $s) => $q->where('subject_id', $s))
                     ->when($scopeStudentId, fn($q, $sid) => $q->where('student_id', $sid))
                     ->get();
             });
         }
 
         return Inertia::render('Grades/Index', [
+            'academicYears' => $academicYears,
             'classes'    => $classes,
             'semesters'  => $semesters,
             'subjects'   => $subjects,
             'grades'     => $grades,
-            'filters'    => $request->only(['class_id', 'semester_id', 'subject_id']),
+            'filters'    => array_merge(
+                $request->only(['class_id', 'semester_id', 'subject_id']),
+                ['academic_year_id' => $selectedAyId]
+            ),
         ]);
     }
 

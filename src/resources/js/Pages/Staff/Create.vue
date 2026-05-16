@@ -15,6 +15,7 @@ const form = useForm({
   birth_date: '',
   address: '',
   status: 'active',
+  create_account: false,
 });
 
 const submit = () => {
@@ -115,6 +116,29 @@ const submit = () => {
           <label class="mb-1.5 block text-xs font-medium text-slate-600">Alamat</label>
           <textarea v-model="form.address" rows="3" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 shadow-sm transition-colors placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20" placeholder="Alamat lengkap" />
           <p v-if="form.errors.address" class="mt-1 text-xs text-red-500">{{ form.errors.address }}</p>
+        </div>
+      </div>
+
+      <!-- Account Section -->
+      <div class="border-t border-slate-100 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-700">Akun Login</h3>
+            <p class="text-xs text-slate-400">Akses masuk aplikasi untuk guru</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="create_account" type="checkbox" v-model="form.create_account" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+            <label for="create_account" class="text-sm font-medium text-slate-700">Buat Akun Otomatis</label>
+          </div>
+        </div>
+        <div v-if="form.create_account" class="mt-4 rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
+          <p class="font-medium">Akun akan dibuat dengan detail berikut:</p>
+          <ul class="mt-2 list-disc list-inside space-y-1 ml-2">
+            <li>Username: <strong>email guru</strong> (jika diisi) atau <strong>{NIP}@guru.sekolah.id</strong></li>
+            <li>Password Default: <strong>password</strong></li>
+          </ul>
+          <p class="mt-2 text-xs">Isi minimal Email atau NIP supaya akun bisa dibuat.</p>
+          <p v-if="form.errors.create_account" class="mt-2 text-xs text-red-600 font-medium">{{ form.errors.create_account }}</p>
         </div>
       </div>
 

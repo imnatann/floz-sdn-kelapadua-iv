@@ -9,6 +9,7 @@ import FormSelect from '@/Components/UI/FormSelect.vue';
 defineOptions({ layout: AppLayout });
 
 const props = defineProps({
+  academicYears: { type: Array, default: () => [] },
   classes: Array,
   semesters: Array,
   subjects: Array,
@@ -20,14 +21,24 @@ const page = usePage();
 const isStudent = computed(() => page.props.auth?.user?.role === 'student');
 const canManage = computed(() => !isStudent.value);
 
+const academicYearId = ref(props.filters?.academic_year_id || '');
 const classId = ref(props.filters?.class_id || '');
 const semesterId = ref(props.filters?.semester_id || '');
 const subjectId = ref(props.filters?.subject_id || '');
 
 const applyFilters = () => {
   router.get('/grades', {
-    class_id: classId.value, semester_id: semesterId.value, subject_id: subjectId.value,
+    academic_year_id: academicYearId.value,
+    class_id: classId.value,
+    semester_id: semesterId.value,
+    subject_id: subjectId.value,
   }, { preserveState: true });
+};
+
+const changeAcademicYear = () => {
+  classId.value = '';
+  semesterId.value = '';
+  applyFilters();
 };
 
 const openBatchInput = () => {
@@ -84,6 +95,14 @@ const predicateColor = (p) => p === 'A' ? 'emerald' : p === 'B' ? 'blue' : p ===
 
     <!-- Filters -->
     <div class="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="w-56">
+        <FormSelect v-model="academicYearId" label="Tahun Ajaran" @change="changeAcademicYear">
+          <option value="">— Pilih Tahun —</option>
+          <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
+            {{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}
+          </option>
+        </FormSelect>
+      </div>
       <div class="w-56">
         <FormSelect v-model="classId" label="Kelas" @change="applyFilters">
           <option value="">— Pilih Kelas —</option>

@@ -233,7 +233,10 @@ class YearTransitionService
                     $this->applyMutation($mutation, $classMap);
                 }
 
-                // 3. Write audit log (WARN-2: store plain arrays, not Eloquent models)
+                // 3. Move active academic period to target AY and Semester 1.
+                $this->activateTargetAcademicPeriod($targetAyId);
+
+                // 4. Write audit log (WARN-2: store plain arrays, not Eloquent models)
                 $log = YearTransitionLog::create([
                     'executed_by'             => $admin->id,
                     'source_academic_year_id' => $sourceAyId,
@@ -251,6 +254,21 @@ class YearTransitionService
             });
         } finally {
             $lock->release();
+        }
+    }
+
+    private function activateTargetAcademicPeriod(int $targetAyId): void
+    {
+        AcademicYear::query()->update(['is_active' => false]);
+        AcademicYear::whereKey($targetAyId)->update(['is_active' => true]);
+
+        $targetSem1 = Semester::where('academic_year_id', $targetAyId)
+            ->where('semester_number', 1)
+            ->first();
+
+        if ($targetSem1) {
+            Semester::query()->update(['is_active' => false]);
+            $targetSem1->update(['is_active' => true]);
         }
     }
 

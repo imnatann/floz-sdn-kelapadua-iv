@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Exam;
 use App\Models\ExamScore;
+use App\Models\AcademicYear;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Semester;
@@ -57,11 +58,47 @@ class ExamController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = SchoolClass::where('status', 'active')->with('academicYear:id,name,is_active');
 
-        if ($user->isStudent() && $user->student) {
-            // Students only see their own class
-            $query->where('id', $user->student->class_id);
+        // Filter by academic year: explicit query param, else default to active AY
+        $activeAy = AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+        $student = ($user->isStudent() && $user->student) ? $user->student : null;
+
+        $academicYears = AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+        $query = SchoolClass::query()->with('academicYear:id,name,is_active');
+
+        if ($student) {
+            $academicYears = AcademicYear::query()
+                ->whereHas('semesters.enrollments', fn ($q) => $q->where('student_id', $student->id))
+                ->orderByDesc('start_date')
+                ->get(['id', 'name', 'is_active']);
+
+            if ($academicYears->isEmpty() && $activeAy) {
+                $academicYears = AcademicYear::whereKey($activeAy->id)->get(['id', 'name', 'is_active']);
+            }
+
+            $selectedAyId = $request->integer('academic_year_id')
+                ?: (($activeAy && $academicYears->contains('id', $activeAy->id))
+                    ? $activeAy->id
+                    : $academicYears->first()?->id);
+
+            $enrollmentClassIds = StudentClassEnrollment::query()
+                ->where('student_id', $student->id)
+                ->whereHas('semester', fn ($q) => $q->when($selectedAyId, fn ($qq, $ay) => $qq->where('academic_year_id', $ay)))
+                ->pluck('class_id');
+
+            $student->loadMissing('class');
+            $currentClassId = $student->class && (! $selectedAyId || (int) $student->class->academic_year_id === (int) $selectedAyId)
+                ? [$student->class_id]
+                : [];
+
+            $classIds = $enrollmentClassIds
+                ->merge($currentClassId)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $query->whereIn('id', $classIds->all() ?: [0]);
         } elseif ($user->isTeacher() && $user->teacher) {
             $teacherId = $user->teacher->id;
             $classIds = DB::table('teaching_assignments')
@@ -74,18 +111,25 @@ class ExamController extends Controller
                 ->toArray();
 
             $allClassIds = array_unique(array_merge($classIds, $homeroomClassIds));
-            $query->whereIn('id', $allClassIds);
+            $query->where('status', 'active')->whereIn('id', $allClassIds);
+        } else {
+            $query->where('status', 'active');
         }
 
-        // Filter by academic year: explicit query param, else default to active AY
-        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
-        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
         if ($selectedAyId) {
             $query->where('academic_year_id', $selectedAyId);
         }
 
-        $classes = $query->withCount('students')->orderBy('grade_level')->orderBy('name')->get();
-        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+        $query->withCount([
+            'enrollments as students_count' => fn ($q) => $q
+                ->whereHas(
+                    'semester',
+                    fn ($qq) => $qq->when($selectedAyId, fn ($qqq, $ay) => $qqq->where('academic_year_id', $ay))
+                )
+                ->select(DB::raw('count(distinct student_id)')),
+        ]);
+
+        $classes = $query->orderBy('grade_level')->orderBy('name')->get();
 
         return Inertia::render('Exams/Index', [
             'classes'       => $classes,
@@ -100,21 +144,43 @@ class ExamController extends Controller
     public function classIndex(SchoolClass $class, Request $request)
     {
         $user = $request->user();
-        if ($user->isStudent() && $user->student && $user->student->class_id !== $class->id) {
-            abort(403, 'Anda hanya dapat melihat kelas Anda sendiri.');
+        $student = ($user->isStudent() && $user->student) ? $user->student : null;
+
+        $studentSemesterIds = collect();
+        if ($student) {
+            $studentSemesterIds = StudentClassEnrollment::query()
+                ->where('student_id', $student->id)
+                ->where('class_id', $class->id)
+                ->whereHas('semester', fn ($q) => $q->where('academic_year_id', $class->academic_year_id))
+                ->pluck('semester_id');
+
+            $student->loadMissing('class');
+            if ($student->class_id === $class->id && $student->class?->academic_year_id === $class->academic_year_id) {
+                $currentClassSemesterIds = Semester::where('academic_year_id', $class->academic_year_id)->pluck('id');
+                $studentSemesterIds = $studentSemesterIds->merge($currentClassSemesterIds);
+            }
+
+            $studentSemesterIds = $studentSemesterIds->filter()->unique()->values();
+            abort_if($studentSemesterIds->isEmpty(), 403, 'Anda hanya dapat melihat kelas yang ada di riwayat Anda.');
         }
 
         // Semester dropdown: all semesters belonging to the class's academic year (not just those with exams).
         $semesters = Semester::with('academicYear')
             ->where('academic_year_id', $class->academic_year_id)
+            ->when($student, fn ($q) => $q->whereIn('id', $studentSemesterIds->all()))
             ->orderBy('semester_number')
             ->get();
 
         $activeSemesterInAy = Semester::where('is_active', true)
             ->where('academic_year_id', $class->academic_year_id)
             ->first();
-        $selectedSemesterId = $request->integer('semester_id')
-            ?: ($activeSemesterInAy?->id ?? $semesters->first()?->id);
+        $requestedSemesterId = $request->integer('semester_id') ?: null;
+        abort_if($requestedSemesterId && ! $semesters->contains('id', $requestedSemesterId), 404, 'Semester tidak tersedia untuk kelas ini.');
+
+        $selectedSemesterId = $requestedSemesterId
+            ?: (($activeSemesterInAy && $semesters->contains('id', $activeSemesterInAy->id))
+                ? $activeSemesterInAy->id
+                : $semesters->first()?->id);
 
         if (!$selectedSemesterId) {
             return Inertia::render('Exams/ClassIndex', [

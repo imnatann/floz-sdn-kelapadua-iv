@@ -132,3 +132,79 @@ it('filters students by enrollment semester showing historical roster including 
     $pindahRow = collect($data)->firstWhere('name', 'Pindah');
     expect($pindahRow['enrollment_status'])->toBe('transferred_out');
 });
+
+it('displays the historical enrollment class for the selected academic year', function () {
+    $admin = makeAdmin();
+
+    $previousAy = AcademicYear::create([
+        'name' => '2026/2027',
+        'is_active' => false,
+        'start_date' => '2026-07-01',
+        'end_date' => '2027-06-30',
+    ]);
+    $previousSemester = Semester::create([
+        'academic_year_id' => $previousAy->id,
+        'semester_number' => 2,
+        'is_active' => false,
+        'start_date' => '2027-01-01',
+        'end_date' => '2027-06-30',
+    ]);
+    $previousClass = SchoolClass::create([
+        'name' => 'Kelas 1',
+        'grade_level' => 1,
+        'academic_year_id' => $previousAy->id,
+        'status' => 'active',
+    ]);
+
+    $currentAy = AcademicYear::create([
+        'name' => '2027/2028',
+        'is_active' => true,
+        'start_date' => '2027-07-01',
+        'end_date' => '2028-06-30',
+    ]);
+    $currentSemester = Semester::create([
+        'academic_year_id' => $currentAy->id,
+        'semester_number' => 1,
+        'is_active' => true,
+        'start_date' => '2027-07-01',
+        'end_date' => '2027-12-31',
+    ]);
+    $currentClass = SchoolClass::create([
+        'name' => 'Kelas 2',
+        'grade_level' => 2,
+        'academic_year_id' => $currentAy->id,
+        'status' => 'active',
+    ]);
+
+    $student = Student::create([
+        'nis' => '777',
+        'name' => 'Layen',
+        'class_id' => $currentClass->id,
+        'status' => 'active',
+    ]);
+
+    StudentClassEnrollment::create([
+        'student_id' => $student->id,
+        'semester_id' => $previousSemester->id,
+        'class_id' => $previousClass->id,
+        'status' => 'promoted_out',
+        'enrolled_at' => '2026-07-01',
+    ]);
+    StudentClassEnrollment::create([
+        'student_id' => $student->id,
+        'semester_id' => $currentSemester->id,
+        'class_id' => $currentClass->id,
+        'status' => 'active',
+        'enrolled_at' => '2027-07-01',
+    ]);
+
+    $response = $this->actingAs($admin)->get("/students?academic_year_id={$previousAy->id}");
+    $response->assertOk();
+
+    $layenRow = collect($response->viewData('page')['props']['students']['data'])
+        ->firstWhere('name', 'Layen');
+
+    expect($layenRow['enrollment_class_id'])->toBe($previousClass->id);
+    expect($layenRow['enrollment_class']['name'])->toBe('Kelas 1');
+    expect($layenRow['class']['name'])->toBe('Kelas 2');
+});

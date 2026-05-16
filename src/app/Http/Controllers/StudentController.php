@@ -139,6 +139,12 @@ class StudentController extends Controller
                 ->select('students.*')
                 ->selectRaw('sce.class_id as enrollment_class_id, sce.status as enrollment_status, sce.exit_date as enrollment_exit_date')
                 ->join('student_class_enrollments as sce', 'sce.student_id', '=', 'students.id')
+                ->leftJoin('classes as enrollment_classes', 'enrollment_classes.id', '=', 'sce.class_id')
+                ->addSelect([
+                    'enrollment_classes.name as enrollment_class_name',
+                    'enrollment_classes.grade_level as enrollment_class_grade_level',
+                    'enrollment_classes.academic_year_id as enrollment_class_academic_year_id',
+                ])
                 ->where('sce.semester_id', $semesterId)
                 ->with(['class.academicYear:id,name,is_active'])
                 ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
@@ -171,6 +177,12 @@ class StudentController extends Controller
                     $j->on('sce.student_id', '=', 'students.id')
                         ->on('sce.semester_id', '=', 'sem.id');
                 })
+                ->leftJoin('classes as enrollment_classes', 'enrollment_classes.id', '=', 'sce.class_id')
+                ->addSelect([
+                    'enrollment_classes.name as enrollment_class_name',
+                    'enrollment_classes.grade_level as enrollment_class_grade_level',
+                    'enrollment_classes.academic_year_id as enrollment_class_academic_year_id',
+                ])
                 ->with(['class.academicYear:id,name,is_active'])
                 ->when($request->search, fn($q, $s) => $q->where(function ($qq) use ($s) {
                     $qq->where('students.name', 'like', "%{$s}%")
@@ -195,6 +207,8 @@ class StudentController extends Controller
                 ->withQueryString();
         }
 
+        $students->getCollection()->transform(fn (Student $student) => $this->appendEnrollmentClass($student));
+
         // Classes filtered to selected AY (so the Kelas dropdown only shows kelas of that AY)
         $classes = SchoolClass::where('status', 'active')
             ->when($selectedAyId, fn($q, $ay) => $q->where('academic_year_id', $ay))
@@ -218,6 +232,26 @@ class StudentController extends Controller
                 ['academic_year_id' => $selectedAyId, 'semester_id' => $semesterId]
             ),
         ]);
+    }
+
+    private function appendEnrollmentClass(Student $student): Student
+    {
+        if (! $student->getAttribute('enrollment_class_id')) {
+            return $student;
+        }
+
+        $student->setAttribute('enrollment_class', [
+            'id' => (int) $student->getAttribute('enrollment_class_id'),
+            'name' => $student->getAttribute('enrollment_class_name'),
+            'grade_level' => $student->getAttribute('enrollment_class_grade_level') !== null
+                ? (int) $student->getAttribute('enrollment_class_grade_level')
+                : null,
+            'academic_year_id' => $student->getAttribute('enrollment_class_academic_year_id') !== null
+                ? (int) $student->getAttribute('enrollment_class_academic_year_id')
+                : null,
+        ]);
+
+        return $student;
     }
 
     public function create()
@@ -324,8 +358,10 @@ class StudentController extends Controller
 
         $student->load([
             'class.homeroomTeacher',
-            'grades.subject',
-            'grades.semester.academicYear',
+            'grades' => fn ($query) => $query
+                ->with(['subject', 'semester.academicYear', 'schoolClass.academicYear'])
+                ->orderBy('semester_id')
+                ->orderBy('subject_id'),
             'reportCards',
             'mutations.fromClass',
             'mutations.toClass',

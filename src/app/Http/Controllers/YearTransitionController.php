@@ -8,6 +8,7 @@ use App\Models\YearTransitionLog;
 use App\Services\YearTransitionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -20,12 +21,17 @@ class YearTransitionController extends Controller
         //
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         Gate::authorize('manage_year_transition');
 
+        $initialTargetAyId = $request->integer('target_academic_year_id') ?: null;
+
         return Inertia::render('YearTransition/Wizard', [
             'academicYears' => \App\Models\AcademicYear::orderByDesc('start_date')->get(),
+            'initialTargetAcademicYearId' => \App\Models\AcademicYear::whereKey($initialTargetAyId)->exists()
+                ? $initialTargetAyId
+                : null,
         ]);
     }
 

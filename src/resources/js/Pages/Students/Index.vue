@@ -46,6 +46,7 @@ watch([search, classId, status, academicYearId, semesterId], (newVals, oldVals) 
 });
 
 const genderLabel = (g) => g === 'male' ? 'L' : g === 'female' ? 'P' : '—';
+const classLabel = (student) => student.enrollment_class?.name || student.class?.name || '—';
 const statusColor = (s) => {
   if (s === 'active') return 'emerald';
   if (s === 'graduated') return 'blue';
@@ -166,7 +167,7 @@ const deleteStudent = (student) => {
                 </div>
               </td>
               <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ student.nis }}</td>
-              <td class="px-4 py-3 text-slate-500">{{ student.class?.name || '—' }}</td>
+              <td class="px-4 py-3 text-slate-500">{{ classLabel(student) }}</td>
               <td class="px-4 py-3 text-slate-500">{{ genderLabel(student.gender) }}</td>
               <td class="px-4 py-3">
                 <Badge :color="statusColor(student.enrollment_status || student.status)">

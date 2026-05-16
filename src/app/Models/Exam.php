@@ -17,8 +17,12 @@ class Exam extends Model
     ];
 
     protected $casts = [
-        'exam_date' => 'date',
-        'max_score' => 'decimal:2',
+        'exam_date'   => 'date',
+        'max_score'   => 'decimal:2',
+        'class_id'    => 'integer',
+        'subject_id'  => 'integer',
+        'semester_id' => 'integer',
+        'teacher_id'  => 'integer',
     ];
 
     public function schoolClass(): BelongsTo

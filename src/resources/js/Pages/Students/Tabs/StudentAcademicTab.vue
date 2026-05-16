@@ -16,6 +16,14 @@ const props = defineProps({
 });
 
 const predicateColor = (p) => p === 'A' ? 'emerald' : p === 'B' ? 'blue' : p === 'C' ? 'amber' : 'rose';
+const semesterLabel = (grade) => {
+  const semester = grade.semester;
+  if (!semester) return '-';
+
+  const academicYear = semester.academic_year?.name || semester.academicYear?.name;
+  return academicYear ? `${academicYear} - Sem ${semester.semester_number}` : `Semester ${semester.semester_number}`;
+};
+const classLabel = (grade) => grade.school_class?.name || grade.schoolClass?.name || '-';
 
 const chartData = computed(() => ({
   labels: props.academicHistory.map(h => h.semester),
@@ -63,6 +71,7 @@ const chartOptions = {
             <tr class="border-b border-slate-100">
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Mata Pelajaran</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Semester</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Kelas</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Nilai Akhir</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Predikat</th>
             </tr>
@@ -70,7 +79,8 @@ const chartOptions = {
           <tbody>
             <tr v-for="grade in student.grades" :key="grade.id" class="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
               <td class="px-4 py-3 font-medium text-slate-700">{{ grade.subject?.name }}</td>
-              <td class="px-4 py-3 text-slate-500">{{ grade.semester?.name ? (grade.semester.academicYear?.name + ' - Sem ' + grade.semester.semester_number) : '-' }}</td>
+              <td class="px-4 py-3 text-slate-500">{{ semesterLabel(grade) }}</td>
+              <td class="px-4 py-3 text-slate-500">{{ classLabel(grade) }}</td>
               <td class="px-4 py-3 font-mono font-semibold text-slate-700">{{ grade.final_score ?? '—' }}</td>
               <td class="px-4 py-3">
                 <Badge v-if="grade.predicate" :color="predicateColor(grade.predicate)" size="sm">{{ grade.predicate }}</Badge>

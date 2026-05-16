@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\AcademicYear;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Semester;
@@ -19,9 +20,47 @@ class AttendanceController extends Controller
     {
         $user = $request->user();
 
-        $query = SchoolClass::where('status', 'active')->with('academicYear:id,name,is_active');
+        // Filter by academic year: explicit query param, else default to active AY
+        $activeAy = AcademicYear::where('is_active', true)->first();
+        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
+        $student = ($user->isStudent() && $user->student) ? $user->student : null;
 
-        if ($user->isTeacher() && $user->teacher) {
+        $academicYears = AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+        $query = SchoolClass::query()->with('academicYear:id,name,is_active');
+
+        if ($student) {
+            $academicYears = AcademicYear::query()
+                ->whereHas('semesters.enrollments', fn ($q) => $q->where('student_id', $student->id))
+                ->orderByDesc('start_date')
+                ->get(['id', 'name', 'is_active']);
+
+            if ($academicYears->isEmpty() && $activeAy) {
+                $academicYears = AcademicYear::whereKey($activeAy->id)->get(['id', 'name', 'is_active']);
+            }
+
+            $selectedAyId = $request->integer('academic_year_id')
+                ?: (($activeAy && $academicYears->contains('id', $activeAy->id))
+                    ? $activeAy->id
+                    : $academicYears->first()?->id);
+
+            $enrollmentClassIds = StudentClassEnrollment::query()
+                ->where('student_id', $student->id)
+                ->whereHas('semester', fn ($q) => $q->when($selectedAyId, fn ($qq, $ay) => $qq->where('academic_year_id', $ay)))
+                ->pluck('class_id');
+
+            $student->loadMissing('class');
+            $currentClassId = $student->class && (! $selectedAyId || (int) $student->class->academic_year_id === (int) $selectedAyId)
+                ? [$student->class_id]
+                : [];
+
+            $classIds = $enrollmentClassIds
+                ->merge($currentClassId)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $query->whereIn('id', $classIds->all() ?: [0]);
+        } elseif ($user->isTeacher() && $user->teacher) {
             // Get classes where the teacher is either homeroom or teaches a subject
             $teacherId = $user->teacher->id;
             $classIds = DB::table('teaching_assignments')
@@ -34,20 +73,25 @@ class AttendanceController extends Controller
                 ->toArray();
 
             $allClassIds = array_unique(array_merge($classIds, $homeroomClassIds));
-            $query->whereIn('id', $allClassIds);
-        } elseif ($user->isStudent() && $user->student) {
-            $query->where('id', $user->student->class_id);
+            $query->where('status', 'active')->whereIn('id', $allClassIds);
+        } else {
+            $query->where('status', 'active');
         }
 
-        // Filter by academic year: explicit query param, else default to active AY
-        $activeAy = \App\Models\AcademicYear::where('is_active', true)->first();
-        $selectedAyId = $request->integer('academic_year_id') ?: $activeAy?->id;
         if ($selectedAyId) {
             $query->where('academic_year_id', $selectedAyId);
         }
 
-        $classes = $query->withCount('students')->orderBy('grade_level')->orderBy('name')->get();
-        $academicYears = \App\Models\AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']);
+        $query->withCount([
+            'enrollments as students_count' => fn ($q) => $q
+                ->whereHas(
+                    'semester',
+                    fn ($qq) => $qq->when($selectedAyId, fn ($qqq, $ay) => $qqq->where('academic_year_id', $ay))
+                )
+                ->select(DB::raw('count(distinct student_id)')),
+        ]);
+
+        $classes = $query->orderBy('grade_level')->orderBy('name')->get();
 
         return Inertia::render('Attendance/Index', [
             'classes'       => $classes,

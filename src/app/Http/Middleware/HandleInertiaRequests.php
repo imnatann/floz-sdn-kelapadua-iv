@@ -59,6 +59,11 @@ class HandleInertiaRequests extends Middleware
                     ];
                 },
             ],
+            'session' => fn () => [
+                'expiresAt' => $request->session()->get(EnsureWebSessionIsFresh::EXPIRES_AT_SESSION_KEY),
+                'timeoutSeconds' => EnsureWebSessionIsFresh::timeoutSeconds(),
+                'extendGraceSeconds' => EnsureWebSessionIsFresh::extendGraceSeconds(),
+            ],
             'school' => fn () => [
                 'name'    => config('school.name'),
                 'address' => config('school.address'),

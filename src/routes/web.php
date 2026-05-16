@@ -18,7 +18,9 @@ use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OfflineAssignmentController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\ServerManagementController;
 use App\Http\Controllers\YearTransitionController;
+use App\Http\Middleware\EnsureWebSessionIsFresh;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,11 +42,12 @@ Route::get('/docs', function () {
 Route::controller(LoginController::class)->group(function () {
     Route::get('/login', 'showLoginForm')->name('login');
     Route::post('/login', 'login');
+    Route::post('/session/extend', 'extendSession')->middleware('auth')->name('session.extend');
     Route::post('/logout', 'logout')->name('logout');
 });
 
 // ─── School Routes (auth required) ──────────────────────────────────
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', EnsureWebSessionIsFresh::class])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -127,6 +130,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:school_admin')->group(function () {
         // Audit Logs
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+
+        // Server Management
+        Route::get('/server-management', [ServerManagementController::class, 'index'])
+            ->name('server-management.index');
 
         // Academic Years
         Route::resource('academic-years', AcademicYearController::class);

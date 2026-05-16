@@ -18,9 +18,13 @@ class Task extends Model
     ];
 
     protected $casts = [
-        'task_date' => 'date',
-        'due_date' => 'date',
-        'max_score' => 'decimal:2',
+        'task_date'   => 'date',
+        'due_date'    => 'date',
+        'max_score'   => 'decimal:2',
+        'class_id'    => 'integer',
+        'subject_id'  => 'integer',
+        'semester_id' => 'integer',
+        'teacher_id'  => 'integer',
     ];
 
     public function schoolClass(): BelongsTo

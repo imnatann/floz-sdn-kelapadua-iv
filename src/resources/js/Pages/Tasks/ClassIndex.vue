@@ -116,7 +116,7 @@ const formatDate = (raw) => {
           <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
         </FormSelect>
       </div>
-      <div v-if="isAdmin" class="w-full sm:w-72">
+      <div class="w-full sm:w-72">
         <FormSelect v-model="semesterId" label="Semester">
           <option v-for="sem in semesters" :key="sem.id" :value="sem.id">
             Sem. {{ sem.semester_number }} — {{ sem.academic_year?.name }}{{ sem.is_active ? ' (Aktif)' : '' }}

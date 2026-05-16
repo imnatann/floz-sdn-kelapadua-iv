@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import Toast from '@/Components/UI/Toast.vue';
 import NotificationDropdown from '@/Components/UI/NotificationDropdown.vue';
 
@@ -32,6 +33,7 @@ const navigation = computed(() => {
     { name: 'Tahun Ajaran', href: '/academic-years', icon: 'academic-years', show: permissions.manage_academic_years },
     { name: 'Kenaikan Kelas', href: '/year-transition', icon: 'year-transition', show: permissions.manage_year_transition },
     { name: 'Audit Logs', href: '/audit-logs', icon: 'audit-logs', show: user.value?.role === 'school_admin' },
+    { name: 'Manajemen Server', href: '/server-management', icon: 'server-management', show: user.value?.role === 'school_admin' },
   ];
 
   return items.filter(item => item.show);
@@ -58,6 +60,157 @@ const closeToast = () => {
     toast.value.show = false;
     // Clear flash manually if needed, but usually next request clears it
 };
+
+const sessionPromptOpen = ref(false);
+const sessionCountdown = ref(0);
+const extendingSession = ref(false);
+const sessionConfig = computed(() => page.props.session || {});
+const idleTimeoutMs = computed(() => Number(sessionConfig.value.timeoutSeconds || 900) * 1000);
+const promptGraceSeconds = computed(() => Number(sessionConfig.value.extendGraceSeconds || 300));
+const sessionTimeoutLabel = computed(() => {
+  const seconds = Number(sessionConfig.value.timeoutSeconds || 900);
+
+  if (seconds < 60) {
+    return `${seconds} detik`;
+  }
+
+  return `${Math.round(seconds / 60)} menit`;
+});
+const sessionCountdownLabel = computed(() => {
+  const minutes = Math.floor(sessionCountdown.value / 60).toString().padStart(2, '0');
+  const seconds = (sessionCountdown.value % 60).toString().padStart(2, '0');
+
+  return `${minutes}:${seconds}`;
+});
+
+const activityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+let idleTimerId = null;
+let countdownTimerId = null;
+let promptLogoutTimerId = null;
+let lastActivityEventAt = 0;
+
+const clearIdleTimer = () => {
+  if (idleTimerId) {
+    window.clearTimeout(idleTimerId);
+    idleTimerId = null;
+  }
+};
+
+const clearPromptTimers = () => {
+  if (countdownTimerId) {
+    window.clearInterval(countdownTimerId);
+    countdownTimerId = null;
+  }
+
+  if (promptLogoutTimerId) {
+    window.clearTimeout(promptLogoutTimerId);
+    promptLogoutTimerId = null;
+  }
+};
+
+const goToLogin = () => {
+  window.location.assign('/login');
+};
+
+const logoutFromPrompt = async () => {
+  clearIdleTimer();
+  clearPromptTimers();
+  sessionPromptOpen.value = false;
+
+  try {
+    await axios.post('/logout');
+  } finally {
+    goToLogin();
+  }
+};
+
+const openSessionPrompt = () => {
+  if (!user.value || sessionPromptOpen.value) {
+    return;
+  }
+
+  clearIdleTimer();
+  clearPromptTimers();
+  sessionCountdown.value = promptGraceSeconds.value;
+  sessionPromptOpen.value = true;
+
+  countdownTimerId = window.setInterval(() => {
+    sessionCountdown.value = Math.max(0, sessionCountdown.value - 1);
+  }, 1000);
+
+  promptLogoutTimerId = window.setTimeout(() => {
+    logoutFromPrompt();
+  }, promptGraceSeconds.value * 1000);
+};
+
+const resetIdleTimer = () => {
+  if (!user.value || sessionPromptOpen.value) {
+    return;
+  }
+
+  clearIdleTimer();
+  idleTimerId = window.setTimeout(openSessionPrompt, idleTimeoutMs.value);
+};
+
+const handleUserActivity = () => {
+  if (!user.value || sessionPromptOpen.value) {
+    return;
+  }
+
+  const now = Date.now();
+
+  if (now - lastActivityEventAt < 1000) {
+    return;
+  }
+
+  lastActivityEventAt = now;
+  resetIdleTimer();
+};
+
+const extendSession = async () => {
+  if (extendingSession.value) {
+    return;
+  }
+
+  extendingSession.value = true;
+
+  try {
+    await axios.post('/session/extend');
+    clearPromptTimers();
+    sessionPromptOpen.value = false;
+    sessionCountdown.value = promptGraceSeconds.value;
+    toast.value = { show: true, message: 'Sesi berhasil diperpanjang.', type: 'success' };
+    resetIdleTimer();
+  } catch (error) {
+    goToLogin();
+  } finally {
+    extendingSession.value = false;
+  }
+};
+
+onMounted(() => {
+  activityEvents.forEach((eventName) => {
+    window.addEventListener(eventName, handleUserActivity, { passive: true });
+  });
+
+  resetIdleTimer();
+});
+
+onBeforeUnmount(() => {
+  activityEvents.forEach((eventName) => {
+    window.removeEventListener(eventName, handleUserActivity);
+  });
+
+  clearIdleTimer();
+  clearPromptTimers();
+});
+
+watch(() => [user.value?.id, page.url], () => {
+  clearPromptTimers();
+  sessionPromptOpen.value = false;
+  sessionCountdown.value = promptGraceSeconds.value;
+  resetIdleTimer();
+});
 </script>
 
 <template>
@@ -139,6 +292,7 @@ const closeToast = () => {
           <svg v-else-if="item.icon === 'academic-years'" class="h-5 w-5 shrink-0" :class="isActive(item.href) ? 'text-orange-600' : 'text-slate-400 group-hover:text-slate-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <svg v-else-if="item.icon === 'year-transition'" class="h-5 w-5 shrink-0" :class="isActive(item.href) ? 'text-orange-600' : 'text-slate-400 group-hover:text-slate-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
           <svg v-else-if="item.icon === 'audit-logs'" class="h-5 w-5 shrink-0" :class="isActive(item.href) ? 'text-orange-600' : 'text-slate-400 group-hover:text-slate-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <svg v-else-if="item.icon === 'server-management'" class="h-5 w-5 shrink-0" :class="isActive(item.href) ? 'text-orange-600' : 'text-slate-400 group-hover:text-slate-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14M6 4h12a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2zm0 8h12a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2zm2-5h.01M8 16h.01M12 7h4m-4 9h4"/></svg>
 
             <span v-if="sidebarOpen" class="truncate">{{ item.name }}</span>
           </Link>
@@ -246,6 +400,65 @@ const closeToast = () => {
       </main>
     </div>
 
+    <!-- ═══════ Session Timeout Prompt ═══════ -->
+    <Transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="sessionPromptOpen"
+        class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="session-timeout-title"
+      >
+        <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/20">
+          <div class="flex items-start gap-4">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h2 id="session-timeout-title" class="text-base font-semibold text-slate-900">
+                Sesi hampir berakhir
+              </h2>
+              <p class="mt-1 text-sm leading-6 text-slate-500">
+                Anda tidak aktif selama {{ sessionTimeoutLabel }}. Perpanjang sesi agar tetap masuk, atau sesi akan logout otomatis.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-lg border border-orange-100 bg-orange-50 px-4 py-3">
+            <p class="text-xs font-medium uppercase tracking-wider text-orange-700">Sisa waktu</p>
+            <p class="mt-1 font-mono text-2xl font-semibold text-orange-700">{{ sessionCountdownLabel }}</p>
+          </div>
+
+          <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              @click="logoutFromPrompt"
+              class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              Logout
+            </button>
+            <button
+              type="button"
+              @click="extendSession"
+              :disabled="extendingSession"
+              class="inline-flex items-center justify-center rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-orange-500/20 transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-300"
+            >
+              {{ extendingSession ? 'Memperpanjang...' : 'Perpanjang sesi' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- ═══════ Mobile Drawer ═══════ -->
     <Transition
       enter-active-class="transition duration-200"
@@ -304,6 +517,7 @@ const closeToast = () => {
               <svg v-else-if="item.icon === 'academic-years'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <svg v-else-if="item.icon === 'year-transition'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
               <svg v-else-if="item.icon === 'audit-logs'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              <svg v-else-if="item.icon === 'server-management'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14M6 4h12a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2zm0 8h12a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2zm2-5h.01M8 16h.01M12 7h4m-4 9h4"/></svg>
 
                 {{ item.name }}
               </Link>

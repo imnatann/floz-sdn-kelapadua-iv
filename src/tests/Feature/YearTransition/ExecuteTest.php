@@ -2,10 +2,12 @@
 
 use App\Models\AcademicYear;
 use App\Models\SchoolClass;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentMutation;
 use App\Models\User;
 use App\Models\YearTransitionLog;
+use App\Services\YearTransitionService;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -426,4 +428,52 @@ it('execute returns 409 when target AY already has classes (idempotency)', funct
             'plan_hash'               => $planHash,
         ])
         ->assertStatus(409);
+});
+
+it('activates target academic year and semester 1 after transition', function () {
+    $admin = User::factory()->create(['role' => 'school_admin']);
+    $source = AcademicYear::factory()->create(['is_active' => true]);
+    $target = AcademicYear::factory()->create(['is_active' => false]);
+
+    $sourceSem1 = Semester::factory()->create([
+        'academic_year_id' => $source->id,
+        'semester_number' => 1,
+        'is_active' => false,
+    ]);
+    $sourceSem2 = Semester::factory()->create([
+        'academic_year_id' => $source->id,
+        'semester_number' => 2,
+        'is_active' => true,
+    ]);
+    $targetSem1 = Semester::factory()->create([
+        'academic_year_id' => $target->id,
+        'semester_number' => 1,
+        'is_active' => false,
+    ]);
+    $targetSem2 = Semester::factory()->create([
+        'academic_year_id' => $target->id,
+        'semester_number' => 2,
+        'is_active' => false,
+    ]);
+
+    $class3 = SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level' => 3,
+        'name' => 'Kelas 3A',
+    ]);
+    SchoolClass::factory()->create([
+        'academic_year_id' => $source->id,
+        'grade_level' => 4,
+        'name' => 'Kelas 4A',
+    ]);
+    Student::factory()->count(2)->create(['class_id' => $class3->id, 'status' => 'active']);
+
+    app(YearTransitionService::class)->executeTransition($source->id, $target->id, [], $admin);
+
+    expect($source->fresh()->is_active)->toBeFalse()
+        ->and($target->fresh()->is_active)->toBeTrue()
+        ->and($sourceSem1->fresh()->is_active)->toBeFalse()
+        ->and($sourceSem2->fresh()->is_active)->toBeFalse()
+        ->and($targetSem1->fresh()->is_active)->toBeTrue()
+        ->and($targetSem2->fresh()->is_active)->toBeFalse();
 });

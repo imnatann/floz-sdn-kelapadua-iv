@@ -12,6 +12,7 @@ defineOptions({ layout: AppLayout });
 
 const props = defineProps({
     academicYears: { type: Array, default: () => [] },
+    initialTargetAcademicYearId: { type: [Number, String, null], default: null },
 });
 
 const currentStep = ref(1);
@@ -27,7 +28,7 @@ const stepLabels = [
 
 const wizardData = ref({
     sourceAyId: null,
-    targetAyId: null,
+    targetAyId: props.initialTargetAcademicYearId ? Number(props.initialTargetAcademicYearId) : null,
     newClasses: [],
     overrides: {},
     plan: null,

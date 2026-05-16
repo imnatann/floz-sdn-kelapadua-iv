@@ -102,7 +102,7 @@ function destroy(id) {
                                 </span>
                                 <Link
                                     v-else-if="hasActiveAy"
-                                    :href="`/year-transition/create?target_academic_year_id=${ay.id}`"
+                                    :href="`${route('year-transition.index')}?target_academic_year_id=${ay.id}`"
                                     class="inline-flex items-center rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
                                 >
                                     Mulai Kenaikan Kelas
