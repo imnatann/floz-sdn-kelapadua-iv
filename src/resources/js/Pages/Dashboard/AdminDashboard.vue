@@ -4,14 +4,22 @@ import StatCard from '@/Components/UI/StatCard.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
-import { Link } from '@inertiajs/vue3';
+import FormSelect from '@/Components/UI/FormSelect.vue';
+import { Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineOptions({ layout: AppLayout });
 
 const props = defineProps({
   stats: Object,
   recentAnnouncements: Array,
+  academicYears: { type: Array, default: () => [] },
+  semesters: { type: Array, default: () => [] },
+  filters: { type: Object, default: () => ({}) },
 });
+
+const academicYearId = ref(props.filters?.academic_year_id ?? '');
+const semesterId = ref(props.filters?.semester_id ?? '');
 
 const statCards = [
   { label: 'Total Siswa', key: 'total_students', icon: '👩‍🎓', color: 'orange', bg: 'bg-orange-50' },
@@ -19,6 +27,22 @@ const statCards = [
   { label: 'Total Kelas', key: 'total_classes', icon: '🏫', color: 'amber', bg: 'bg-amber-50' },
   { label: 'Total Staff', key: 'total_staff', icon: '👥', color: 'purple', bg: 'bg-purple-50' },
 ];
+
+const applyFilters = () => {
+  router.get(
+    '/dashboard',
+    {
+      academic_year_id: academicYearId.value || undefined,
+      semester_id: semesterId.value || undefined,
+    },
+    { preserveState: true, preserveScroll: true, replace: true }
+  );
+};
+
+const changeAcademicYear = () => {
+  semesterId.value = '';
+  applyFilters();
+};
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('id-ID', {
@@ -49,7 +73,24 @@ const stripHtml = (raw) => {
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-xl font-bold text-slate-800">Dashboard Sekolah</h2>
-        <p class="mt-0.5 text-sm text-slate-400">Ringkasan data dan aktivitas sekolah</p>
+        <p class="mt-0.5 text-sm text-slate-400">Ringkasan data dan aktivitas sekolah per semester</p>
+      </div>
+      <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
+        <div class="w-full sm:w-56">
+          <FormSelect v-model="academicYearId" label="Tahun Ajaran" @change="changeAcademicYear">
+            <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
+              {{ ay.name }}{{ ay.is_active ? ' (Aktif)' : '' }}
+            </option>
+          </FormSelect>
+        </div>
+        <div class="w-full sm:w-44">
+          <FormSelect v-model="semesterId" label="Semester" @change="applyFilters">
+            <option value="" disabled>Pilih Semester</option>
+            <option v-for="semester in semesters" :key="semester.id" :value="semester.id">
+              Semester {{ semester.semester_number }}{{ semester.is_active ? ' (Aktif)' : '' }}
+            </option>
+          </FormSelect>
+        </div>
       </div>
     </div>
 
@@ -69,7 +110,7 @@ const stripHtml = (raw) => {
       <!-- Left Column: Attendance & Quick Actions -->
       <div class="space-y-6 lg:col-span-2">
         <!-- Attendance Summary -->
-        <Card title="Absensi Hari Ini" subtitle="Rekap kehadiran siswa hari ini">
+        <Card title="Absensi Semester" subtitle="Rekap kehadiran siswa pada semester yang dipilih">
           <div class="grid grid-cols-2 gap-4">
             <div class="rounded-xl border border-green-100 bg-green-50/50 p-4 text-center">
               <div class="text-3xl font-bold text-green-600">{{ stats.attendance_present ?? 0 }}</div>

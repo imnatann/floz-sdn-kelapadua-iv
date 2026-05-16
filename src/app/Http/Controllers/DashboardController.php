@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Student;
 use App\Models\SchoolClass;
 use App\Models\Grade;
 use App\Models\ReportCard;
+use App\Models\Semester;
 use App\Models\Teacher;
 use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\StudentClassEnrollment;
 use App\Models\TeachingAssignment;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
@@ -43,18 +47,9 @@ class DashboardController extends Controller
             ]
         )
     )]
-    public function index()
+    public function index(Request $request)
     {
         $today = Carbon::today();
-
-        $stats = [
-            'total_students'   => Student::active()->count(),
-            'total_teachers'   => Teacher::where('status', 'active')->count(),
-            'total_classes'    => SchoolClass::count(),
-            'total_staff'      => Teacher::count(),
-            'attendance_present' => Attendance::whereDate('date', $today)->where('status', 'present')->count(),
-            'attendance_absent'  => Attendance::whereDate('date', $today)->where('status', '!=', 'present')->count(),
-        ];
 
         $recentAnnouncements = Announcement::where('is_published', true)
             ->latest()
@@ -154,9 +149,64 @@ class DashboardController extends Controller
         }
 
         // Admin Dashboard (Default)
+        $academicYears = AcademicYear::orderByDesc('start_date')
+            ->get(['id', 'name', 'is_active']);
+
+        $activeAcademicYear = AcademicYear::where('is_active', true)->first();
+        $requestedAcademicYear = $request->integer('academic_year_id')
+            ? AcademicYear::find($request->integer('academic_year_id'))
+            : null;
+        $requestedSemester = $request->integer('semester_id')
+            ? Semester::with('academicYear')->find($request->integer('semester_id'))
+            : null;
+
+        $selectedAcademicYear = $requestedAcademicYear
+            ?? $requestedSemester?->academicYear
+            ?? $activeAcademicYear
+            ?? $academicYears->first();
+
+        $semesters = Semester::query()
+            ->when(
+                $selectedAcademicYear,
+                fn ($query) => $query->where('academic_year_id', $selectedAcademicYear->id)
+            )
+            ->orderBy('semester_number')
+            ->get(['id', 'academic_year_id', 'semester_number', 'start_date', 'end_date', 'is_active']);
+
+        $selectedSemester = null;
+        if ($requestedSemester && (! $selectedAcademicYear || (int) $requestedSemester->academic_year_id === (int) $selectedAcademicYear->id)) {
+            $selectedSemester = $semesters->firstWhere('id', $requestedSemester->id);
+        }
+
+        $selectedSemester ??= $semesters->firstWhere('is_active', true);
+        $selectedSemester ??= $semesters->first();
+
+        $stats = [
+            'total_students' => $selectedSemester
+                ? StudentClassEnrollment::where('semester_id', $selectedSemester->id)->distinct()->count('student_id')
+                : Student::active()->count(),
+            'total_teachers' => Teacher::where('status', 'active')->count(),
+            'total_classes' => $selectedAcademicYear
+                ? SchoolClass::where('academic_year_id', $selectedAcademicYear->id)->count()
+                : SchoolClass::count(),
+            'total_staff' => Teacher::count(),
+            'attendance_present' => $selectedSemester
+                ? Attendance::where('semester_id', $selectedSemester->id)->where('status', 'present')->count()
+                : Attendance::whereDate('date', $today)->where('status', 'present')->count(),
+            'attendance_absent' => $selectedSemester
+                ? Attendance::where('semester_id', $selectedSemester->id)->where('status', '!=', 'present')->count()
+                : Attendance::whereDate('date', $today)->where('status', '!=', 'present')->count(),
+        ];
+
         return Inertia::render('Dashboard/AdminDashboard', [
             'stats'        => $stats,
             'recentAnnouncements' => $recentAnnouncements,
+            'academicYears' => $academicYears,
+            'semesters' => $semesters,
+            'filters' => [
+                'academic_year_id' => $selectedAcademicYear?->id,
+                'semester_id' => $selectedSemester?->id,
+            ],
         ]);
     }
 }

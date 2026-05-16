@@ -24,6 +24,14 @@ class TeachingAssignmentPolicy
     }
 
     /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user, TeachingAssignment $teachingAssignment): bool
+    {
+        return $user->isSchoolAdmin();
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, TeachingAssignment $teachingAssignment): bool
