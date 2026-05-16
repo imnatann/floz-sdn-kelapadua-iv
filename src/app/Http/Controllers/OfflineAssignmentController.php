@@ -63,7 +63,7 @@ class OfflineAssignmentController extends Controller
             });
         }
 
-        return Inertia::render('Tenant/Assignments/Index', [
+        return Inertia::render('Assignments/Index', [
             'assignments' => $assignments,
             'subjects' => Subject::orderBy('name')->get(['id', 'name']),
             'classes' => SchoolClass::orderBy('name')->get(['id', 'name']),
@@ -82,7 +82,7 @@ class OfflineAssignmentController extends Controller
                 ->find($request->meeting_id);
         }
         
-        return Inertia::render('Tenant/Assignments/Create', [
+        return Inertia::render('Assignments/Create', [
             'subjects' => Subject::orderBy('name')->get(['id', 'name']),
             'classes' => SchoolClass::orderBy('name')->get(['id', 'name']),
             'meeting' => $meeting,
@@ -95,7 +95,7 @@ class OfflineAssignmentController extends Controller
         
         $offlineAssignment->load(['classes', 'files', 'questions']);
         
-        return Inertia::render('Tenant/Assignments/Edit', [
+        return Inertia::render('Assignments/Edit', [
             'assignment' => $offlineAssignment,
             'subjects' => Subject::orderBy('name')->get(['id', 'name']),
             'classes' => SchoolClass::orderBy('name')->get(['id', 'name']),
@@ -169,7 +169,7 @@ class OfflineAssignmentController extends Controller
         if ($request->meeting_id) {
             $meeting = \App\Models\Meeting::find($request->meeting_id);
             if ($meeting) {
-                return redirect("/tenant/courses/{$meeting->teaching_assignment_id}")->with('success', 'Tugas berhasil dibuat.');
+                return redirect("/courses/{$meeting->teaching_assignment_id}")->with('success', 'Tugas berhasil dibuat.');
             }
         }
 
@@ -289,7 +289,7 @@ class OfflineAssignmentController extends Controller
                  ])->find($offlineAssignment->meeting_id);
              }
 
-             return Inertia::render('Tenant/Assignments/Show', [
+             return Inertia::render('Assignments/Show', [
                 'assignment' => $offlineAssignment,
                 'submission' => $submission,
                 'meeting' => $meeting,
@@ -333,7 +333,7 @@ class OfflineAssignmentController extends Controller
             ])->find($offlineAssignment->meeting_id);
         }
 
-        return Inertia::render('Tenant/Assignments/Show', [
+        return Inertia::render('Assignments/Show', [
             'assignment' => $offlineAssignment,
             'students' => $students,
             'meeting' => $meeting,
@@ -454,7 +454,7 @@ class OfflineAssignmentController extends Controller
             ->with('files')
             ->first();
 
-        return Inertia::render('Tenant/Assignments/Grading', [
+        return Inertia::render('Assignments/Grading', [
             'assignment' => $offlineAssignment,
             'student' => $student,
             'submission' => $submission,

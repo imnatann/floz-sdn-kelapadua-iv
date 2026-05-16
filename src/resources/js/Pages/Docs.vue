@@ -131,7 +131,7 @@ const copyCode = (code) => {
             <!-- Directory Structure -->
             <h2 id="structure" class="text-3xl font-bold text-white scroll-mt-24">Directory Structure</h2>
             <p class="mb-6">
-                FLOZ mengikuti struktur standar Laravel dengan beberapa penyesuaian untuk arsitektur multi-tenant.
+                Struktur standar Laravel dengan separasi rapi antara backend (PHP) dan frontend (Vue/Inertia).
             </p>
 
             <div class="not-prose bg-[#0d1117] border border-slate-800 rounded-xl p-6 font-mono text-sm text-slate-400 overflow-x-auto">
@@ -139,11 +139,11 @@ const copyCode = (code) => {
 floz/
 ├── app/
 │   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── <span class="text-orange-400">Platform/</span>       <span class="text-slate-600">// Controller untuk Admin Pusat</span>
-│   │   │   └── <span class="text-purple-400">Tenant/</span>         <span class="text-slate-600">// Controller untuk Sekolah Users</span>
+│   │   ├── <span class="text-orange-400">Controllers/</span>     <span class="text-slate-600">// Web + API controllers</span>
 │   │   └── Middleware/
-│   └── Models/
+│   ├── <span class="text-purple-400">Models/</span>              <span class="text-slate-600">// Eloquent models</span>
+│   ├── Notifications/
+│   └── Services/
 ├── config/
 ├── database/
 │   ├── migrations/
@@ -154,8 +154,9 @@ floz/
 │       ├── <span class="text-blue-400">Layouts/</span>
 │       └── <span class="text-blue-400">Pages/</span>
 └── routes/
-    ├── <span class="text-green-400">web.php</span>             <span class="text-slate-600">// Routing Landing & Platform</span>
-    └── <span class="text-green-400">tenant.php</span>          <span class="text-slate-600">// Routing untuk subdomain Sekolah</span>
+    ├── <span class="text-green-400">web.php</span>              <span class="text-slate-600">// Inertia + auth routes</span>
+    ├── <span class="text-green-400">api.php</span>              <span class="text-slate-600">// Mobile JSON API (/api/v1)</span>
+    └── <span class="text-green-400">channels.php</span>         <span class="text-slate-600">// Broadcast channel auth</span>
 </pre>
             </div>
 

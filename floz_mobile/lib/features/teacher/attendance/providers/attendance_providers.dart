@@ -55,3 +55,47 @@ class AttendanceSubmitController extends AsyncNotifier<void> {
 final attendanceSubmitControllerProvider =
     AsyncNotifierProvider<AttendanceSubmitController, void>(
         AttendanceSubmitController.new);
+
+// ─── Daily class attendance (wali kelas) ─────────────────────────────────────
+
+/// Loads today's daily attendance roster for a homeroom class.
+final dailyAttendanceRosterProvider =
+    FutureProvider.family<DailyAttendanceRoster, int>((ref, classId) async {
+  final result =
+      await ref.read(attendanceRepositoryProvider).fetchDailyRoster(classId);
+  switch (result) {
+    case Success(:final data):
+      return data;
+    case FailureResult(:final failure):
+      throw failure;
+  }
+});
+
+/// Controller for submitting daily class attendance.
+class DailyAttendanceSubmitController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<bool> submit({
+    required int classId,
+    required List<Map<String, dynamic>> entries,
+  }) async {
+    state = const AsyncLoading();
+    final result = await ref
+        .read(attendanceRepositoryProvider)
+        .submitDailyAttendance(classId, entries);
+    switch (result) {
+      case Success():
+        ref.invalidate(dailyAttendanceRosterProvider(classId));
+        state = const AsyncData(null);
+        return true;
+      case FailureResult(:final failure):
+        state = AsyncError(failure, StackTrace.current);
+        return false;
+    }
+  }
+}
+
+final dailyAttendanceSubmitControllerProvider =
+    AsyncNotifierProvider<DailyAttendanceSubmitController, void>(
+        DailyAttendanceSubmitController.new);

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class TeacherController extends Controller
@@ -24,7 +27,7 @@ class TeacherController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return Inertia::render('Tenant/Staff/Index', [
+        return Inertia::render('Staff/Index', [
             'teachers' => $teachers,
             'filters'  => $request->only(['search', 'status']),
         ]);
@@ -34,7 +37,7 @@ class TeacherController extends Controller
     {
         \Illuminate\Support\Facades\Gate::authorize('create', Teacher::class);
 
-        return Inertia::render('Tenant/Staff/Create');
+        return Inertia::render('Staff/Create');
     }
 
     public function store(Request $request)
@@ -52,19 +55,61 @@ class TeacherController extends Controller
             'birth_date'  => 'nullable|date',
             'address'     => 'nullable|string|max:500',
             'status'      => 'required|in:active,inactive',
+
+            // Account fields
+            'create_account' => 'nullable|boolean',
         ]);
 
-        Teacher::create($validated);
+        if ($request->boolean('create_account')) {
+            $loginEmail = $this->resolveTeacherLoginEmail($validated);
+
+            if (!$loginEmail) {
+                return back()->withInput()->withErrors([
+                    'create_account' => 'Untuk membuat akun otomatis, isi minimal Email atau NIP.',
+                ]);
+            }
+
+            if (User::where('email', $loginEmail)->exists()) {
+                return back()->withInput()->withErrors([
+                    'create_account' => "Akun dengan email {$loginEmail} sudah ada.",
+                ]);
+            }
+
+            $validated['email'] = $loginEmail;
+        }
+
+        $teacher = Teacher::create($validated);
+
+        if ($request->boolean('create_account')) {
+            User::create([
+                'name'      => $teacher->name,
+                'email'     => $teacher->email,
+                'password'  => Hash::make('password'),
+                'role'      => UserRole::Teacher,
+                'is_active' => true,
+            ]);
+        }
 
         return redirect()->route('staff.index')
             ->with('success', 'Guru berhasil ditambahkan.');
+    }
+
+    private function resolveTeacherLoginEmail(array $validated): ?string
+    {
+        if (!empty($validated['email'])) {
+            return $validated['email'];
+        }
+        if (!empty($validated['nip'])) {
+            return $validated['nip'] . '@guru.sekolah.id';
+        }
+        return null;
     }
 
     public function edit(Teacher $staff)
     {
         \Illuminate\Support\Facades\Gate::authorize('update', $staff);
 
-        return Inertia::render('Tenant/Staff/Edit', [
+        return Inertia::render('Staff/Edit', [
             'teacher' => $staff,
         ]);
     }

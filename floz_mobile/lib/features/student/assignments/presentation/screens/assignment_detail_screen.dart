@@ -9,6 +9,7 @@ import '../../../../../shared/widgets/error_state.dart';
 import '../../../../../shared/widgets/floz_card.dart';
 import '../../domain/entities/assignment.dart';
 import '../../providers/assignment_providers.dart';
+import 'assignment_submit_screen.dart';
 
 class AssignmentDetailScreen extends ConsumerWidget {
   const AssignmentDetailScreen({
@@ -192,7 +193,7 @@ class _DetailContent extends StatelessWidget {
         if (detail.submission != null)
           _SubmissionCard(submission: detail.submission!)
         else
-          _NoSubmissionBanner(),
+          _SubmitBanner(assignmentId: detail.id),
       ],
     );
   }
@@ -422,32 +423,23 @@ class _SubmissionCard extends StatelessWidget {
   }
 }
 
-class _NoSubmissionBanner extends StatelessWidget {
+class _SubmitBanner extends StatelessWidget {
+  const _SubmitBanner({required this.assignmentId});
+  final int assignmentId;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.slate100,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
-        border: Border.all(color: AppColors.slate200),
-      ),
-      child: Row(
-        children: const [
-          Icon(Icons.info_outline_rounded,
-              size: 16, color: AppColors.slate500),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Kumpulkan tugas secara langsung kepada guru di kelas.',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.slate600,
-              ),
-            ),
+    return FilledButton.icon(
+      onPressed: () async {
+        await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (_) => AssignmentSubmitScreen(assignmentId: assignmentId),
           ),
-        ],
-      ),
+        );
+        // Provider invalidation is handled inside AssignmentSubmitScreen on success.
+      },
+      icon: const Icon(Icons.upload_outlined),
+      label: const Text('Kumpulkan Tugas'),
     );
   }
 }

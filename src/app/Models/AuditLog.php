@@ -6,11 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use App\Models\User;
-use App\Traits\UsesTenantConnection;
 
 class AuditLog extends Model
 {
-    use UsesTenantConnection;
 
     protected $guarded = ['id'];
 

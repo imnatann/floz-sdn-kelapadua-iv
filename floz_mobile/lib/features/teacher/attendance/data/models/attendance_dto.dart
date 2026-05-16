@@ -1,5 +1,31 @@
 import '../../domain/entities/attendance_roster.dart';
 
+class DailyAttendanceRosterDto {
+  static DailyAttendanceRoster fromJson(Map<String, dynamic> json) {
+    final classJson = json['class'] as Map<String, dynamic>? ?? {};
+    final studentsJson = json['students'] as List? ?? [];
+
+    return DailyAttendanceRoster(
+      meetingNumber: (json['meeting_number'] as num?)?.toInt() ?? 0,
+      date: json['date'] as String? ?? '',
+      classInfo: ClassInfo(
+        id: (classJson['id'] as num?)?.toInt() ?? 0,
+        name: classJson['name'] as String? ?? '-',
+      ),
+      students: studentsJson
+          .whereType<Map<String, dynamic>>()
+          .map((s) => StudentAttendance(
+                id: (s['id'] as num?)?.toInt() ?? 0,
+                name: s['name'] as String? ?? '-',
+                nis: s['nis']?.toString() ?? '-',
+                status: s['status'] as String?,
+                note: s['note'] as String?,
+              ))
+          .toList(growable: false),
+    );
+  }
+}
+
 class AttendanceRosterDto {
   static AttendanceRoster fromJson(Map<String, dynamic> json) {
     final meetingJson = json['meeting'] as Map<String, dynamic>? ?? {};

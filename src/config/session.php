@@ -38,6 +38,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Authenticated Web Session Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Authenticated web users get a fixed 15 minute access window. Seconds-based
+    | values are optional overrides for fast local testing.
+    |
+    */
+
+    'auth_timeout_minutes' => (int) env('AUTH_SESSION_TIMEOUT_MINUTES', 15),
+
+    'auth_extend_grace_minutes' => (int) env('AUTH_SESSION_EXTEND_GRACE_MINUTES', 5),
+
+    'auth_timeout_seconds' => env('AUTH_SESSION_TIMEOUT_SECONDS'),
+
+    'auth_extend_grace_seconds' => env('AUTH_SESSION_EXTEND_GRACE_SECONDS'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Encryption
     |--------------------------------------------------------------------------
     |

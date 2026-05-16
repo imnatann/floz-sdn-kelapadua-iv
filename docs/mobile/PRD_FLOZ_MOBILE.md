@@ -13,7 +13,7 @@
 FLOZ Mobile adalah aplikasi pendamping (companion app) dari FLOZ LMS Web — platform SaaS manajemen rapor siswa K-12 di Indonesia. Aplikasi mobile difokuskan untuk **3 role utama**: **Student**, **Teacher**, dan **Parent** — memberikan akses cepat ke fitur yang paling sering digunakan di mana pun dan kapan pun.
 
 > [!IMPORTANT]
-> Aplikasi mobile ini BUKAN replika penuh web app. Fitur administratif berat (Tenant Management, Subscription Billing, Audit Logs) tetap di web. Mobile fokus pada **consumption & quick-action**.
+> Aplikasi mobile ini BUKAN replika penuh web app. Fitur administratif berat (Audit Logs, manajemen master data) tetap di web. Mobile fokus pada **consumption & quick-action**.
 
 ### Tujuan Utama
 1. **Siswa**: Cek nilai, jadwal, tugas, dan rapor dengan cepat
@@ -68,10 +68,10 @@ FLOZ Mobile adalah aplikasi pendamping (companion app) dari FLOZ LMS Web — pla
 ┌──────────────────────────────────────────────────────┐
 │              FLOZ Backend (Laravel 12)                │
 │  ┌──────────────────┐   ┌──────────────────────────┐ │
-│  │ API v1 (JSON)    │   │ Multi-Tenant Middleware   │ │
-│  │ /api/v1/mobile/* │   │ (IdentifyTenant +        │ │
-│  └──────────────────┘   │  Sanctum Auth)           │ │
-│                         └──────────────────────────┘ │
+│  │ API v1 (JSON)    │   │ Sanctum Auth Middleware   │ │
+│  │ /api/v1/*        │   │ (Bearer token)           │ │
+│  └──────────────────┘   └──────────────────────────┘ │
+│                                                       │
 │  ┌────────────┐  ┌──────────┐  ┌──────────────────┐ │
 │  │ PostgreSQL │  │  Redis   │  │ MinIO (Storage)   │ │
 │  └────────────┘  └──────────┘  └──────────────────┘ │
@@ -215,7 +215,6 @@ floz_mobile/
 ```
 Auth Screens:
 ├── SplashScreen                    → Branding + auto-login check
-├── TenantSelectionScreen           → Pilih / cari sekolah
 ├── LoginScreen                     → Email + password
 
 Main Screens (Student):
@@ -267,7 +266,6 @@ Saat ini backend FLOZ menggunakan Inertia.js (server-side rendering), sehingga b
 
 | Method | Endpoint | Deskripsi |
 |:-------|:---------|:----------|
-| `GET` | `/api/v1/tenants/search?q={query}` | Cari sekolah/tenant |
 | `POST` | `/api/v1/auth/login` | Login → Sanctum token |
 | `POST` | `/api/v1/auth/logout` | Revoke token |
 | `GET` | `/api/v1/auth/me` | Profil user yang login |
@@ -350,13 +348,13 @@ Saat ini backend FLOZ menggunakan Inertia.js (server-side rendering), sehingga b
 ## 7. Authentication Flow
 
 ```
-┌──────────┐     ┌─────────────────┐     ┌──────────────┐
-│  Splash  │────▶│  Tenant Search  │────▶│    Login      │
-│  Screen  │     │  (Cari Sekolah) │     │ (Email+Pass)  │
-└──────────┘     └─────────────────┘     └──────┬───────┘
-                                                │
-                                    POST /api/v1/auth/login
-                                    Body: { tenant_slug, email, password }
+┌──────────┐     ┌──────────────┐
+│  Splash  │────▶│    Login      │
+│  Screen  │     │ (Email+Pass)  │
+└──────────┘     └──────┬───────┘
+                        │
+            POST /api/v1/auth/login
+            Body: { email, password }
                                                 │
                                          ┌──────▼───────┐
                                          │  Store Token  │
@@ -424,11 +422,10 @@ Saat ini backend FLOZ menggunakan Inertia.js (server-side rendering), sehingga b
 1. **SSL/TLS** — Semua komunikasi via HTTPS
 2. **Token-based Auth** — Laravel Sanctum Bearer Token
 3. **Certificate Pinning** — Opsional untuk production
-4. **Tenant Isolation** — Setiap request menyertakan `X-Tenant-Slug` header
-5. **Input Validation** — Validasi di client + server
-6. **Secure Storage** — Gunakan flutter_secure_storage untuk token
-7. **Rate Limiting** — Backend rate limit per user/tenant
-8. **No Sensitive Data Logging** — Pastikan log tidak mengandung token/password
+4. **Input Validation** — Validasi di client + server
+5. **Secure Storage** — Gunakan flutter_secure_storage untuk token
+6. **Rate Limiting** — Backend rate limit per user
+7. **No Sensitive Data Logging** — Pastikan log tidak mengandung token/password
 
 ---
 
@@ -488,7 +485,6 @@ Saat ini backend FLOZ menggunakan Inertia.js (server-side rendering), sehingga b
 
 | Istilah | Definisi |
 |:--------|:---------|
-| **Tenant** | Sekolah yang terdaftar di platform FLOZ |
 | **KKM** | Kriteria Ketuntasan Minimal — batas nilai minimum kelulusan |
 | **KI-3 / KI-4** | Kompetensi Inti Pengetahuan / Keterampilan (SMP/SMA) |
 | **NISN** | Nomor Induk Siswa Nasional |

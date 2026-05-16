@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\UsesTenantConnection;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Student extends Model
 {
-    use HasFactory, UsesTenantConnection, Auditable;
+    use HasFactory, Auditable;
 
     public function user()
     {
@@ -26,6 +25,7 @@ class Student extends Model
 
     protected $casts = [
         'birth_date' => 'date',
+        'class_id'   => 'integer',
     ];
 
     public function class(): BelongsTo
@@ -53,6 +53,10 @@ class Student extends Model
         return $this->hasMany(StudentMutation::class)->orderBy('date', 'desc');
     }
 
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class);
+    }
 
     public function siblings(): HasMany
     {

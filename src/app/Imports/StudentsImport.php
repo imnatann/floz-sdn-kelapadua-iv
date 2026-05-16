@@ -57,11 +57,11 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('tenant.students', 'nis') // Check uniqueness in tenant db
+                Rule::unique('students', 'nis')
             ],
             'nama_lengkap' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P,l,p,Male,Female,male,female',
-            'kelas' => 'nullable|string|exists:tenant.classes,name',
+            'kelas' => 'nullable|string|exists:classes,name',
         ];
     }
 

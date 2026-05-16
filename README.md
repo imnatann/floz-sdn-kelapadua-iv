@@ -2,10 +2,10 @@
   <img src="screenshots/landing.png" alt="FLOZ LMS" width="100%">
 </p>
 
-<h1 align="center">FLOZ — Open Source Learning Management System</h1>
+<h1 align="center">FLOZ LMS — SDN Kelapadua IV</h1>
 
 <p align="center">
-  <strong>A modern, multi-tenant LMS built for Indonesian schools</strong>
+  <strong>Sistem informasi akademik dedicated untuk SDN Kelapadua IV</strong>
 </p>
 
 <p align="center">
@@ -14,66 +14,52 @@
   <img src="https://img.shields.io/badge/PostgreSQL_16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia">
   <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind">
-  <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="License">
 </p>
 
 ---
 
 ## ✨ Overview
 
-**FLOZ LMS** is a production-ready, multi-tenant Learning Management System purpose-built for Indonesian educational institutions. It provides schools with a fully isolated environment to manage their academic operations — from student enrollment and grading to real-time announcements and per-session course management.
-
-Each school (tenant) operates on its own database, ensuring complete data isolation while sharing a single codebase.
+Repo ini adalah adaptasi single-school dari framework **FLOZ LMS** (yang awalnya multi-tenant SaaS) untuk dipakai oleh **SDN Kelapadua IV**. Satu sekolah, satu database, satu instance — tidak ada konsep tenant/subdomain. Original framework readme tetap disimpan di [`FLOZ_README.md`](FLOZ_README.md) sebagai konteks historis.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Fitur Utama
 
-### 🏫 Multi-Tenant Architecture
-- One codebase, unlimited schools — each with isolated PostgreSQL databases
-- Tenant identification via subdomain routing
-- Centralized super admin panel for tenant management
-
-### 👥 Role-Based Access Control (RBAC)
-| Role | Capabilities |
+### 👥 Role-Based Access Control
+| Role | Kapabilitas |
 |------|-------------|
-| **Super Admin** | Tenant management, platform settings |
-| **School Admin** | Full school management, staff, students, grades |
-| **Teacher** | Courses, assignments, grading, attendance |
-| **Student** | View courses, submit assignments, view grades |
-| **Parent** | View child's academic progress *(planned)* |
+| **School Admin** | Mengelola guru, siswa, kelas, mapel, tahun ajaran, penugasan |
+| **Teacher** | Pertemuan, materi, tugas, absensi, input nilai, rapor |
+| **Student** | Lihat materi, kumpul tugas, lihat nilai/rapor, jadwal |
+| **Parent** | Pantau perkembangan akademik anak *(planned)* |
 
 ### 📚 Course Management (Pertemuan System)
-- **Per-Meeting Structure** — Courses organized into 16 sessions (Pertemuan 1–14 + UTS + UAS)
-- **Material Management** — Upload files, attach links, or write text notes per meeting
-- **Lock/Unlock Meetings** — Teachers control student visibility per session
-- **Auto-Generated Sessions** — 16 meetings auto-created for every teaching assignment
+- Tiap Teaching Assignment otomatis ter-generate jadi 16 pertemuan (M1–M14 + UTS + UAS).
+- Per pertemuan: upload file/link/teks materi, lock/unlock visibility, attach tugas/quiz.
 
-### 📝 Unified Assignment System (Tugas)
-- **Manual Assignments** — File upload submissions with teacher grading
-- **Quiz Engine** — Multiple choice, true/false, and essay questions
-- **Auto-Grading** — Objective questions graded automatically on submission
-- **Per-Meeting Assignments** — Create assignments directly from course meetings
+### 📝 Tugas & Ujian
+- Manual assignment dengan file upload + grading manual oleh guru.
+- Quiz engine (pilihan ganda, benar/salah, esai) dengan auto-grading untuk soal objektif.
 
-### 📊 Academic Management
-- Class, subject, and academic year management
-- Teaching assignment system linking teachers ↔ subjects ↔ classes
-- Interactive schedule management with conflict detection
-- Comprehensive gradebook supporting K-13 and Merdeka curriculum
+### 📊 Manajemen Akademik
+- CRUD Kelas, Mata Pelajaran, Tahun Akademik, Semester.
+- Teaching Assignment matrix (Guru × Mapel × Kelas).
+- Schedule management dengan conflict detection.
+- Gradebook untuk Kurikulum 13 / Merdeka.
 
-### 📄 Report Cards
-- Auto-generated PDF report cards
-- Custom templates per school
-- Student import via Excel/CSV
+### 📄 Rapor (Report Card)
+- PDF rapor auto-generate per Student × Semester (template SD).
+- School identity (nama, alamat, dsb.) di-pull dari `config/school.php`.
+- Import siswa massal via Excel/CSV.
 
-### 📢 Announcements & Notifications
-- Rich-text editor with cover images and pinning
-- Real-time notifications via **Laravel Reverb** (WebSocket)
-- Targeted distribution by role
+### 📢 Pengumuman & Notifikasi
+- Rich-text editor + pin pengumuman + cover image.
+- Real-time notifikasi via **Laravel Reverb** (WebSocket).
+- Targeting per role.
 
 ### 🔍 Audit Logging
-- Full activity logging per tenant
-- Tracks create/update/delete operations with user attribution
+- Full activity logging untuk operasi Create/Update/Delete dengan user attribution.
 
 ---
 
@@ -84,80 +70,66 @@ Each school (tenant) operates on its own database, ensuring complete data isolat
 | **Backend** | Laravel 12 (PHP 8.2+) |
 | **Frontend** | Vue 3 + Inertia.js |
 | **Styling** | Tailwind CSS |
-| **Database** | PostgreSQL 16 |
-| **Multi-tenancy** | Custom implementation (subdomain-based) |
+| **Database** | PostgreSQL 16 (single connection) |
 | **Real-time** | Laravel Reverb (WebSocket) |
-| **API Docs** | Swagger / OpenAPI |
-| **Containerization** | Docker & Docker Compose |
-
----
-
-## 📸 Screenshots
-
-### Landing Page
-![Landing Page](screenshots/landing.png)
-
-### Login Portal
-![Login Page](screenshots/login.png)
+| **API Docs** | Swagger / OpenAPI (`/docs`) |
+| **Mobile** | Flutter via REST API (`/api/v1`) |
 
 ---
 
 ## ⚡ Quick Start
 
-### Prerequisites
-- PHP 8.2+ with `pgsql` extension
+### Prasyarat
+- PHP 8.2+ dengan ekstensi `pgsql`
 - PostgreSQL 16+
 - Node.js 18+ & NPM
 - Composer 2+
 
-### Installation
+### Instalasi
 
 ```bash
 # 1. Clone
-git clone https://github.com/imnatann/floz-lms.git
-cd floz-lms
+git clone https://github.com/imnatann/floz-sdn-kelapadua-iv.git
+cd floz-sdn-kelapadua-iv
 
 # 2. Install dependencies
-composer install
-npm install
+cd src && composer install && npm install && cd ..
 
 # 3. Environment
-cp .env.example .env
-php artisan key:generate
+cp src/.env.example src/.env
+cd src && php artisan key:generate
 
-# 4. Database — configure .env with your PostgreSQL credentials, then:
-php artisan migrate --seed          # Central database
-php artisan tenants:migrate         # Tenant databases
+# 4. Database (atur kredensial PostgreSQL di src/.env)
+php artisan migrate --seed
 
 # 5. Build frontend
 npm run build
 ```
 
-### Running Locally
+### Menjalankan Lokal
 
-You need **4 terminals** running simultaneously:
+Butuh 4 terminal:
 
 ```bash
-# Terminal 1 — Application Server
-php artisan serve
+# Terminal 1 — App server
+cd src && php artisan serve
 
-# Terminal 2 — Reverb WebSocket Server
-php artisan reverb:start
+# Terminal 2 — Reverb (WebSocket)
+cd src && php artisan reverb:start
 
-# Terminal 3 — Queue Worker
-php artisan queue:listen
+# Terminal 3 — Queue worker
+cd src && php artisan queue:listen
 
-# Terminal 4 — Vite Dev Server
-npm run dev
+# Terminal 4 — Vite dev
+cd src && npm run dev
 ```
 
-### Access
+### Akses
 
-| URL | Description |
-|-----|-------------|
-| `http://localhost:8000` | Landing Page |
-| `http://{tenant}.localhost:8000` | Tenant Portal |
-| **Super Admin** | `admin@floz.id` / `password` |
+| URL | Keterangan |
+|-----|-----------|
+| `http://localhost:8000` | Aplikasi web |
+| `http://localhost:8000/docs` | API documentation (Swagger) |
 
 ---
 
@@ -166,43 +138,34 @@ npm run dev
 ```
 src/
 ├── app/
-│   ├── Http/Controllers/
-│   │   ├── Tenant/           # Tenant-scoped controllers
-│   │   └── Platform/         # Super admin controllers
-│   ├── Models/Tenant/        # Tenant models (Meeting, Assignment, etc.)
-│   ├── Policies/Tenant/      # Authorization policies
-│   └── Services/             # Business logic services
+│   ├── Http/Controllers/   # Web + API controllers
+│   ├── Models/             # Eloquent models (flat namespace)
+│   ├── Notifications/
+│   └── Services/
+├── config/
+│   ├── school.php          # Identitas sekolah (name, address, etc.)
+│   └── ...
 ├── database/
-│   └── migrations/
-│       ├── tenant/           # Tenant-specific migrations
-│       └── *.php             # Central migrations
+│   ├── migrations/
+│   └── seeders/
 ├── resources/js/
-│   ├── Pages/Tenant/         # Vue pages per feature
-│   ├── Layouts/              # TenantLayout, PlatformLayout
-│   └── Components/UI/        # Reusable UI components
-└── routes/web.php            # All route definitions
+│   ├── Pages/              # Inertia pages (flat by feature)
+│   ├── Layouts/            # AppLayout, DocsLayout
+│   └── Components/         # Reusable components
+└── routes/
+    ├── web.php             # Inertia + auth routes
+    ├── api.php             # Mobile JSON API (/api/v1)
+    └── channels.php        # Broadcast channel auth
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is open-sourced software licensed under the [MIT License](https://opensource.org/licenses/MIT).
+MIT — lihat [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
-  Made with ❤️ for Indonesian Education
+  Dibangun untuk SDN Kelapadua IV ❤️
 </p>

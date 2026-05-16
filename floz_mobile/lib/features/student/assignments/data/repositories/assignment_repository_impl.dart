@@ -62,6 +62,24 @@ class AssignmentRepositoryImpl implements AssignmentRepository {
     }
   }
 
+  @override
+  Future<Result<SubmissionResult>> submit(int id, {String? answerText, String? answerLink}) async {
+    try {
+      final data = await _remote.submitAssignment(id, answerText: answerText, answerLink: answerLink);
+      return Success(data);
+    } on NetworkException catch (e) {
+      return FailureResult(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return FailureResult(AuthFailure(e.message));
+    } on ForbiddenException catch (e) {
+      return FailureResult(ForbiddenFailure(e.message));
+    } on ValidationException catch (e) {
+      return FailureResult(ValidationFailure(message: e.message, fieldErrors: e.errors));
+    } on ApiException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    }
+  }
+
   List<Map<String, dynamic>> _listToJson(List<AssignmentSummary> data) {
     return data
         .map((a) => {

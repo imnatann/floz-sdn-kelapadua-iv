@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\UsesTenantConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
-    use HasFactory, UsesTenantConnection;
+    use HasFactory;
 
     protected $fillable = [
         'class_id', 'subject_id', 'semester_id', 'teacher_id',
@@ -19,9 +18,13 @@ class Task extends Model
     ];
 
     protected $casts = [
-        'task_date' => 'date',
-        'due_date' => 'date',
-        'max_score' => 'decimal:2',
+        'task_date'   => 'date',
+        'due_date'    => 'date',
+        'max_score'   => 'decimal:2',
+        'class_id'    => 'integer',
+        'subject_id'  => 'integer',
+        'semester_id' => 'integer',
+        'teacher_id'  => 'integer',
     ];
 
     public function schoolClass(): BelongsTo

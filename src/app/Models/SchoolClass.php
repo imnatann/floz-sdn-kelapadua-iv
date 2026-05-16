@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Traits\HasAcademicYear;
-use App\Traits\UsesTenantConnection;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class SchoolClass extends Model
 {
-    use HasFactory, UsesTenantConnection, HasAcademicYear, Auditable;
+    use HasFactory, HasAcademicYear, Auditable;
 
     protected $table = 'classes';
 
@@ -41,6 +40,11 @@ class SchoolClass extends Model
     public function students(): HasMany
     {
         return $this->hasMany(Student::class, 'class_id');
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class, 'class_id');
     }
 
     public function grades(): HasMany
