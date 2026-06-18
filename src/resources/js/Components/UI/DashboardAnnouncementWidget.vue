@@ -20,7 +20,7 @@ const props = defineProps({
     },
     viewAllLink: {
         type: String,
-        default: '/tenant/announcements',
+        default: '/announcements',
     },
 });
 

@@ -33,7 +33,7 @@ const applyFilters = () => {
 
 const confirmDelete = (cls) => {
   if (confirm(`Yakin ingin menghapus kelas ${cls.name}?`)) {
-    router.delete(`/tenant/classes/${cls.id}`);
+    router.delete(`/classes/${cls.id}`);
   }
 };
 </script>

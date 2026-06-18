@@ -31,7 +31,7 @@ const fetchNotifications = async (url = '/notifications/data') => {
 const markAsRead = async (notification) => {
     if (notification.read_at) return;
     try {
-        await axios.post(`/tenant/notifications/${notification.id}/mark-read`);
+        await axios.post(`/notifications/${notification.id}/mark-read`);
         const index = notifications.value.data.findIndex(n => n.id === notification.id);
         if (index !== -1) {
             notifications.value.data[index].read_at = new Date().toISOString();

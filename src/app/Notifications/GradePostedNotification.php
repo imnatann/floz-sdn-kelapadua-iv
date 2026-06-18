@@ -46,7 +46,7 @@ class GradePostedNotification extends Notification implements ShouldQueue
             'type'    => 'grade',
             'title'   => 'Nilai Baru',
             'message' => "Nilai {$type} {$subject}: {$this->grade->score}",
-            'link'    => route('tenant.report-cards.index'), // Linking to report card as grades might extend to detailed view later
+            'link'    => route('report-cards.index'), // Linking to report card as grades might extend to detailed view later
         ];
     }
 
@@ -63,7 +63,7 @@ class GradePostedNotification extends Notification implements ShouldQueue
             'type'    => 'grade',
             'title'   => 'Nilai Baru',
             'message' => "Nilai {$type} {$subject}: {$this->grade->score}",
-            'link'    => route('tenant.report-cards.index'),
+            'link'    => route('report-cards.index'),
             'created_at' => now()->toIso8601String(),
             'read_at' => null,
         ]);

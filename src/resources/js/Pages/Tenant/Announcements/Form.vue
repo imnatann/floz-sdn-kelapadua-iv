@@ -41,7 +41,7 @@ const handleImageUpload = (event) => {
 
 const submit = () => {
   if (props.announcement) {
-    form.post(`/tenant/announcements/${props.announcement.id}`, {
+    form.post(`/announcements/${props.announcement.id}`, {
         _method: 'put',
         forceFormData: true,
     });

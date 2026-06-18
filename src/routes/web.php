@@ -54,13 +54,17 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('students', StudentController::class);
 
     // Staff (Teachers)
-    Route::resource('staff', TeacherController::class)->parameters(['staff' => 'staff']);
+    Route::resource('staff', TeacherController::class)
+        ->parameters(['staff' => 'staff'])
+        ->except(['show']);
 
     // Classes (Kelas)
-    Route::resource('classes', SchoolClassController::class)->parameters(['classes' => 'class']);
+    Route::resource('classes', SchoolClassController::class)
+        ->parameters(['classes' => 'class'])
+        ->except(['show']);
 
     // Subjects (Mata Pelajaran)
-    Route::resource('subjects', SubjectController::class);
+    Route::resource('subjects', SubjectController::class)->except(['show']);
 
     // Teaching Assignments (Penugasan Guru — data only, no CRUD pages)
     Route::resource('teaching-assignments', TeachingAssignmentController::class)->except(['show']);

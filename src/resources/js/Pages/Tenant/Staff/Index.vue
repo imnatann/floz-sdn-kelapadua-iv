@@ -35,7 +35,7 @@ const applyFilters = () => {
 
 const confirmDelete = (teacher) => {
   if (confirm(`Yakin ingin menghapus data ${teacher.name}?`)) {
-    router.delete(`/tenant/staff/${teacher.id}`);
+    router.delete(`/staff/${teacher.id}`);
   }
 };
 </script>

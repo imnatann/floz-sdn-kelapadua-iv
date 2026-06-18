@@ -24,7 +24,7 @@ watch(search, debounce((value) => {
 
 const deleteAnnouncement = (announcement) => {
     if (confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')) {
-        router.delete(`/tenant/announcements/${announcement.id}`, {
+        router.delete(`/announcements/${announcement.id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 // Toast will be handled by layout
